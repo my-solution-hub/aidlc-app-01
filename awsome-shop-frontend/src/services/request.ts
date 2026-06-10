@@ -63,8 +63,14 @@ instance.interceptors.response.use(
   },
   (error) => {
     if (error.response?.status === 401) {
+      // Clear both the JWT and the zustand-persisted auth flag, otherwise
+      // /login redirects the user straight back to / via the
+      // isAuthenticated useEffect, looping forever.
       localStorage.removeItem(TOKEN_KEY);
-      window.location.href = "/login";
+      localStorage.removeItem("auth-storage");
+      if (window.location.pathname !== "/login") {
+        window.location.href = "/login";
+      }
     }
     return Promise.reject(error);
   },

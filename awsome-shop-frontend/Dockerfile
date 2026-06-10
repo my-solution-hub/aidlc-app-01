@@ -19,7 +19,6 @@ RUN npm run build
 
 # ---- Runtime stage ----
 FROM nginx:1.27-alpine
-# default.conf is supplied at runtime via a bind mount in docker-compose,
-# but copy it in as well so the image is self-contained.
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /app/dist /usr/share/nginx/html
 EXPOSE 80

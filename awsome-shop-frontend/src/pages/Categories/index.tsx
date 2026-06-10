@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import ButtonBase from "@mui/material/ButtonBase";
+import Button from "@mui/material/Button";
 import InputBase from "@mui/material/InputBase";
 import Select from "@mui/material/Select";
 import MenuItem from "@mui/material/MenuItem";
@@ -27,6 +28,8 @@ import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
 import DialogActions from "@mui/material/DialogActions";
 import TextField from "@mui/material/TextField";
+import Switch from "@mui/material/Switch";
+import FormControlLabel from "@mui/material/FormControlLabel";
 import {
   listCategories,
   createCategory,
@@ -40,7 +43,6 @@ import type {
   UpdateCategoryRequest,
 } from "../../types/api";
 import AdminPageHeader from "../../components/AdminPageHeader";
-import ConfirmDialog from "../../components/ConfirmDialog";
 import { AppSnackbar, useSnackbar } from "../../components/AppSnackbar";
 import { BusinessError } from "../../services/request";
 
@@ -491,17 +493,15 @@ export default function CategoryList() {
         />
       )}
 
-      {/* Delete confirm */}
-      <ConfirmDialog
-        open={!!deleteTarget}
-        title={t("admin.categories.deleteConfirmTitle")}
-        message={t("admin.categories.deleteConfirmMessage", {
-          name: deleteTarget?.name ?? "",
-        })}
-        loading={actionLoading}
-        onConfirm={handleDelete}
-        onCancel={() => setDeleteTarget(null)}
-      />
+      {/* Delete confirm (strong: type-to-confirm) */}
+      {deleteTarget && (
+        <DeleteCategoryDialog
+          node={deleteTarget}
+          loading={actionLoading}
+          onConfirm={handleDelete}
+          onCancel={() => setDeleteTarget(null)}
+        />
+      )}
 
       <AppSnackbar state={snackbar.state} onClose={snackbar.close} />
     </Box>
@@ -528,6 +528,7 @@ function CategoryDialog({
   const [name, setName] = useState(node?.name ?? "");
   const [icon, setIcon] = useState(node?.icon ?? "");
   const [sortOrder, setSortOrder] = useState(String(node?.sortOrder ?? 0));
+  const [enabled, setEnabled] = useState((node?.status ?? 1) === 1);
   const [description, setDescription] = useState(node?.description ?? "");
 
   const title = editing
@@ -542,7 +543,7 @@ function CategoryDialog({
       parentId: editing ? (node?.parentId ?? null) : mode.parentId,
       icon: icon.trim() || undefined,
       sortOrder: Number(sortOrder) || 0,
-      status: node?.status ?? 1,
+      status: enabled ? 1 : 0,
       description: description.trim() || undefined,
     });
   };
@@ -642,6 +643,14 @@ function CategoryDialog({
             />
           </Box>
         </Box>
+        <FormControlLabel
+          control={<Switch checked={enabled} onChange={(e) => setEnabled(e.target.checked)} />}
+          label={
+            <Typography sx={{ fontSize: 13, color: "#1E293B" }}>
+              {enabled ? t("admin.categories.statusEnabled") : t("admin.categories.statusDisabled")}
+            </Typography>
+          }
+        />
         <Box sx={{ display: "flex", flexDirection: "column", gap: "6px" }}>
           <Typography sx={{ fontSize: 13, fontWeight: 500, color: "#1E293B" }}>
             {t("admin.categories.fieldDescription")}
@@ -1025,5 +1034,67 @@ function StatusChip({ enabled }: { enabled: boolean }) {
           : t("admin.categories.statusDisabled")}
       </Typography>
     </Box>
+  );
+}
+
+
+// ---- dlg-06 强确认删除类目 ----
+function DeleteCategoryDialog({
+  node,
+  loading,
+  onConfirm,
+  onCancel,
+}: {
+  node: CategoryDTO;
+  loading?: boolean;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  const { t } = useTranslation();
+  const [input, setInput] = useState("");
+  const matched = input.trim() === node.name;
+
+  return (
+    <Dialog open onClose={onCancel} slotProps={{ paper: { sx: { borderRadius: "12px", width: 440 } } }}>
+      <DialogTitle sx={{ fontSize: 18, fontWeight: 700, color: "#DC2626" }}>
+        {t("admin.categories.deleteConfirmTitle")}
+      </DialogTitle>
+      <DialogContent sx={{ display: "flex", flexDirection: "column", gap: "16px", pt: "8px !important" }}>
+        <Box sx={{ bgcolor: "#FEF2F2", borderRadius: "8px", p: "12px 16px" }}>
+          <Typography sx={{ fontSize: 13, fontWeight: 600, color: "#991B1B" }}>
+            {t("admin.categories.deleteImpactTitle")}
+          </Typography>
+          <Typography sx={{ fontSize: 12, color: "#B91C1C", mt: "4px", lineHeight: 1.6 }}>
+            {t("admin.categories.deleteImpactBody")}
+          </Typography>
+        </Box>
+        <Typography sx={{ fontSize: 13, color: "#1E293B" }}>
+          {t("admin.categories.deleteTypeHint")}
+          <Box component="span" sx={{ fontWeight: 700, color: "#DC2626", mx: "4px" }}>{node.name}</Box>
+        </Typography>
+        <TextField
+          fullWidth
+          size="small"
+          placeholder={node.name}
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          sx={{ "& .MuiOutlinedInput-root": { borderRadius: "8px", fontSize: 14, "& fieldset": { borderColor: "#E2E8F0" } } }}
+        />
+      </DialogContent>
+      <DialogActions sx={{ p: "16px 24px" }}>
+        <Button onClick={onCancel} disabled={loading} sx={{ textTransform: "none", color: "#64748B", border: "1px solid #E2E8F0", borderRadius: "8px", px: "20px" }}>
+          {t("common.cancel")}
+        </Button>
+        <Button
+          variant="contained"
+          color="error"
+          disabled={loading || !matched}
+          onClick={onConfirm}
+          sx={{ textTransform: "none", borderRadius: "8px", px: "20px" }}
+        >
+          {t("admin.categories.confirmDelete")}
+        </Button>
+      </DialogActions>
+    </Dialog>
   );
 }

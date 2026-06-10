@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { useNavigate } from "react-router";
 import { useTranslation } from "react-i18next";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
@@ -20,17 +21,10 @@ import RedeemIcon from "@mui/icons-material/Redeem";
 import ShoppingBagIcon from "@mui/icons-material/ShoppingBag";
 import DevicesIcon from "@mui/icons-material/Devices";
 import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
-import Dialog from "@mui/material/Dialog";
-import DialogTitle from "@mui/material/DialogTitle";
-import DialogContent from "@mui/material/DialogContent";
-import DialogActions from "@mui/material/DialogActions";
-import TextField from "@mui/material/TextField";
 import AdminPageHeader from "../../components/AdminPageHeader";
 import {
   listExchangeRecords,
   getExchangeRecordStats,
-  getExchangeRecord,
-  updateExchangeRecordStatus,
 } from "../../services/api/exchangeRecord";
 import type {
   ExchangeRecordDTO,
@@ -38,7 +32,6 @@ import type {
   PageResult,
 } from "../../types/api";
 import { AppSnackbar, useSnackbar } from "../../components/AppSnackbar";
-import { BusinessError } from "../../services/request";
 
 // ---- Status chip styling ----
 
@@ -51,7 +44,6 @@ const STATUS_STYLES: Record<string, StatusStyle> = {
   PENDING_DELIVERY: { textColor: "#D97706", bgColor: "#FFF7ED" },
   DELIVERING: { textColor: "#2563EB", bgColor: "#EFF6FF" },
   COMPLETED: { textColor: "#166534", bgColor: "#DCFCE7" },
-  PROCESSING: { textColor: "#2563EB", bgColor: "#EFF6FF" },
   CANCELLED: { textColor: "#991B1B", bgColor: "#FEE2E2" },
 };
 
@@ -59,7 +51,6 @@ const STATUS_I18N: Record<string, string> = {
   PENDING_DELIVERY: "admin.exchangeRecords.statusPending",
   DELIVERING: "admin.exchangeRecords.statusDelivering",
   COMPLETED: "admin.exchangeRecords.statusCompleted",
-  PROCESSING: "admin.exchangeRecords.statusProcessing",
   CANCELLED: "admin.exchangeRecords.statusCancelled",
 };
 
@@ -95,6 +86,7 @@ function getDateRange(range: string): { startTime?: string; endTime?: string } {
 
 export default function ExchangeRecordList() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const snackbar = useSnackbar();
 
   const [data, setData] = useState<PageResult<ExchangeRecordDTO> | null>(null);
@@ -105,9 +97,6 @@ export default function ExchangeRecordList() {
   const [statusFilter, setStatusFilter] = useState("");
   const [dateRange, setDateRange] = useState("30");
   const pageSize = 5;
-
-  const [detail, setDetail] = useState<ExchangeRecordDTO | null>(null);
-  const [detailLoading, setDetailLoading] = useState(false);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -146,49 +135,6 @@ export default function ExchangeRecordList() {
   const end = start + records.length - 1;
 
   // Open detail dialog by fetching the full record
-  const handleOpenDetail = async (id: number) => {
-    setDetailLoading(true);
-    try {
-      const record = await getExchangeRecord(id);
-      setDetail(record);
-    } catch (err) {
-      snackbar.showError(
-        err instanceof BusinessError
-          ? err.message
-          : t("common.operationFailed"),
-      );
-    } finally {
-      setDetailLoading(false);
-    }
-  };
-
-  // Update status (and optional tracking number) from the detail dialog
-  const handleUpdateStatus = async (
-    id: number,
-    status: string,
-    trackingNumber?: string,
-  ) => {
-    try {
-      const updated = await updateExchangeRecordStatus({
-        id,
-        status,
-        trackingNumber,
-      });
-      snackbar.showSuccess(t("admin.exchangeRecords.statusUpdateSuccess"));
-      setDetail(updated);
-      fetchData();
-      getExchangeRecordStats()
-        .then(setStats)
-        .catch(() => {});
-    } catch (err) {
-      snackbar.showError(
-        err instanceof BusinessError
-          ? err.message
-          : t("admin.exchangeRecords.statusUpdateFailed"),
-      );
-    }
-  };
-
   // Client-side CSV export of the current page's records
   const handleExport = () => {
     if (records.length === 0) {
@@ -362,9 +308,6 @@ export default function ExchangeRecordList() {
           </MenuItem>
           <MenuItem value="DELIVERING">
             {t("admin.exchangeRecords.statusDelivering")}
-          </MenuItem>
-          <MenuItem value="PROCESSING">
-            {t("admin.exchangeRecords.statusProcessing")}
           </MenuItem>
           <MenuItem value="COMPLETED">
             {t("admin.exchangeRecords.statusCompleted")}
@@ -546,7 +489,7 @@ export default function ExchangeRecordList() {
                 key={record.id}
                 record={record}
                 rowIndex={idx}
-                onDetail={() => handleOpenDetail(record.id)}
+                onDetail={() => navigate(`/admin/orders/${record.id}`)}
               />
             ))}
           </Box>
@@ -605,211 +548,8 @@ export default function ExchangeRecordList() {
       )}
 
       {/* Detail dialog */}
-      {detail && (
-        <DetailDialog
-          record={detail}
-          loading={detailLoading}
-          onUpdateStatus={handleUpdateStatus}
-          onClose={() => setDetail(null)}
-        />
-      )}
-
       <AppSnackbar state={snackbar.state} onClose={snackbar.close} />
     </Box>
-  );
-}
-
-// ---- Detail dialog ----
-
-const DETAIL_STATUS_OPTIONS = [
-  "PENDING_DELIVERY",
-  "DELIVERING",
-  "PROCESSING",
-  "COMPLETED",
-  "CANCELLED",
-];
-
-function DetailDialog({
-  record,
-  loading,
-  onUpdateStatus,
-  onClose,
-}: {
-  record: ExchangeRecordDTO;
-  loading?: boolean;
-  onUpdateStatus: (id: number, status: string, trackingNumber?: string) => void;
-  onClose: () => void;
-}) {
-  const { t } = useTranslation();
-  const [status, setStatus] = useState(record.status);
-  const [tracking, setTracking] = useState(record.trackingNumber ?? "");
-
-  const statusLabel = (s: string) => (STATUS_I18N[s] ? t(STATUS_I18N[s]) : s);
-
-  const fieldSx = {
-    "& .MuiOutlinedInput-root": {
-      borderRadius: "8px",
-      fontFamily: "Inter, sans-serif",
-      fontSize: 14,
-      "& fieldset": { borderColor: "#E2E8F0" },
-    },
-  };
-
-  const row = (label: string, value: React.ReactNode) => (
-    <Box sx={{ display: "flex", justifyContent: "space-between", gap: "16px" }}>
-      <Typography
-        sx={{ fontSize: 13, color: "#64748B", fontFamily: "Inter, sans-serif" }}
-      >
-        {label}
-      </Typography>
-      <Typography
-        sx={{
-          fontSize: 13,
-          fontWeight: 500,
-          color: "#1E293B",
-          fontFamily: "Inter, sans-serif",
-          textAlign: "right",
-        }}
-      >
-        {value}
-      </Typography>
-    </Box>
-  );
-
-  return (
-    <Dialog
-      open
-      onClose={onClose}
-      slotProps={{ paper: { sx: { borderRadius: "12px", width: 460 } } }}
-    >
-      <DialogTitle
-        sx={{
-          fontSize: 18,
-          fontWeight: 700,
-          color: "#1E293B",
-          fontFamily: "Inter, sans-serif",
-        }}
-      >
-        {t("admin.exchangeRecords.detailTitle")}
-      </DialogTitle>
-      <DialogContent
-        sx={{
-          display: "flex",
-          flexDirection: "column",
-          gap: "12px",
-          pt: "8px !important",
-        }}
-      >
-        {row(t("admin.exchangeRecords.fieldOrderNo"), record.orderNo)}
-        {row(t("admin.exchangeRecords.fieldProduct"), record.productName)}
-        {row(t("admin.exchangeRecords.fieldEmployee"), record.employeeName)}
-        {row(
-          t("admin.exchangeRecords.fieldPoints"),
-          record.pointsCost?.toLocaleString() ?? "—",
-        )}
-        {row(
-          t("admin.exchangeRecords.fieldTime"),
-          (record.exchangeTime ?? "").slice(0, 19).replace("T", " "),
-        )}
-        {row(
-          t("admin.exchangeRecords.fieldStatus"),
-          statusLabel(record.status),
-        )}
-
-        <Box sx={{ height: "1px", bgcolor: "#F1F5F9", my: "4px" }} />
-
-        <Box sx={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-          <Typography sx={{ fontSize: 13, fontWeight: 500, color: "#1E293B" }}>
-            {t("admin.exchangeRecords.fieldStatus")}
-          </Typography>
-          <Select
-            value={status}
-            onChange={(e) => setStatus(e.target.value)}
-            size="small"
-            sx={{
-              height: 40,
-              borderRadius: "8px",
-              fontSize: 14,
-              "& .MuiOutlinedInput-notchedOutline": { borderColor: "#E2E8F0" },
-            }}
-          >
-            {DETAIL_STATUS_OPTIONS.map((s) => (
-              <MenuItem key={s} value={s}>
-                {statusLabel(s)}
-              </MenuItem>
-            ))}
-          </Select>
-        </Box>
-        <Box sx={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-          <Typography sx={{ fontSize: 13, fontWeight: 500, color: "#1E293B" }}>
-            {t("admin.exchangeRecords.fieldTracking")}
-          </Typography>
-          <TextField
-            fullWidth
-            size="small"
-            placeholder={t("admin.exchangeRecords.trackingPlaceholder")}
-            value={tracking}
-            onChange={(e) => setTracking(e.target.value)}
-            sx={fieldSx}
-          />
-        </Box>
-      </DialogContent>
-      <DialogActions sx={{ p: "16px 24px", gap: "8px" }}>
-        <ButtonBase
-          onClick={onClose}
-          disabled={loading}
-          sx={{
-            borderRadius: "8px",
-            border: "1px solid #E2E8F0",
-            px: "20px",
-            py: "8px",
-            "&:hover": { bgcolor: "#F8FAFC" },
-          }}
-        >
-          <Typography sx={{ fontSize: 13, fontWeight: 500, color: "#1E293B" }}>
-            {t("admin.exchangeRecords.close")}
-          </Typography>
-        </ButtonBase>
-        <ButtonBase
-          onClick={() =>
-            onUpdateStatus(
-              record.id,
-              "DELIVERING",
-              tracking.trim() || undefined,
-            )
-          }
-          disabled={loading}
-          sx={{
-            borderRadius: "8px",
-            border: "1px solid #2563EB",
-            px: "20px",
-            py: "8px",
-            "&:hover": { bgcolor: "#EFF6FF" },
-          }}
-        >
-          <Typography sx={{ fontSize: 13, fontWeight: 600, color: "#2563EB" }}>
-            {t("admin.exchangeRecords.ship")}
-          </Typography>
-        </ButtonBase>
-        <ButtonBase
-          onClick={() =>
-            onUpdateStatus(record.id, status, tracking.trim() || undefined)
-          }
-          disabled={loading}
-          sx={{
-            borderRadius: "8px",
-            bgcolor: "#2563EB",
-            px: "20px",
-            py: "8px",
-            "&:hover": { bgcolor: "#1D4ED8" },
-          }}
-        >
-          <Typography sx={{ fontSize: 13, fontWeight: 600, color: "#fff" }}>
-            {t("admin.exchangeRecords.updateStatus")}
-          </Typography>
-        </ButtonBase>
-      </DialogActions>
-    </Dialog>
   );
 }
 

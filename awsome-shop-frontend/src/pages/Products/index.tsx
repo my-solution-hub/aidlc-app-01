@@ -268,13 +268,14 @@ export default function ProductList() {
                 <Box key={rowIdx} sx={{ display: "flex", gap: "20px" }}>
                   {products.slice(rowIdx * 4, rowIdx * 4 + 4).map((product) => (
                     <ProductCard
-                      key={product.id}
-                      product={product}
-                      onEdit={() =>
-                        navigate(`/admin/products/${product.id}/edit`)
-                      }
-                      onDelete={() => setDeleteTarget(product)}
-                    />
+                                          key={product.id}
+                                          product={product}
+                                          onView={() => navigate(`/admin/products/${product.id}`)}
+                                          onEdit={() =>
+                                            navigate(`/admin/products/${product.id}/edit`)
+                                          }
+                                          onDelete={() => setDeleteTarget(product)}
+                                        />
                   ))}
                   {/* Fill remaining space if less than 4 cards in a row */}
                   {rowIdx * 4 + 4 > products.length &&
@@ -405,10 +406,12 @@ export default function ProductList() {
 /** Product card component matching Pencil design exactly */
 function ProductCard({
   product,
+  onView,
   onEdit,
   onDelete,
 }: {
   product: ProductDTO;
+  onView: () => void;
   onEdit: () => void;
   onDelete: () => void;
 }) {
@@ -420,6 +423,7 @@ function ProductCard({
 
   return (
     <Box
+      onClick={onView}
       sx={{
         flex: 1,
         display: "flex",
@@ -428,6 +432,8 @@ function ProductCard({
         border: "1px solid #F1F5F9",
         bgcolor: "#fff",
         overflow: "hidden",
+        cursor: "pointer",
+        "&:hover": { boxShadow: 2 },
       }}
     >
       {/* Image area */}
@@ -567,7 +573,10 @@ function ProductCard({
         }}
       >
         <ButtonBase
-          onClick={onEdit}
+          onClick={(e) => {
+            e.stopPropagation();
+            onEdit();
+          }}
           sx={{
             display: "flex",
             alignItems: "center",
@@ -591,7 +600,10 @@ function ProductCard({
           </Typography>
         </ButtonBase>
         <ButtonBase
-          onClick={onDelete}
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete();
+          }}
           sx={{
             display: "flex",
             alignItems: "center",

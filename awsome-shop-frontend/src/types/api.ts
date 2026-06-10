@@ -38,6 +38,7 @@ export interface RegisterRequest {
   username: string;
   password: string;
   nickname?: string;
+  employeeId?: string;
   role?: string;
 }
 
@@ -50,6 +51,7 @@ export interface UserDTO {
   employeeId?: string;
   lastLoginAt: string;
   createdAt: string;
+  updatedAt?: string;
 }
 
 export interface ListUserRequest {

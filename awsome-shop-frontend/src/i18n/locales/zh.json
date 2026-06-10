@@ -50,11 +50,15 @@
     "passwordPlaceholder": "请输入密码",
     "nicknameLabel": "昵称",
     "nicknamePlaceholder": "请输入昵称",
+    "employeeIdLabel": "工号",
+    "employeeIdPlaceholder": "请输入工号（选填）",
     "registerBtn": "注 册",
     "registerSuccess": "注册成功，请登录",
     "registerFailed": "注册失败",
     "hasAccount": "已有账户？",
-    "login": "立即登录"
+    "login": "立即登录",
+    "usernameInvalid": "用户名长度需为 3-20 个字符",
+    "passwordInvalid": "密码长度至少 6 个字符"
   },
   "employee": {
     "nav": {

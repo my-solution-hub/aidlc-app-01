@@ -50,11 +50,15 @@
     "passwordPlaceholder": "Enter your password",
     "nicknameLabel": "Nickname",
     "nicknamePlaceholder": "Enter your nickname",
+    "employeeIdLabel": "Employee ID",
+    "employeeIdPlaceholder": "Enter employee ID (optional)",
     "registerBtn": "Register",
     "registerSuccess": "Registered successfully, please sign in",
     "registerFailed": "Registration failed",
     "hasAccount": "Already have an account?",
-    "login": "Sign In"
+    "login": "Sign In",
+    "usernameInvalid": "Username must be 3-20 characters",
+    "passwordInvalid": "Password must be at least 6 characters"
   },
   "employee": {
     "nav": {

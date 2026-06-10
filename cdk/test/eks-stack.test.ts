@@ -70,25 +70,33 @@ describe('EksStack', () => {
     });
   });
 
-  // ALB Security Group
-  test('ALB security group allows HTTP and HTTPS', () => {
-    template.hasResourceProperties('AWS::EC2::SecurityGroup', {
-      GroupDescription: 'Security group for ALB',
-      SecurityGroupIngress: Match.arrayWith([
-        Match.objectLike({
-          IpProtocol: 'tcp',
-          FromPort: 80,
-          ToPort: 80,
-          CidrIp: '0.0.0.0/0',
-        }),
-        Match.objectLike({
-          IpProtocol: 'tcp',
-          FromPort: 443,
-          ToPort: 443,
-          CidrIp: '0.0.0.0/0',
-        }),
-      ]),
+  // ALB Security Group - restricted to CloudFront only
+  test('ALB security group restricts access to CloudFront prefix list only', () => {
+    // Ingress rules are created as separate resources when using prefix lists
+    template.hasResourceProperties('AWS::EC2::SecurityGroupIngress', {
+      IpProtocol: 'tcp',
+      FromPort: 80,
+      ToPort: 80,
+      SourcePrefixListId: Match.anyValue(),
+      Description: 'Allow HTTP from CloudFront only',
     });
+
+    template.hasResourceProperties('AWS::EC2::SecurityGroupIngress', {
+      IpProtocol: 'tcp',
+      FromPort: 443,
+      ToPort: 443,
+      SourcePrefixListId: Match.anyValue(),
+      Description: 'Allow HTTPS from CloudFront only',
+    });
+  });
+
+  test('ALB security group does NOT allow 0.0.0.0/0', () => {
+    const ingressRules = template.findResources('AWS::EC2::SecurityGroupIngress');
+    for (const [, rule] of Object.entries(ingressRules)) {
+      const props = (rule as any).Properties;
+      expect(props.CidrIp).toBeUndefined();
+      expect(props.CidrIpv6).toBeUndefined();
+    }
   });
 
   // IAM - Pod Role

@@ -41,7 +41,7 @@ public class ProductBatchController {
             return Result.success(Map.of("successCount", 0, "failCount", 0, "failures", List.of()));
         }
         if (requests.size() > MAX_BATCH_SIZE) {
-            return Result.fail("PARAM_002", "批量导入最多支持 " + MAX_BATCH_SIZE + " 条记录");
+            return Result.failure("PARAM_002", "批量导入最多支持 " + MAX_BATCH_SIZE + " 条记录");
         }
 
         int successCount = 0;

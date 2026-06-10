@@ -42,6 +42,12 @@
             <artifactId>spring-cloud-starter-gateway-server-webflux</artifactId>
         </dependency>
 
+        <!-- Circuit Breaker + Rate Limiting (GW-1) -->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-circuitbreaker-reactor-resilience4j</artifactId>
+        </dependency>
+
         <!-- Spring Boot WebFlux (transitive via gateway, but explicit for clarity) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

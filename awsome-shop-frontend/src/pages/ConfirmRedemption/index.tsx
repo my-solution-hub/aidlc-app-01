@@ -108,14 +108,16 @@ export default function ConfirmRedemption() {
     if (!product || !user || insufficient) return;
     setRedeeming(true);
     try {
-      await redeemProduct({
+      const record = await redeemProduct({
         productId: product.id,
         quantity: 1,
         userId: user.userId,
         employeeName: user.displayName,
       });
-      snackbar.showSuccess(t("employee.redeemSuccess"));
-      navigate("/orders");
+      navigate("/orders/success", {
+        replace: true,
+        state: { record, remaining },
+      });
     } catch (err) {
       snackbar.showError(
         err instanceof BusinessError

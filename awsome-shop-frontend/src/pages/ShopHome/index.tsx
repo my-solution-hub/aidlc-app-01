@@ -13,19 +13,11 @@ import ShoppingBagIcon from "@mui/icons-material/ShoppingBag";
 import Inventory2Icon from "@mui/icons-material/Inventory2";
 import TollIcon from "@mui/icons-material/Toll";
 import { listProducts } from "../../services/api/product";
+import { listCategories } from "../../services/api/category";
 import { getBalance } from "../../services/api/point";
 import type { ProductDTO } from "../../types/api";
 import { useAuthStore } from "../../store/useAuthStore";
 import { AppSnackbar, useSnackbar } from "../../components/AppSnackbar";
-
-const CATEGORIES = [
-  { key: "", label: "全部" },
-  { key: "数码电子", label: "数码电子" },
-  { key: "智能穿戴", label: "智能穿戴" },
-  { key: "礼品卡", label: "礼品卡" },
-  { key: "生活百货", label: "生活百货" },
-  { key: "办公用品", label: "办公用品" },
-];
 
 const CATEGORY_STYLES: Record<string, { bg: string; color: string }> = {
   数码电子: { bg: "#DBEAFE", color: "#2563EB" },
@@ -49,10 +41,25 @@ export default function ShopHome() {
 
   const [activeCategory, setActiveCategory] = useState("");
   const [products, setProducts] = useState<ProductDTO[]>([]);
+  const [categories, setCategories] = useState<{ key: string; label: string }[]>([]);
   const [loading, setLoading] = useState(false);
   const [balance, setBalance] = useState<number | null>(null);
 
   const gridRef = useRef<HTMLDivElement>(null);
+
+  // Load category list (top-level) to drive the filter chips dynamically.
+  useEffect(() => {
+    listCategories()
+      .then((tree) => {
+        const tops = (tree ?? [])
+          .filter((c) => c.status !== 0)
+          .map((c) => ({ key: c.name, label: c.name }));
+        setCategories([{ key: "", label: t("employee.categoryAll") }, ...tops]);
+      })
+      .catch(() => {
+        setCategories([{ key: "", label: t("employee.categoryAll") }]);
+      });
+  }, [t]);
 
   const fetchProducts = useCallback(async () => {
     setLoading(true);
@@ -158,8 +165,8 @@ export default function ShopHome() {
       </Box>
 
       {/* Category Filter */}
-      <Box sx={{ display: "flex", gap: "8px" }}>
-        {CATEGORIES.map((cat) => (
+      <Box sx={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+        {categories.map((cat) => (
           <Chip
             key={cat.key || "all"}
             label={cat.label}

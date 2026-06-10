@@ -20,6 +20,7 @@ import {
   getProduct,
   updateProduct,
 } from "../../services/api/product";
+import { listCategories } from "../../services/api/category";
 import { BusinessError } from "../../services/request";
 
 // Shared input style matching Pencil design
@@ -34,13 +35,12 @@ const inputSx = {
   },
 };
 
-const CATEGORIES = ["数码电子", "智能穿戴", "礼品卡", "生活百货", "办公用品"];
+const FALLBACK_CATEGORIES = ["数码电子", "生活家居", "美食餐饮", "礼品卡券", "办公用品"];
 
 interface SpecRow {
   key: string;
   value: string;
 }
-
 export default function CreateProduct() {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -55,9 +55,22 @@ export default function CreateProduct() {
   const [brand, setBrand] = useState("");
   const [pointsPrice, setPointsPrice] = useState("");
   const [marketPrice, setMarketPrice] = useState("");
+  const [stock, setStock] = useState("");
+  const [status, setStatus] = useState(1);
   const [description, setDescription] = useState("");
   const [specs, setSpecs] = useState<SpecRow[]>([]);
+  const [categories, setCategories] = useState<string[]>(FALLBACK_CATEGORIES);
   const [loading, setLoading] = useState(false);
+
+  // Load category options dynamically (fall back to defaults on failure).
+  useEffect(() => {
+    listCategories()
+      .then((tree) => {
+        const names = (tree ?? []).map((c) => c.name).filter(Boolean);
+        if (names.length) setCategories(names);
+      })
+      .catch(() => {});
+  }, []);
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
     message: string;
@@ -79,6 +92,8 @@ export default function CreateProduct() {
         setBrand(p.brand ?? "");
         setPointsPrice(p.pointsPrice != null ? String(p.pointsPrice) : "");
         setMarketPrice(p.marketPrice != null ? String(p.marketPrice) : "");
+        setStock(p.stock != null ? String(p.stock) : "");
+        setStatus(p.status ?? 1);
         setDescription(p.description ?? "");
         setSpecs(
           (p.specs ?? []).flatMap((row) =>
@@ -126,9 +141,10 @@ export default function CreateProduct() {
         brand: brand || undefined,
         pointsPrice: Number(pointsPrice),
         marketPrice: marketPrice ? Number(marketPrice) : undefined,
+        stock: stock !== "" ? Number(stock) : undefined,
         description: description || undefined,
         specs: specData.length > 0 ? specData : undefined,
-        status: 1,
+        status: isEdit ? status : 1,
       };
 
       if (isEdit && productId) {
@@ -410,7 +426,7 @@ export default function CreateProduct() {
                   {t("admin.products.categoryPlaceholder")}
                 </Typography>
               </MenuItem>
-              {CATEGORIES.map((cat) => (
+              {categories.map((cat) => (
                 <MenuItem key={cat} value={cat}>
                   {cat}
                 </MenuItem>
@@ -529,6 +545,25 @@ export default function CreateProduct() {
               sx={inputSx}
             />
           </Box>
+        </Box>
+
+        {/* Row 4: Stock */}
+        <Box sx={{ display: "flex", gap: "20px" }}>
+          <Box sx={{ flex: 1, display: "flex", flexDirection: "column", gap: "6px" }}>
+            <Typography sx={{ fontSize: 13, fontWeight: 500, color: "#1E293B", fontFamily: "Inter, sans-serif" }}>
+              {t("admin.products.stock")}
+            </Typography>
+            <TextField
+              fullWidth
+              size="small"
+              type="number"
+              placeholder={t("admin.products.stockPlaceholder")}
+              value={stock}
+              onChange={(e) => setStock(e.target.value)}
+              sx={inputSx}
+            />
+          </Box>
+          <Box sx={{ flex: 1 }} />
         </Box>
       </Box>
 

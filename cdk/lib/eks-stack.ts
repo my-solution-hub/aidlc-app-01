@@ -174,6 +174,28 @@ export class EksStack extends cdk.Stack {
     });
 
     // ─────────────────────────────────────────────
+    // Amazon CloudWatch Observability Addon (Application Signals)
+    // ─────────────────────────────────────────────
+
+    const cwObservabilitySa = this.cluster.addServiceAccount('CwObservability', {
+      name: 'amazon-cloudwatch-observability',
+      namespace: 'amazon-cloudwatch',
+    });
+
+    cwObservabilitySa.role.addManagedPolicy(
+      iam.ManagedPolicy.fromAwsManagedPolicyName('CloudWatchAgentServerPolicy'),
+    );
+    cwObservabilitySa.role.addManagedPolicy(
+      iam.ManagedPolicy.fromAwsManagedPolicyName('AWSXrayWriteOnlyAccess'),
+    );
+
+    new eks.CfnAddon(this, 'CloudWatchObservabilityAddon', {
+      addonName: 'amazon-cloudwatch-observability',
+      clusterName: this.cluster.clusterName,
+      serviceAccountRoleArn: cwObservabilitySa.role.roleArn,
+    });
+
+    // ─────────────────────────────────────────────
     // ALB reference (created by Ingress controller)
     // We create a placeholder ALB for CloudFront to reference
     // ─────────────────────────────────────────────

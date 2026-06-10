@@ -73,21 +73,13 @@ describe('EksStack', () => {
 
   // ALB Security Group - restricted to CloudFront only
   test('ALB security group restricts access to CloudFront prefix list only', () => {
-    // Ingress rules are created as separate resources when using prefix lists
+    // Single rule with port range 80-443 to stay within SG rule quota
     template.hasResourceProperties('AWS::EC2::SecurityGroupIngress', {
       IpProtocol: 'tcp',
       FromPort: 80,
-      ToPort: 80,
-      SourcePrefixListId: Match.anyValue(),
-      Description: 'Allow HTTP from CloudFront only',
-    });
-
-    template.hasResourceProperties('AWS::EC2::SecurityGroupIngress', {
-      IpProtocol: 'tcp',
-      FromPort: 443,
       ToPort: 443,
       SourcePrefixListId: Match.anyValue(),
-      Description: 'Allow HTTPS from CloudFront only',
+      Description: 'Allow HTTP/HTTPS from CloudFront only',
     });
   });
 

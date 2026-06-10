@@ -1,0 +1,23 @@
+# Terraform runtime files
+.terraform/
+.terraform.lock.hcl
+
+# State files (local state for this bootstrap project)
+*.tfstate
+*.tfstate.backup
+
+# Actual tfvars (may contain sensitive info)
+terraform.tfvars
+
+# Plan files
+*.tfplan
+
+# Crash logs
+crash.log
+crash.*.log
+
+# Override files
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json

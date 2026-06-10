@@ -1,0 +1,140 @@
+name: Deploy on Release
+
+on:
+  push:
+    branches:
+      - release
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: us-east-1
+
+jobs:
+  # ============================================================
+  # Detect which folders changed
+  # ============================================================
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      cdk: ${{ steps.changes.outputs.cdk }}
+      auth-service: ${{ steps.changes.outputs.auth-service }}
+      gateway-service: ${{ steps.changes.outputs.gateway-service }}
+      order-service: ${{ steps.changes.outputs.order-service }}
+      points-service: ${{ steps.changes.outputs.points-service }}
+      product-service: ${{ steps.changes.outputs.product-service }}
+      frontend: ${{ steps.changes.outputs.frontend }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: changes
+        with:
+          filters: |
+            cdk:
+              - 'cdk/**'
+            auth-service:
+              - 'awsome-shop-auth-service/**'
+            gateway-service:
+              - 'awsome-shop-gateway-service/**'
+            order-service:
+              - 'awsome-shop-order-service/**'
+            points-service:
+              - 'awsome-shop-points-service/**'
+            product-service:
+              - 'awsome-shop-product-service/**'
+            frontend:
+              - 'awsome-shop-frontend/**'
+
+  # ============================================================
+  # CDK Deploy (infrastructure changes)
+  # ============================================================
+  deploy-cdk:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.cdk == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: cdk/package-lock.json
+
+      - name: Install CDK dependencies
+        working-directory: cdk
+        run: npm ci
+
+      - name: CDK Diff
+        working-directory: cdk
+        run: npx cdk diff
+
+      - name: CDK Deploy
+        working-directory: cdk
+        run: npx cdk deploy --all --require-approval never
+
+  # ============================================================
+  # Service Build & Deploy (ECR + deploy manifest)
+  # ============================================================
+  deploy-auth-service:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.auth-service == 'true'
+    uses: ./.github/workflows/deploy-service.yml
+    with:
+      service-name: awsome-shop-auth-service
+      service-path: awsome-shop-auth-service
+    secrets: inherit
+
+  deploy-gateway-service:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.gateway-service == 'true'
+    uses: ./.github/workflows/deploy-service.yml
+    with:
+      service-name: awsome-shop-gateway-service
+      service-path: awsome-shop-gateway-service
+    secrets: inherit
+
+  deploy-order-service:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.order-service == 'true'
+    uses: ./.github/workflows/deploy-service.yml
+    with:
+      service-name: awsome-shop-order-service
+      service-path: awsome-shop-order-service
+    secrets: inherit
+
+  deploy-points-service:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.points-service == 'true'
+    uses: ./.github/workflows/deploy-service.yml
+    with:
+      service-name: awsome-shop-points-service
+      service-path: awsome-shop-points-service
+    secrets: inherit
+
+  deploy-product-service:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.product-service == 'true'
+    uses: ./.github/workflows/deploy-service.yml
+    with:
+      service-name: awsome-shop-product-service
+      service-path: awsome-shop-product-service
+    secrets: inherit
+
+  deploy-frontend:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.frontend == 'true'
+    uses: ./.github/workflows/deploy-service.yml
+    with:
+      service-name: awsome-shop-frontend
+      service-path: awsome-shop-frontend
+    secrets: inherit

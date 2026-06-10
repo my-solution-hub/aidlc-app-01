@@ -1,0 +1,74 @@
+name: Deploy Service (reusable)
+
+on:
+  workflow_call:
+    inputs:
+      service-name:
+        required: true
+        type: string
+        description: "Name of the service (used as ECR repo name)"
+      service-path:
+        required: true
+        type: string
+        description: "Path to the service directory"
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: us-east-1
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Create ECR repository if not exists
+        run: |
+          aws ecr describe-repositories --repository-names ${{ inputs.service-name }} 2>/dev/null || \
+          aws ecr create-repository \
+            --repository-name ${{ inputs.service-name }} \
+            --image-scanning-configuration scanOnPush=true \
+            --encryption-configuration encryptionType=AES256
+
+      - name: Build and push Docker image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        working-directory: ${{ inputs.service-path }}
+        run: |
+          docker build -t $ECR_REGISTRY/${{ inputs.service-name }}:$IMAGE_TAG .
+          docker build -t $ECR_REGISTRY/${{ inputs.service-name }}:latest .
+          docker push $ECR_REGISTRY/${{ inputs.service-name }}:$IMAGE_TAG
+          docker push $ECR_REGISTRY/${{ inputs.service-name }}:latest
+
+      - name: Deploy via kubectl (apply manifests)
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          # Update EKS kubeconfig
+          aws eks update-kubeconfig --name ${{ secrets.EKS_CLUSTER_NAME }} --region ${{ env.AWS_REGION }}
+
+          # Apply Kubernetes manifests if they exist
+          if [ -d "${{ inputs.service-path }}/k8s" ]; then
+            # Replace image tag placeholder in manifests
+            sed -i "s|IMAGE_PLACEHOLDER|$ECR_REGISTRY/${{ inputs.service-name }}:$IMAGE_TAG|g" \
+              ${{ inputs.service-path }}/k8s/*.yaml
+            kubectl apply -f ${{ inputs.service-path }}/k8s/
+          else
+            echo "No k8s/ directory found in ${{ inputs.service-path }}, skipping kubectl apply"
+            echo "Image pushed: $ECR_REGISTRY/${{ inputs.service-name }}:$IMAGE_TAG"
+          fi

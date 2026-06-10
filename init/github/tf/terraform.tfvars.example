@@ -1,0 +1,21 @@
+# terraform.tfvars.example — Copy to terraform.tfvars and fill in your values
+
+project_name = "awsome-shop"
+
+# AWS CLI profile (default profile for local use)
+aws_profile = "default"
+aws_region  = "us-east-1"
+
+# Required: Your GitHub organization (or username) and repository name
+github_org  = "my-solution-hub"
+github_repo = "aidlc-app-01"
+
+# Branch that triggers deployment
+deploy_branch = "release"
+
+# Common tags applied to all resources
+tags = {
+  Project   = "awsome-shop"
+  ManagedBy = "terraform"
+  Component = "oidc-bootstrap"
+}

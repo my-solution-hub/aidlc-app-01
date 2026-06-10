@@ -8,6 +8,7 @@ import DashboardIcon from '@mui/icons-material/Dashboard';
 import Inventory2Icon from '@mui/icons-material/Inventory2';
 import CategoryIcon from '@mui/icons-material/Category';
 import TollIcon from '@mui/icons-material/Toll';
+import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
 import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
 import GroupIcon from '@mui/icons-material/Group';
 // AvatarMenu is rendered by AdminPageHeader inside each page
@@ -19,6 +20,7 @@ const NAV_ITEMS = [
   { key: 'products', path: '/admin/products', icon: Inventory2Icon },
   { key: 'categories', path: '/admin/categories', icon: CategoryIcon },
   { key: 'points', path: '/admin/points', icon: TollIcon },
+  { key: 'userPoints', path: '/admin/user-points', icon: AccountBalanceWalletIcon },
   { key: 'orders', path: '/admin/orders', icon: ReceiptLongIcon },
   { key: 'users', path: '/admin/users', icon: GroupIcon },
 ];

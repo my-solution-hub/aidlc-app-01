@@ -37,13 +37,14 @@ describe('EksStack', () => {
     });
   });
 
-  // Fargate Profile
-  test('creates Fargate profile', () => {
-    template.hasResourceProperties('Custom::AWSCDK-EKS-FargateProfile', {
-      Config: Match.objectLike({
-        selectors: Match.arrayWith([
-          Match.objectLike({ namespace: 'awsome-shop' }),
-        ]),
+  // Managed Node Group (replaced Fargate profile)
+  test('creates managed node group with t3.large', () => {
+    template.hasResourceProperties('AWS::EKS::Nodegroup', {
+      InstanceTypes: Match.arrayWith(['t3.large']),
+      ScalingConfig: Match.objectLike({
+        DesiredSize: 3,
+        MinSize: 3,
+        MaxSize: 3,
       }),
     });
   });

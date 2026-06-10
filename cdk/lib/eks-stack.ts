@@ -43,10 +43,11 @@ export class EksStack extends cdk.Stack {
       authenticationMode: eks.AuthenticationMode.API_AND_CONFIG_MAP,
     });
 
-    // Cluster admin access for developer / console-admin IAM principals
+    // Cluster admin access for developer / console-admin / CI IAM principals
     const clusterAdminPrincipals = [
       { id: 'YagrxuAccessEntry', arn: `arn:aws:iam::${this.account}:user/yagrxu` },
       { id: 'AdminRoleAccessEntry', arn: `arn:aws:iam::${this.account}:role/Admin` },
+      { id: 'GhaDeployAccessEntry', arn: `arn:aws:iam::${this.account}:role/awsome-shop-github-actions-role` },
     ];
 
     for (const { id, arn } of clusterAdminPrincipals) {

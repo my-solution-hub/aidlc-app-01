@@ -114,6 +114,15 @@
     <!-- Staging/Prod 环境配置            -->
     <!-- ================================ -->
     <springProfile name="staging,prod">
+        <!-- 控制台输出 Appender (Kubernetes/容器化环境必须输出到 stdout) -->
+        <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+            <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+                <includeContext>true</includeContext>
+                <includeMdc>true</includeMdc>
+                <customFields>{"application":"awsome-shop-gateway-service"}</customFields>
+            </encoder>
+        </appender>
+
         <!-- 文件输出 Appender (JSON 格式) -->
         <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
             <file>${LOG_PATH}/${LOG_FILE}.log</file>
@@ -186,6 +195,7 @@
 
         <!-- Root Logger -->
         <root level="INFO">
+            <appender-ref ref="CONSOLE"/>
             <appender-ref ref="ASYNC_FILE"/>
             <appender-ref ref="ASYNC_ERROR_FILE"/>
         </root>

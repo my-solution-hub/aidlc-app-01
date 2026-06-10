@@ -39,6 +39,18 @@ export class EksStack extends cdk.Stack {
       vpcSubnets: [{ subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS }],
       defaultCapacity: 0, // We'll use Fargate only
       endpointAccess: eks.EndpointAccess.PUBLIC_AND_PRIVATE,
+      authenticationMode: eks.AuthenticationMode.API_AND_CONFIG_MAP,
+    });
+
+    // Cluster admin access for the developer IAM principal
+    new eks.AccessEntry(this, 'YagrxuAccessEntry', {
+      cluster: this.cluster,
+      principal: 'arn:aws:iam::613477150601:user/yagrxu',
+      accessPolicies: [
+        eks.AccessPolicy.fromAccessPolicyName('AmazonEKSClusterAdminPolicy', {
+          accessScopeType: eks.AccessScopeType.CLUSTER,
+        }),
+      ],
     });
 
     // Fargate Profile — all workloads run on Fargate

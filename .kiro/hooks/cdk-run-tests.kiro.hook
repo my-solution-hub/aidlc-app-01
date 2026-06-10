@@ -1,0 +1,18 @@
+{
+  "enabled": true,
+  "name": "CDK Test on Change",
+  "description": "Automatically runs CDK unit tests when any TypeScript file in the cdk/ directory is edited",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      "cdk/lib/*.ts",
+      "cdk/bin/*.ts",
+      "cdk/test/*.ts"
+    ]
+  },
+  "then": {
+    "type": "runCommand",
+    "command": "cd cdk && npx jest --no-coverage --ci"
+  }
+}

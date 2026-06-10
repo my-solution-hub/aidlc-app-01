@@ -212,24 +212,42 @@ export class EksStack extends cdk.Stack {
 
     // ─────────────────────────────────────────────
     // Amazon CloudWatch Observability Addon (Application Signals)
+    //
+    // The addon creates several SAs in amazon-cloudwatch namespace
+    // (amazon-cloudwatch-observability, cloudwatch-agent,
+    // dcgm-exporter-service-acct, neuron-monitor-service-acct) and
+    // annotates ALL of them with serviceAccountRoleArn. So the role's
+    // trust policy must allow every SA name the addon may use.
     // ─────────────────────────────────────────────
 
-    const cwObservabilitySa = this.cluster.addServiceAccount('CwObservability', {
-      name: 'amazon-cloudwatch-observability',
-      namespace: 'amazon-cloudwatch',
+    const cwObservabilityCondition = new cdk.CfnJson(this, 'CwObservabilityCondition', {
+      value: {
+        [`${this.cluster.clusterOpenIdConnectIssuer}:aud`]: 'sts.amazonaws.com',
+        [`${this.cluster.clusterOpenIdConnectIssuer}:sub`]: [
+          'system:serviceaccount:amazon-cloudwatch:amazon-cloudwatch-observability',
+          'system:serviceaccount:amazon-cloudwatch:cloudwatch-agent',
+          'system:serviceaccount:amazon-cloudwatch:dcgm-exporter-service-acct',
+          'system:serviceaccount:amazon-cloudwatch:neuron-monitor-service-acct',
+        ],
+      },
     });
 
-    cwObservabilitySa.role.addManagedPolicy(
-      iam.ManagedPolicy.fromAwsManagedPolicyName('CloudWatchAgentServerPolicy'),
-    );
-    cwObservabilitySa.role.addManagedPolicy(
-      iam.ManagedPolicy.fromAwsManagedPolicyName('AWSXrayWriteOnlyAccess'),
-    );
+    const cwObservabilityRole = new iam.Role(this, 'CwObservabilityRole', {
+      assumedBy: new iam.FederatedPrincipal(
+        this.cluster.openIdConnectProvider.openIdConnectProviderArn,
+        { StringEquals: cwObservabilityCondition },
+        'sts:AssumeRoleWithWebIdentity',
+      ),
+      managedPolicies: [
+        iam.ManagedPolicy.fromAwsManagedPolicyName('CloudWatchAgentServerPolicy'),
+        iam.ManagedPolicy.fromAwsManagedPolicyName('AWSXrayWriteOnlyAccess'),
+      ],
+    });
 
     new eks.CfnAddon(this, 'CloudWatchObservabilityAddon', {
       addonName: 'amazon-cloudwatch-observability',
       clusterName: this.cluster.clusterName,
-      serviceAccountRoleArn: cwObservabilitySa.role.roleArn,
+      serviceAccountRoleArn: cwObservabilityRole.roleArn,
     });
 
     // ─────────────────────────────────────────────

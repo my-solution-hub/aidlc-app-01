@@ -155,9 +155,22 @@ Makefile 已用 `--spring.datasource.*` 启动参数覆盖，**不改源码**。
 
 ---
 
-## 相关文档
+## 相关文档（按角色导航 · 从这里开始）
 
-- `AWSomeShop-四服务全功能清单与进度.md` — 各服务功能完成度
-- `AWSomeShop-E2E验证报告.md` — 端到端真实验证记录（含 Saga 验证）
-- `前端按钮联通-审计与任务清单.md` — 前端交互接线审计
-- `awsome-shop-architecture.html` — 交互式架构关系图
+> 权威文档优先；其余为历史记录，仅供追溯。
+
+**🧭 我负责后端** → 先读这两份：
+- `API接口文档.md` — REST 接口契约（v1.1，权威）
+- `Olivia-AWSomeShop-前端功能清單.md` 的 **D 节『对后端的依赖』** — 前端仍需的端点/字段（含 REST 契约），直接照此开工
+
+**🎨 我负责前端** → 先读这些：
+- `awsome-shop-plan/doc/awsome-shop.pen` — 设计稿真相（30 个 Web frame，可用 Pencil CLI 导出比对）
+- `Olivia-AWSomeShop-前端功能清單.md` — A 节（已完成）/ B 节（待接线 backlog）
+- `API接口文档.md` — 调用契约；`Olivia-AWSomeShop-後端API回應契約.md` — 响应信封说明
+
+**🤖 我用 agent 接力** → `CLAUDE.md`（AIDLC 工作流 harness，会自动加载）+ 上面对应角色的文档
+
+**▶️ 怎么跑起来** → 见上文「快速开始（本地 Debug）」
+
+---
+历史/追溯（非权威，记录用）：`AWSomeShop-四服务全功能清单与进度.md`、`AWSomeShop-完成清单与服务详解.md`、`AWSomeShop-E2E验证报告.md`、`前端按钮联通-审计与任务清单.md`、`对齐任务清单.md`、`REST改造映射.md`、`AWSomeShop-待办清单-未做的事.md`、`AIDLC-准备清单.md`、`awsome-shop-architecture.html`（交互式架构图）

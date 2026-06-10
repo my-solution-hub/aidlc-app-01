@@ -33,6 +33,16 @@ spec:
               value: "http://points-service:8003"
             - name: ORDER_SERVICE_URL
               value: "http://order-service:8004"
+            - name: REDIS_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: shared-config
+                  key: redis-host
+            - name: REDIS_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: shared-config
+                  key: redis-port
           resources:
             requests:
               cpu: 250m

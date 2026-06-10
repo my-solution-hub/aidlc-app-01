@@ -14,6 +14,7 @@ export interface EksStackProps extends cdk.StackProps {
   vpc: ec2.Vpc;
   dbCluster: rds.DatabaseCluster;
   redisEndpoint: string;
+  redisPort?: string;
   queue: sqs.Queue;
   imageBucket: s3.Bucket;
 }
@@ -96,34 +97,6 @@ export class EksStack extends cdk.Stack {
     }
 
     // ─────────────────────────────────────────────
-    // IAM Role for Pod (IRSA)
-    // ─────────────────────────────────────────────
-
-    const conditions = new cdk.CfnJson(this, 'OidcCondition', {
-      value: {
-        [`${this.cluster.clusterOpenIdConnectIssuer}:aud`]: 'sts.amazonaws.com',
-        [`${this.cluster.clusterOpenIdConnectIssuer}:sub`]: 'system:serviceaccount:awsome-shop:awsome-shop-sa',
-      },
-    });
-
-    const podRole = new iam.Role(this, 'PodRole', {
-      roleName: 'awsomeshop-pod-role',
-      assumedBy: new iam.FederatedPrincipal(
-        this.cluster.openIdConnectProvider.openIdConnectProviderArn,
-        {
-          StringEquals: conditions,
-        },
-        'sts:AssumeRoleWithWebIdentity'
-      ),
-    });
-
-    // Grant Pod access to AWS resources
-    queue.grantSendMessages(podRole);
-    queue.grantConsumeMessages(podRole);
-    imageBucket.grantReadWrite(podRole);
-    dbCluster.secret?.grantRead(podRole);
-
-    // ─────────────────────────────────────────────
     // AWS Load Balancer Controller (for ALB Ingress)
     // ─────────────────────────────────────────────
 
@@ -186,11 +159,56 @@ export class EksStack extends cdk.Stack {
     // Kubernetes Namespace
     // ─────────────────────────────────────────────
 
-    this.cluster.addManifest('Namespace', {
+    const namespaceManifest = this.cluster.addManifest('Namespace', {
       apiVersion: 'v1',
       kind: 'Namespace',
       metadata: { name: 'awsome-shop' },
     });
+
+    // ─────────────────────────────────────────────
+    // Workload ServiceAccount + shared ConfigMap
+    // ─────────────────────────────────────────────
+
+    const workloadSa = this.cluster.addServiceAccount('AwsomeShopSa', {
+      name: 'awsome-shop-sa',
+      namespace: 'awsome-shop',
+    });
+    workloadSa.role.attachInlinePolicy(new iam.Policy(this, 'WorkloadSaPolicy', {
+      policyName: 'awsomeshop-workload-policy',
+      statements: [
+        new iam.PolicyStatement({
+          effect: iam.Effect.ALLOW,
+          actions: ['sqs:SendMessage', 'sqs:ReceiveMessage', 'sqs:DeleteMessage', 'sqs:GetQueueAttributes'],
+          resources: [queue.queueArn],
+        }),
+        new iam.PolicyStatement({
+          effect: iam.Effect.ALLOW,
+          actions: ['s3:GetObject', 's3:PutObject', 's3:DeleteObject', 's3:ListBucket'],
+          resources: [imageBucket.bucketArn, `${imageBucket.bucketArn}/*`],
+        }),
+        new iam.PolicyStatement({
+          effect: iam.Effect.ALLOW,
+          actions: ['secretsmanager:GetSecretValue'],
+          resources: [dbCluster.secret?.secretArn ?? '*'],
+        }),
+      ],
+    }));
+    workloadSa.node.addDependency(namespaceManifest);
+
+    const sharedConfig = this.cluster.addManifest('SharedConfig', {
+      apiVersion: 'v1',
+      kind: 'ConfigMap',
+      metadata: { name: 'shared-config', namespace: 'awsome-shop' },
+      data: {
+        'redis-host': props.redisEndpoint,
+        'redis-port': props.redisPort ?? '6379',
+        'aurora-host': dbCluster.clusterEndpoint.hostname,
+        'aurora-port': cdk.Token.asString(dbCluster.clusterEndpoint.port),
+        'sqs-queue-url': queue.queueUrl,
+        'image-bucket': imageBucket.bucketName,
+      },
+    });
+    sharedConfig.node.addDependency(namespaceManifest);
 
     // ─────────────────────────────────────────────
     // Amazon CloudWatch Observability Addon (Application Signals)
@@ -302,7 +320,7 @@ export class EksStack extends cdk.Stack {
     });
 
     new cdk.CfnOutput(this, 'PodRoleArn', {
-      value: podRole.roleArn,
+      value: workloadSa.role.roleArn,
     });
 
     for (const [name, repo] of Object.entries(repos)) {

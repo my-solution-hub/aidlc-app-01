@@ -92,11 +92,15 @@ describe('EksStack', () => {
     }
   });
 
-  // IAM - Pod Role
-  test('creates Pod IAM role for IRSA', () => {
-    template.hasResourceProperties('AWS::IAM::Role', {
-      RoleName: 'awsomeshop-pod-role',
-    });
+  // IAM - Pod Role (created via cluster.addServiceAccount; the OIDC subject
+  // condition lives in a Custom::AWSCDK-EKS-Cluster CfnJson resource).
+  test('creates IRSA role bound to awsome-shop-sa service account', () => {
+    const cfnJson = template.findResources('Custom::AWSCDKCfnJson');
+    const expectedSubject = 'system:serviceaccount:awsome-shop:awsome-shop-sa';
+    const matches = Object.values(cfnJson).filter((r: any) =>
+      JSON.stringify(r.Properties?.Value ?? {}).includes(expectedSubject),
+    );
+    expect(matches.length).toBeGreaterThan(0);
   });
 
   // Kubernetes Namespace

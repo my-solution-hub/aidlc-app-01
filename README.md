@@ -1,0 +1,163 @@
+# AWSomeShop · 员工积分兑换商城
+
+企业内部员工福利积分电商平台。员工用积分兑换商品，管理员管理商品/分类/积分规则/兑换记录/用户。
+微服务架构（Java 21 + Spring Boot 3 + DDD 六边形）+ React 管理/商城前端 + Android 员工端。
+
+> 本仓库基于 AWS AI-DLC workshop 的 baseline 工程，已由 AI-DLC 流程补全为可运行的全栈系统。
+
+---
+
+## 一图看懂架构
+
+```
+   Web 前端 (React, :5173)            Android 端 (Kotlin/Compose)
+            \                          /
+             \                        /
+          ┌───────────────────────────────┐
+          │   API Gateway (:8088)          │  统一入口：JWT 校验 + 路由 + RBAC
+          └───────────────────────────────┘
+            │         │         │        │
+        ┌───┘     ┌───┘     ┌───┘    └───┐
+        ▼         ▼         ▼            ▼
+     Auth      Product    Points      Order        (4 个后端微服务)
+     :8001     :8002      :8003       :8004
+        │         │         │            │
+        └─────────┴────┬────┴────────────┘
+                       ▼
+              MySQL (:3306, 4 个独立 Schema) + Redis (:6379)
+
+   兑换链路（Saga）：Order → Product 扣库存 + Points 扣积分，失败补偿回滚
+   注册链路：Auth 注册 → 调 Points 初始化积分账户
+```
+
+可视化关系图见 `awsome-shop-architecture.html`（用浏览器打开）。
+
+---
+
+## 服务清单
+
+| 服务 | 端口 | 职责 | 技术 |
+|------|------|------|------|
+| **gateway** | 8088* | 唯一入口、JWT 校验、路由转发、RBAC | Spring Cloud Gateway |
+| **auth** | 8001 | 注册/登录/登出、JWT、用户管理、内部 validate | DDD + JWT + Redis |
+| **product** | 8002 | 商品 CRUD、分类树、库存（悲观锁）、内部扣/补库存 | DDD + MyBatis-Plus |
+| **points** | 8003 | 积分规则 CRUD、账户余额/流水、内部调整 | DDD |
+| **order** | 8004 | 兑换下单、订单/兑换记录、跨服务 Saga 编排 | DDD + WebClient |
+| **frontend** | 5173 | 管理后台 + 员工商城（React 19 + MUI 6） | Vite |
+| **android** | — | 员工端（浏览/兑换/积分/订单/我的） | Compose + Hilt |
+
+\* 网关本应 8080，因本机 8080 被占用改用 8088。如需改回，编辑 Makefile `GATEWAY_PORT`。
+
+目录结构：每个后端是独立 Maven 多模块工程（common / domain / infrastructure / application / interface / bootstrap，六边形分层）。
+
+---
+
+## 快速开始（本地 Debug）
+
+### 前置依赖
+
+| 工具 | 版本 | 说明 |
+|------|------|------|
+| JDK | **21** | 后端编译运行（本机路径见 Makefile `JAVA_HOME_21`） |
+| Maven | 3.9+ | 后端打包 |
+| Node | 20+ | 前端 |
+| Docker | — | 跑 MySQL + Redis |
+| Android SDK | 可选 | 仅编译 Android 时需要 |
+
+启动依赖容器（若未运行）：
+
+```bash
+# MySQL 8.4
+docker run -d --name mysql84 -e MYSQL_ROOT_PASSWORD=aidlc_root_pw -p 3306:3306 mysql:8.4
+# Redis
+docker run -d --name gen-redis -p 6379:6379 redis
+```
+
+### 一键启动（推荐）
+
+```bash
+make build      # 首次：打包 5 个 fat jar + 构建前端（约 3-5 分钟）
+make up         # 建库 + 启动 4 后端 + 网关 + 前端
+```
+
+启动后访问 **http://localhost:5173**，用 `admin / admin123` 登录（管理端），或 `employee / employee123`（员工端）。
+
+### 常用命令
+
+```bash
+make status     # 查看 6 个服务在线状态
+make logs       # 实时查看所有服务日志（/tmp/awsome/*.log）
+make smoke      # 冒烟测试（经网关登录 + 商品列表）
+make down       # 停止所有服务
+make restart    # 重启
+make help       # 全部命令
+```
+
+### Android
+
+```bash
+make android-apk   # 编译并打包 → app/build/outputs/apk/debug/app-debug.apk
+```
+
+> Android 端默认连 `http://10.0.2.2:8088`（模拟器访问宿主机网关）。真机调试需改 `di/AppModule.kt` 的 baseUrl 为宿主机 IP。
+
+---
+
+## 单服务调试（手动）
+
+如果只想跑/调单个后端服务（例如调 auth）：
+
+```bash
+export JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home
+cd awsome-shop-auth-service
+mvn -o -pl bootstrap spring-boot:run \
+  --spring.datasource.url="jdbc:mysql://localhost:3306/awsome_shop_auth?useSSL=false&allowPublicKeyRetrieval=true" \
+  --spring.datasource.password=aidlc_root_pw
+```
+
+前端单独跑（连网关 8088）：
+
+```bash
+cd awsome-shop-frontend
+VITE_API_BASE_URL=http://localhost:8088 npm run dev
+```
+
+### 重要：环境差异覆盖
+
+各服务 `application-local.yml` 默认指向 **MySQL 3307 + root/root**，与本机（3306 + aidlc_root_pw）不符。
+Makefile 已用 `--spring.datasource.*` 启动参数覆盖，**不改源码**。手动启动时务必同样覆盖。
+
+### API 契约速查（前端/Android 调用，均 POST + `Result<T>` 信封）
+
+| 功能 | 端点（经网关加前缀 /auth /product /point /order） |
+|------|------|
+| 登录 | `/auth/api/v1/public/auth/login` |
+| 商品列表/创建/更新/删除/上下架 | `/product/api/v1/public/product/{list,create,update,delete,update-status}` |
+| 分类树/CRUD | `/product/api/v1/public/category/{list,create,update,delete}` |
+| 积分规则 CRUD | `/point/api/v1/admin/point-rule/{list,create,update,update-status}` |
+| 员工积分余额/流水 | `/point/api/v1/public/point/{balance,transaction/list}` |
+| 兑换下单（Saga）| `/order/api/v1/public/order/exchange` |
+| 兑换记录（admin）| `/order/api/v1/admin/exchange-record/{list,get,stats,update-status}` |
+| 用户管理 | `/auth/api/v1/public/auth/user/{list,create,update-status}` |
+
+---
+
+## 排障
+
+| 现象 | 原因 / 解决 |
+|------|------|
+| 后端起不来，报 `TypeTag :: UNKNOWN` | 用了 JDK 25，必须用 **JDK 21**（Lombok 兼容） |
+| `Could not resolve com.awsome.shop:common` | 各服务 common 模块 GAV 相同，会互相覆盖；用 `make build`（fat jar）规避，勿用 `mvn install` 后 `-pl` 跑 |
+| 网关 8080 端口被占 | Makefile 已用 8088；或 `lsof -nP -iTCP:8080` 杀占用进程 |
+| 前端能开但调接口 401/跳登录 | 网关 JWT 校验失败；确认 auth 服务在线（网关依赖其 `/internal/auth/validate`） |
+| Android 编译卡在下载/`bad_record_mac` | 系统代理对大文件不稳；Makefile 已加 `-Dhttp.proxyHost=` 直连 |
+| 兑换报积分不足 | 先给用户初始化积分：`POST /point/api/v1/internal/point/adjust {"userId":1,"amount":2000,"direction":"INIT"}` |
+
+---
+
+## 相关文档
+
+- `AWSomeShop-四服务全功能清单与进度.md` — 各服务功能完成度
+- `AWSomeShop-E2E验证报告.md` — 端到端真实验证记录（含 Saga 验证）
+- `前端按钮联通-审计与任务清单.md` — 前端交互接线审计
+- `awsome-shop-architecture.html` — 交互式架构关系图

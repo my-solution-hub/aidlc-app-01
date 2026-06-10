@@ -1,0 +1,181 @@
+package com.awsome.shop.order.application.impl.service.exchange;
+
+import com.awsome.shop.order.application.api.dto.exchange.ExchangeRecordDTO;
+import com.awsome.shop.order.application.api.dto.exchange.ExchangeRecordStatsDTO;
+import com.awsome.shop.order.application.api.dto.exchange.request.ExchangeRequest;
+import com.awsome.shop.order.application.api.dto.exchange.request.GetExchangeRecordRequest;
+import com.awsome.shop.order.application.api.dto.exchange.request.ListExchangeRecordRequest;
+import com.awsome.shop.order.application.api.dto.exchange.request.ListMyExchangeRequest;
+import com.awsome.shop.order.application.api.dto.exchange.request.UpdateExchangeStatusRequest;
+import com.awsome.shop.order.application.api.service.exchange.ExchangeRecordApplicationService;
+import com.awsome.shop.order.application.impl.saga.ExchangeRemoteClient;
+import com.awsome.shop.order.application.impl.saga.SagaException;
+import com.awsome.shop.order.common.dto.PageResult;
+import com.awsome.shop.order.common.enums.OrderErrorCode;
+import com.awsome.shop.order.common.exception.BusinessException;
+import com.awsome.shop.order.domain.model.exchange.ExchangeRecordEntity;
+import com.awsome.shop.order.domain.model.exchange.ExchangeRecordStatsEntity;
+import com.awsome.shop.order.domain.service.exchange.ExchangeRecordDomainService;
+import com.fasterxml.jackson.databind.JsonNode;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
+
+/**
+ * 积分兑换记录 应用服务实现
+ *
+ * <p>只依赖 Domain Service，不直接依赖 Repository</p>
+ */
+@Slf4j
+@Service
+@RequiredArgsConstructor
+public class ExchangeRecordApplicationServiceImpl implements ExchangeRecordApplicationService {
+
+    private static final String STATUS_PENDING_DELIVERY = "PENDING_DELIVERY";
+
+    private final ExchangeRecordDomainService exchangeRecordDomainService;
+    private final ExchangeRemoteClient exchangeRemoteClient;
+
+    @Override
+    public ExchangeRecordDTO get(GetExchangeRecordRequest request) {
+        return toDTO(exchangeRecordDomainService.getById(request.getId()));
+    }
+
+    @Override
+    public PageResult<ExchangeRecordDTO> list(ListExchangeRecordRequest request) {
+        PageResult<ExchangeRecordEntity> page = exchangeRecordDomainService.page(
+                request.getPage(), request.getSize(),
+                request.getKeyword(), request.getStatus(),
+                request.getStartTime(), request.getEndTime());
+        return page.convert(this::toDTO);
+    }
+
+    @Override
+    public ExchangeRecordStatsDTO stats() {
+        ExchangeRecordStatsEntity entity = exchangeRecordDomainService.stats();
+        ExchangeRecordStatsDTO dto = new ExchangeRecordStatsDTO();
+        dto.setTotalCount(entity.getTotalCount());
+        dto.setPendingDeliveryCount(entity.getPendingDeliveryCount());
+        dto.setCompletedCount(entity.getCompletedCount());
+        dto.setTotalPointsConsumed(entity.getTotalPointsConsumed());
+        return dto;
+    }
+
+    @Override
+    public ExchangeRecordDTO updateStatus(UpdateExchangeStatusRequest request) {
+        ExchangeRecordEntity updated = exchangeRecordDomainService.updateStatus(
+                request.getId(), request.getStatus(), request.getTrackingNumber());
+        return toDTO(updated);
+    }
+
+    @Override
+    public ExchangeRecordDTO exchange(ExchangeRequest request) {
+        int quantity = request.getQuantity() == null ? 1 : request.getQuantity();
+        Long productId = request.getProductId();
+        Long userId = request.getUserId();
+
+        // 0. 查询商品信息（积分单价 + 名称等）
+        JsonNode product = exchangeRemoteClient.getProduct(productId);
+        String productName = product.path("name").asText("");
+        int pointsPrice = product.path("pointsPrice").asInt(0);
+        String imageUrl = product.path("imageUrl").asText(null);
+        String description = product.path("description").asText(null);
+        int pointsCost = pointsPrice * quantity;
+
+        boolean stockDeducted = false;
+        boolean pointsDeducted = false;
+        try {
+            // 1. 扣减库存
+            exchangeRemoteClient.deductStock(productId, quantity);
+            stockDeducted = true;
+
+            // 2. 扣减积分
+            try {
+                exchangeRemoteClient.deductPoints(userId, pointsCost);
+                pointsDeducted = true;
+            } catch (SagaException e) {
+                // 补偿：恢复库存
+                safeRestoreStock(productId, quantity);
+                throw new BusinessException(OrderErrorCode.DEDUCT_POINTS_FAILED, e.getMessage());
+            }
+
+            // 3. 持久化兑换记录
+            ExchangeRecordEntity entity = buildEntity(request, productId, productName,
+                    description, imageUrl, quantity, pointsCost);
+            try {
+                ExchangeRecordEntity saved = exchangeRecordDomainService.save(entity);
+                return toDTO(saved);
+            } catch (Exception e) {
+                // 补偿：恢复库存 + 退还积分
+                safeRestoreStock(productId, quantity);
+                safeRefundPoints(userId, pointsCost);
+                log.error("兑换记录持久化失败, productId={}, userId={}", productId, userId, e);
+                throw new BusinessException(OrderErrorCode.EXCHANGE_PERSIST_FAILED, e);
+            }
+        } catch (SagaException e) {
+            // 步骤1（扣减库存）失败，无需补偿
+            throw new BusinessException(OrderErrorCode.DEDUCT_STOCK_FAILED, e.getMessage());
+        }
+    }
+
+    @Override
+    public PageResult<ExchangeRecordDTO> listMine(ListMyExchangeRequest request) {
+        PageResult<ExchangeRecordEntity> page = exchangeRecordDomainService.pageByUser(
+                request.getPage(), request.getSize(), request.getUserId(), request.getStatus());
+        return page.convert(this::toDTO);
+    }
+
+    private ExchangeRecordEntity buildEntity(ExchangeRequest request, Long productId, String productName,
+                                             String productDesc, String imageUrl, int quantity, int pointsCost) {
+        ExchangeRecordEntity entity = new ExchangeRecordEntity();
+        entity.setOrderNo("EX" + System.currentTimeMillis());
+        entity.setProductId(productId);
+        entity.setProductName(productName);
+        entity.setProductDesc(productDesc);
+        entity.setProductImageUrl(imageUrl);
+        entity.setUserId(request.getUserId());
+        entity.setEmployeeName(request.getEmployeeName());
+        entity.setQuantity(quantity);
+        entity.setPointsCost(pointsCost);
+        entity.setExchangeTime(LocalDateTime.now());
+        entity.setStatus(STATUS_PENDING_DELIVERY);
+        return entity;
+    }
+
+    private void safeRestoreStock(Long productId, int quantity) {
+        try {
+            exchangeRemoteClient.restoreStock(productId, quantity);
+        } catch (Exception ex) {
+            log.error("库存补偿失败, productId={}, quantity={}", productId, quantity, ex);
+        }
+    }
+
+    private void safeRefundPoints(Long userId, int amount) {
+        try {
+            exchangeRemoteClient.refundPoints(userId, amount);
+        } catch (Exception ex) {
+            log.error("积分补偿失败, userId={}, amount={}", userId, amount, ex);
+        }
+    }
+
+    private ExchangeRecordDTO toDTO(ExchangeRecordEntity entity) {
+        ExchangeRecordDTO dto = new ExchangeRecordDTO();
+        dto.setId(entity.getId());
+        dto.setOrderNo(entity.getOrderNo());
+        dto.setProductId(entity.getProductId());
+        dto.setProductName(entity.getProductName());
+        dto.setProductDesc(entity.getProductDesc());
+        dto.setProductImageUrl(entity.getProductImageUrl());
+        dto.setUserId(entity.getUserId());
+        dto.setEmployeeName(entity.getEmployeeName());
+        dto.setQuantity(entity.getQuantity());
+        dto.setPointsCost(entity.getPointsCost());
+        dto.setExchangeTime(entity.getExchangeTime());
+        dto.setStatus(entity.getStatus());
+        dto.setCreatedAt(entity.getCreatedAt());
+        dto.setUpdatedAt(entity.getUpdatedAt());
+        return dto;
+    }
+}

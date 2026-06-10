@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.awsome.shop.auth.repository.mysql.mapper.user.UserMapper">
+
+    <!-- 分页查询用户列表 -->
+    <select id="selectPage" resultType="com.awsome.shop.auth.repository.mysql.po.user.UserPO">
+        SELECT id, username, password_hash, nickname, role, status,
+               failed_login_attempts, lock_expired_at, last_login_at,
+               created_at, updated_at, created_by, updated_by, deleted, version
+        FROM user
+        WHERE deleted = 0
+        <if test="username != null and username != ''">
+            AND username LIKE CONCAT('%', #{username}, '%')
+        </if>
+        <if test="role != null and role != ''">
+            AND role = #{role}
+        </if>
+        <if test="status != null and status != ''">
+            AND status = #{status}
+        </if>
+        ORDER BY created_at DESC
+    </select>
+
+</mapper>

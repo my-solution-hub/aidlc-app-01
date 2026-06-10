@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.awsome.shop.point.repository.mysql.mapper.pointrule.PointRuleMapper">
+
+    <!-- 分页查询 -->
+    <select id="selectPage" resultType="com.awsome.shop.point.repository.mysql.po.pointrule.PointRulePO">
+        SELECT id, name, description, rule_type, point_value_min, point_value_max,
+               trigger_condition, status, created_at, updated_at, created_by, updated_by, deleted, version
+        FROM point_rule
+        WHERE deleted = 0
+        <if test="name != null and name != ''">
+            AND name LIKE CONCAT('%', #{name}, '%')
+        </if>
+        <if test="ruleType != null and ruleType != ''">
+            AND rule_type = #{ruleType}
+        </if>
+        <if test="status != null">
+            AND status = #{status}
+        </if>
+        ORDER BY created_at DESC
+    </select>
+
+</mapper>

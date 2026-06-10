@@ -1,0 +1,51 @@
+spring:
+  profiles:
+    active: local
+  application:
+    name: awsome-shop-gateway-service
+
+  # Force reactive web application type
+  main:
+    web-application-type: reactive
+
+  # Jackson configuration
+  jackson:
+    deserialization:
+      fail-on-unknown-properties: false
+
+  # Spring Cloud Gateway defaults
+  cloud:
+    gateway:
+      server:
+        webflux:
+          default-filters:
+            - DedupeResponseHeader=Access-Control-Allow-Origin Access-Control-Allow-Credentials, RETAIN_UNIQUE
+
+server:
+  port: 8080
+
+# Gateway configuration
+gateway:
+  auth:
+    timeout: 5s
+  webclient:
+    connect-timeout: 5s
+    read-timeout: 10s
+    write-timeout: 10s
+
+# Micrometer Tracing
+management:
+  tracing:
+    sampling:
+      probability: 1.0
+  endpoint:
+    gateway:
+      access: unrestricted
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,gateway
+      base-path: /actuator
+  metrics:
+    tags:
+      application: awsome-shop-gateway-service

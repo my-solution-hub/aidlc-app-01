@@ -1,0 +1,21 @@
+CREATE TABLE `exchange_record` (
+    `id`             BIGINT       NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+    `order_no`       VARCHAR(32)  NOT NULL COMMENT '订单编号',
+    `product_name`   VARCHAR(200) NOT NULL COMMENT '商品名称',
+    `product_desc`   VARCHAR(500)          DEFAULT NULL COMMENT '商品描述',
+    `employee_name`  VARCHAR(100) NOT NULL COMMENT '兑换员工姓名',
+    `points_cost`    INT          NOT NULL COMMENT '消耗积分',
+    `exchange_time`  DATETIME     NOT NULL COMMENT '兑换时间',
+    `status`         VARCHAR(32)  NOT NULL COMMENT '状态: PENDING_DELIVERY/DELIVERING/COMPLETED/CANCELLED',
+    `created_at`     DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `updated_at`     DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    `created_by`     BIGINT                DEFAULT NULL COMMENT '创建人',
+    `updated_by`     BIGINT                DEFAULT NULL COMMENT '更新人',
+    `deleted`        TINYINT      NOT NULL DEFAULT 0 COMMENT '逻辑删除 0-未删除 1-已删除',
+    `version`        INT          NOT NULL DEFAULT 0 COMMENT '乐观锁版本号',
+    PRIMARY KEY (`id`),
+    INDEX `idx_order_no` (`order_no`),
+    INDEX `idx_employee_name` (`employee_name`),
+    INDEX `idx_status` (`status`),
+    INDEX `idx_exchange_time` (`exchange_time`)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '积分兑换记录表';

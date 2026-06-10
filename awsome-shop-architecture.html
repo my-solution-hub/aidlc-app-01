@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AWSomeShop · 微服务架构关系图</title>
+<link rel="stylesheet" href="https://esm.sh/@xyflow/react@12.3.5/dist/style.css" />
+<style>
+  :root{
+    --bg0:#070b16; --bg1:#0d1424; --ink:#e8eefc; --muted:#8ea0c0;
+  }
+  *{box-sizing:border-box;}
+  html,body,#root{height:100%;margin:0;}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    background:
+      radial-gradient(1200px 800px at 15% -10%, #1b2b4d 0, transparent 55%),
+      radial-gradient(1000px 700px at 110% 120%, #15213b 0, transparent 50%),
+      linear-gradient(160deg,var(--bg0),var(--bg1));
+    color:var(--ink);
+    overflow:hidden;
+  }
+  .react-flow__attribution{display:none;}
+
+  /* ---------- 节点 ---------- */
+  .node{
+    width:216px; border-radius:16px; position:relative; overflow:hidden;
+    background:rgba(15,21,38,.74); backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px);
+    border:1px solid rgba(255,255,255,.08);
+    box-shadow:0 10px 34px rgba(0,0,0,.45), inset 0 0 0 1px rgba(255,255,255,.02);
+    transition:transform .22s ease, box-shadow .22s ease;
+  }
+  .node::before{
+    content:""; position:absolute; inset:0; border-radius:16px; padding:1px; pointer-events:none;
+    background:linear-gradient(135deg, var(--tone), transparent 65%);
+    -webkit-mask:linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite:xor; mask-composite:exclude; opacity:.7;
+  }
+  .node:hover{ transform:translateY(-4px); box-shadow:0 18px 48px rgba(0,0,0,.6), 0 0 28px -6px var(--tone); }
+  .node-bar{ height:4px; background:linear-gradient(90deg,var(--tone), transparent 85%); }
+  .node-body{ padding:13px 15px 15px; }
+  .node-head{ display:flex; align-items:center; gap:10px; }
+  .node-icon{
+    width:38px;height:38px;flex:0 0 38px;border-radius:11px;display:grid;place-items:center;font-size:20px;
+    background:radial-gradient(120% 120% at 30% 20%, color-mix(in srgb, var(--tone) 38%, transparent), transparent 70%);
+    border:1px solid color-mix(in srgb, var(--tone) 45%, transparent);
+  }
+  .node-title{ font-size:15px; font-weight:700; letter-spacing:.2px; line-height:1.2; }
+  .node-sub{ font-size:11px; color:var(--muted); margin-top:2px; }
+  .node-port{
+    display:inline-block; margin-top:3px; font-size:10.5px; font-weight:600; color:#cfe0ff;
+    background:color-mix(in srgb, var(--tone) 22%, transparent); border:1px solid color-mix(in srgb,var(--tone) 40%, transparent);
+    padding:1px 7px; border-radius:999px; font-variant-numeric:tabular-nums;
+  }
+  .node-desc{ margin-top:10px; font-size:11.5px; line-height:1.5; color:#c4d0e6; }
+  .node-tags{ margin-top:9px; display:flex; flex-wrap:wrap; gap:5px; }
+  .chip{ font-size:10px; padding:2px 7px; border-radius:6px; background:rgba(255,255,255,.06); color:#aebbd6; border:1px solid rgba(255,255,255,.06); }
+
+  /* 幽灵 / 建议节点 */
+  .node.ghost{ background:rgba(24,33,54,.4); border-style:dashed; border-color:rgba(148,163,184,.45); box-shadow:none; }
+  .node.ghost::before{ opacity:.35; }
+  .node.ghost:hover{ box-shadow:0 14px 36px rgba(0,0,0,.45), 0 0 22px -8px var(--tone); }
+  .node.ghost .node-desc{ color:#9fb0cc; }
+  .ghost-flag{
+    position:absolute; top:9px; right:9px; font-size:9.5px; font-weight:700; letter-spacing:.4px;
+    color:#0c1020; background:linear-gradient(90deg,#fbbf24,#f59e0b); padding:2px 8px; border-radius:999px;
+  }
+
+  /* handle 收敛为细微锚点 */
+  .react-flow__handle{ width:7px;height:7px;background:rgba(255,255,255,.25);border:none; }
+  .react-flow__handle:hover{ background:#fff; }
+
+  /* ---------- 边标签 ---------- */
+  .react-flow__edge-text{ font-size:11px; font-weight:600; fill:#dbe6ff; }
+  .react-flow__edge-textbg{ fill:#0c1424; }
+
+  /* ---------- 面板 ---------- */
+  .panel{
+    background:rgba(11,17,32,.82); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px);
+    border:1px solid rgba(255,255,255,.09); border-radius:16px; padding:16px 18px;
+    box-shadow:0 12px 40px rgba(0,0,0,.5);
+  }
+  .title-panel{ max-width:380px; }
+  .title-panel h1{
+    margin:0; font-size:20px; font-weight:800; letter-spacing:.3px;
+    background:linear-gradient(90deg,#a855f7,#22d3ee 55%,#34d399); -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  .title-panel p{ margin:8px 0 0; font-size:12px; line-height:1.6; color:var(--muted); }
+  .stat-row{ display:flex; gap:18px; margin-top:13px; }
+  .stat b{ display:block; font-size:21px; font-weight:800; color:#fff; line-height:1; }
+  .stat span{ font-size:10.5px; color:var(--muted); }
+
+  .legend{ max-width:250px; }
+  .legend h3{ margin:0 0 11px; font-size:12px; letter-spacing:1px; text-transform:uppercase; color:#9fb0cc; }
+  .lg-item{ display:flex; align-items:center; gap:9px; font-size:12px; margin:7px 0; color:#cdd8ee; }
+  .swatch{ width:20px;height:4px;border-radius:3px; flex:0 0 20px;}
+  .dash{ width:20px;height:0;border-top:2px dashed #94a3b8;flex:0 0 20px;}
+  .dot{ width:11px;height:11px;border-radius:4px;flex:0 0 11px;border:1px solid rgba(255,255,255,.2);}
+
+  .react-flow__controls{ box-shadow:0 8px 24px rgba(0,0,0,.5);border-radius:10px;overflow:hidden;}
+  .react-flow__controls button{ background:#111a2e;border-bottom:1px solid #1e2942;color:#cdd8ee;}
+  .react-flow__controls button:hover{ background:#1a2540;}
+  .react-flow__minimap{ border-radius:12px; overflow:hidden; border:1px solid rgba(255,255,255,.08);}
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@18.3.1",
+    "react-dom": "https://esm.sh/react-dom@18.3.1",
+    "react-dom/client": "https://esm.sh/react-dom@18.3.1/client",
+    "react/jsx-runtime": "https://esm.sh/react@18.3.1/jsx-runtime",
+    "@xyflow/react": "https://esm.sh/@xyflow/react@12.3.5?external=react,react-dom",
+    "htm": "https://esm.sh/htm@3.1.1"
+  }
+}
+</script>
+
+<script type="module">
+import { createElement, memo, useCallback } from "react";
+import { createRoot } from "react-dom/client";
+import htm from "htm";
+import {
+  ReactFlow, ReactFlowProvider, Background, BackgroundVariant, Controls, MiniMap,
+  Handle, Position, MarkerType, Panel, useNodesState, useEdgesState
+} from "@xyflow/react";
+
+const html = htm.bind(createElement);
+const h = createElement;
+
+/* ===================== 自定义服务节点 ===================== */
+const ServiceNode = memo(({ data }) => {
+  const ports = [
+    ["target", Position.Left, "tl"], ["source", Position.Right, "sr"],
+    ["target", Position.Top, "tt"], ["source", Position.Top, "st"],
+    ["target", Position.Bottom, "tb"], ["source", Position.Bottom, "sb"],
+  ];
+  return html`
+    <div class=${"node" + (data.ghost ? " ghost" : "")} style=${{ "--tone": data.tone }}>
+      ${data.ghost ? html`<div class="ghost-flag">建议补充</div>` : null}
+      <div class="node-bar"></div>
+      <div class="node-body">
+        <div class="node-head">
+          <div class="node-icon">${data.icon}</div>
+          <div>
+            <div class="node-title">${data.title}</div>
+            ${data.sub ? html`<div class="node-sub">${data.sub}</div>` : null}
+            ${data.port ? html`<div class="node-port">PORT ${data.port}</div>` : null}
+          </div>
+        </div>
+        <div class="node-desc">${data.desc}</div>
+        ${data.tags ? html`<div class="node-tags">${data.tags.map(t => html`<span class="chip" key=${t}>${t}</span>`)}</div>` : null}
+      </div>
+      ${ports.map(([type, position, id]) =>
+        h(Handle, { key: type + id, type, position, id, isConnectable: false }))}
+    </div>`;
+});
+const nodeTypes = { service: ServiceNode };
+
+/* ===================== 节点数据 ===================== */
+const N = (id, x, y, data) => ({ id, type: "service", position: { x, y }, data });
+
+const initialNodes = [
+  // —— 客户端入口层 ——
+  N("frontend", 30, 270, { icon:"🖥️", title:"Frontend SPA", sub:"React 19 · Vite · MUI", port:"3000", tone:"#22d3ee",
+    desc:"员工商城端 + 管理后台单页应用。所有请求经网关，含路由守卫做前端角色鉴权。", tags:["员工端","管理端","i18n"] }),
+  N("android", 30, 470, { icon:"📱", title:"Android App", sub:"Kotlin · Gradle", tone:"#06b6d4",
+    desc:"原生移动客户端，与前端共用同一后端入口，供员工浏览与兑换。", tags:["移动端"] }),
+
+  // —— 网关 ——
+  N("gateway", 370, 205, { icon:"🛡️", title:"API Gateway", sub:"Spring Cloud Gateway", port:"8080", tone:"#a855f7",
+    desc:"系统唯一入口。统一鉴权（校验 JWT）、路由转发、按角色做访问控制。", tags:["JWT 校验","路由","RBAC"] }),
+
+  // —— 后端微服务 ——
+  N("auth", 740, 30, { icon:"🔑", title:"Auth Service", sub:"认证授权", port:"8001", tone:"#3b82f6",
+    desc:"注册/登录、签发 JWT、令牌校验、角色与账号启停管理。", tags:["JWT","账号","角色"] }),
+  N("product", 740, 200, { icon:"📦", title:"Product Service", sub:"商品目录", port:"8002", tone:"#10b981",
+    desc:"商品 CRUD、二级分类、图片上传、库存管理（悲观锁防超卖）。", tags:["商品","分类","库存"] }),
+  N("points", 740, 370, { icon:"⭐", title:"Points Service", sub:"积分账户", port:"8003", tone:"#f59e0b",
+    desc:"积分余额、自动发放、管理员手动调整、积分变动流水。", tags:["余额","发放","流水"] }),
+  N("order", 740, 540, { icon:"🧾", title:"Order Service", sub:"兑换编排", port:"8004", tone:"#f43f5e",
+    desc:"下单兑换、订单状态/发货管理。跨服务编排者：协调扣库存与扣积分，失败走 Saga 补偿回滚。", tags:["兑换","Saga","状态机"] }),
+
+  // —— 基础设施 ——
+  N("mysql", 1120, 70, { icon:"🗄️", title:"MySQL", sub:"4 个独立 Schema", port:"3306", tone:"#64748b",
+    desc:"每个后端服务独享自己的 Schema，数据库层隔离。", tags:["每服务一库"] }),
+  N("redis", 1120, 240, { icon:"⚡", title:"Redis", sub:"缓存", tone:"#64748b",
+    desc:"各服务用于热点数据缓存，降低数据库压力。", tags:["缓存"] }),
+  N("sqs", 1120, 410, { icon:"📨", title:"SQS", sub:"消息队列", tone:"#64748b",
+    desc:"各服务异步消息/事件投递（如积分发放、订单事件）。", tags:["异步","解耦"] }),
+
+  // —— 建议补充的服务（幽灵节点）——
+  N("registry", 370, 560, { icon:"🧭", title:"服务发现 / 配置中心", sub:"Nacos / Consul", tone:"#a78bfa", ghost:true,
+    desc:"当前网关用硬编码 localhost:800x 寻址。建议引入注册中心 + 集中配置，支持弹性扩缩与多环境。" }),
+  N("observ", 30, 700, { icon:"📊", title:"可观测性平台", sub:"日志 / 指标 / 链路", tone:"#38bdf8", ghost:true,
+    desc:"目前缺统一监控。建议接入 OpenTelemetry + Prometheus + 链路追踪，定位跨服务调用与 Saga 异常。" }),
+  N("search", 740, 720, { icon:"🔍", title:"搜索服务", sub:"Elasticsearch", tone:"#34d399", ghost:true,
+    desc:"商品检索现走数据库 LIKE。建议独立检索服务，支持全文/分面/排序，减轻 Product 负载。" }),
+  N("storage", 1120, 580, { icon:"🪣", title:"对象存储", sub:"S3 / OSS", tone:"#94a3b8", ghost:true,
+    desc:"商品图片现由 Product 本地上传。建议外置对象存储 + CDN，实现无状态与水平扩展。" }),
+  N("notify", 1120, 740, { icon:"🔔", title:"通知服务", sub:"站内信 / 邮件 / 推送", tone:"#fb7185", ghost:true,
+    desc:"订单状态、积分变动暂无通知。建议消费 SQS 事件统一推送，与核心服务解耦。" }),
+];
+
+/* ===================== 边数据 ===================== */
+const flow = (id, s, t, sh, th, label, color) => ({
+  id, source:s, target:t, sourceHandle:sh, targetHandle:th, label,
+  type:"default", animated:true,
+  style:{ stroke:color, strokeWidth:2 },
+  labelBgPadding:[6,3], labelBgBorderRadius:6,
+  labelStyle:{ fill:"#e8eefc", fontWeight:600 }, labelBgStyle:{ fill:"#0c1424", fillOpacity:.92 },
+  markerEnd:{ type:MarkerType.ArrowClosed, color, width:18, height:18 },
+});
+const infra = (id, s, t, color) => ({
+  id, source:s, target:t, sourceHandle:"sr", targetHandle:"tl",
+  type:"default", animated:false,
+  style:{ stroke:color, strokeWidth:1.2, strokeOpacity:.45, strokeDasharray:"1 0" },
+  markerEnd:{ type:MarkerType.Arrow, color, width:14, height:14, strokeWidth:1 },
+});
+const suggest = (id, s, t, sh, th, label, color) => ({
+  id, source:s, target:t, sourceHandle:sh, targetHandle:th, label,
+  type:"default", animated:false,
+  style:{ stroke:color, strokeWidth:1.6, strokeDasharray:"6 5", strokeOpacity:.8 },
+  labelBgPadding:[6,3], labelBgBorderRadius:6,
+  labelStyle:{ fill:"#cbd5e1", fontWeight:600, fontStyle:"italic" }, labelBgStyle:{ fill:"#161f33", fillOpacity:.9 },
+  markerEnd:{ type:MarkerType.ArrowClosed, color, width:16, height:16 },
+});
+
+const initialEdges = [
+  // 客户端 → 网关
+  flow("e1","frontend","gateway","sr","tl","HTTP 请求","#22d3ee"),
+  flow("e2","android","gateway","sr","tl","HTTP 请求","#06b6d4"),
+  // 网关 → 后端
+  flow("e3","gateway","auth","sr","tl","JWT 校验 & 路由","#a855f7"),
+  flow("e4","gateway","product","sr","tl","路由转发","#a855f7"),
+  flow("e5","gateway","points","sr","tl","路由转发","#a855f7"),
+  flow("e6","gateway","order","sr","tl","路由转发","#a855f7"),
+  // 服务间业务调用
+  flow("e7","auth","points","sb","tt","注册时初始化积分","#3b82f6"),
+  flow("e8","order","product","st","tb","兑换·扣减库存","#f43f5e"),
+  flow("e9","order","points","st","sb","兑换·扣减积分","#fb7185"),
+  // 后端 → 基础设施（每服务一库 + 缓存 + MQ）
+  infra("m1","auth","mysql","#60a5fa"), infra("m2","product","mysql","#34d399"),
+  infra("m3","points","mysql","#fbbf24"), infra("m4","order","mysql","#fb7185"),
+  infra("r1","auth","redis","#60a5fa"), infra("r2","product","redis","#34d399"),
+  infra("r3","points","redis","#fbbf24"), infra("r4","order","redis","#fb7185"),
+  infra("q1","auth","sqs","#60a5fa"), infra("q2","product","sqs","#34d399"),
+  infra("q3","points","sqs","#fbbf24"), infra("q4","order","sqs","#fb7185"),
+  // 建议补充（虚线）
+  suggest("s1","registry","gateway","st","tb","建议：服务发现","#a78bfa"),
+  suggest("s2","observ","gateway","sr","tl","建议：全链路监控","#38bdf8"),
+  suggest("s3","search","product","tt","sb","建议：商品检索","#34d399"),
+  suggest("s4","storage","product","tl","sr","建议：图片外置","#94a3b8"),
+  suggest("s5","notify","sqs","tt","sb","建议：订阅事件","#fb7185"),
+];
+
+/* ===================== App ===================== */
+function App() {
+  const [nodes, , onNodesChange] = useNodesState(initialNodes);
+  const [edges, , onEdgesChange] = useEdgesState(initialEdges);
+  const mmColor = useCallback((n) => n.data?.tone || "#64748b", []);
+
+  return h(ReactFlow, {
+    nodes, edges, onNodesChange, onEdgesChange, nodeTypes,
+    fitView:true, fitViewOptions:{ padding:0.18 }, minZoom:0.25, maxZoom:1.8,
+    proOptions:{ hideAttribution:true }, defaultEdgeOptions:{ type:"default" },
+  },
+    h(Background, { variant:BackgroundVariant.Dots, gap:26, size:1.4, color:"#1c2740" }),
+    h(Controls, { showInteractive:false }),
+    h(MiniMap, { nodeColor:mmColor, nodeStrokeWidth:2, maskColor:"rgba(7,11,22,.7)", style:{ background:"#0b1120" } }),
+
+    // 标题面板
+    h(Panel, { position:"top-left" },
+      html`<div class="panel title-panel">
+        <h1>AWSomeShop · 微服务架构关系图</h1>
+        <p>企业内部员工福利积分商城。客户端经唯一网关进入，网关统一鉴权后路由到各后端微服务；兑换由订单服务编排扣库存与扣积分（Saga）。</p>
+        <div class="stat-row">
+          <div class="stat"><b>7</b><span>核心服务</span></div>
+          <div class="stat"><b>3</b><span>基础设施</span></div>
+          <div class="stat"><b>5</b><span>建议补充</span></div>
+        </div>
+      </div>`),
+
+    // 图例面板
+    h(Panel, { position:"top-right" },
+      html`<div class="panel legend">
+        <h3>图例</h3>
+        <div class="lg-item"><span class="swatch" style=${{background:"#22d3ee"}}></span>客户端 → 网关</div>
+        <div class="lg-item"><span class="swatch" style=${{background:"#a855f7"}}></span>网关鉴权 / 路由</div>
+        <div class="lg-item"><span class="swatch" style=${{background:"#f43f5e"}}></span>服务间业务调用</div>
+        <div class="lg-item"><span class="swatch" style=${{background:"#64748b",opacity:.6}}></span>持久化 / 缓存 / MQ</div>
+        <div class="lg-item"><span class="dash"></span>建议补充（尚未实现）</div>
+        <h3 style=${{marginTop:"14px"}}>分层</h3>
+        <div class="lg-item"><span class="dot" style=${{background:"#22d3ee"}}></span>客户端入口层</div>
+        <div class="lg-item"><span class="dot" style=${{background:"#a855f7"}}></span>API 网关</div>
+        <div class="lg-item"><span class="dot" style=${{background:"#10b981"}}></span>后端微服务</div>
+        <div class="lg-item"><span class="dot" style=${{background:"#64748b"}}></span>基础设施</div>
+      </div>`),
+  );
+}
+
+createRoot(document.getElementById("root")).render(
+  h(ReactFlowProvider, null, h(App))
+);
+</script>
+</body>
+</html>

@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.awsome.shop.order.repository.mysql.mapper.exchange.ExchangeRecordMapper">
+
+    <!-- 分页查询 -->
+    <select id="selectPage" resultType="com.awsome.shop.order.repository.mysql.po.exchange.ExchangeRecordPO">
+        SELECT id, order_no, product_id, product_name, product_desc, product_image_url,
+               user_id, employee_name, quantity, points_cost, exchange_time, status, tracking_number,
+               created_at, updated_at, created_by, updated_by, deleted, version
+        FROM exchange_record
+        WHERE deleted = 0
+        <if test="keyword != null and keyword != ''">
+            AND (order_no LIKE CONCAT('%', #{keyword}, '%')
+                 OR employee_name LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+        <if test="status != null and status != ''">
+            AND status = #{status}
+        </if>
+        <if test="startTime != null">
+            AND exchange_time &gt;= #{startTime}
+        </if>
+        <if test="endTime != null">
+            AND exchange_time &lt;= #{endTime}
+        </if>
+        ORDER BY exchange_time DESC
+    </select>
+
+    <!-- 按员工分页查询 -->
+    <select id="selectPageByUser" resultType="com.awsome.shop.order.repository.mysql.po.exchange.ExchangeRecordPO">
+        SELECT id, order_no, product_id, product_name, product_desc, product_image_url,
+               user_id, employee_name, quantity, points_cost, exchange_time, status, tracking_number,
+               created_at, updated_at, created_by, updated_by, deleted, version
+        FROM exchange_record
+        WHERE deleted = 0
+          AND user_id = #{userId}
+        <if test="status != null and status != ''">
+            AND status = #{status}
+        </if>
+        ORDER BY exchange_time DESC
+    </select>
+
+    <!-- 统计查询 -->
+    <select id="selectStats" resultType="com.awsome.shop.order.repository.mysql.po.exchange.ExchangeRecordStatsPO">
+        SELECT
+            COUNT(*) AS total_count,
+            SUM(CASE WHEN status = 'PENDING_DELIVERY' THEN 1 ELSE 0 END) AS pending_delivery_count,
+            SUM(CASE WHEN status = 'COMPLETED' THEN 1 ELSE 0 END) AS completed_count,
+            COALESCE(SUM(points_cost), 0) AS total_points_consumed
+        FROM exchange_record
+        WHERE deleted = 0
+    </select>
+
+</mapper>

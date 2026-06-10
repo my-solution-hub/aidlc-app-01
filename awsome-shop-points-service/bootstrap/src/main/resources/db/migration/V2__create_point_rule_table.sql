@@ -1,0 +1,20 @@
+CREATE TABLE `point_rule` (
+    `id`                BIGINT       NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+    `name`              VARCHAR(100) NOT NULL COMMENT '规则名称',
+    `description`       VARCHAR(500) DEFAULT NULL COMMENT '规则描述',
+    `rule_type`         VARCHAR(30)  NOT NULL COMMENT '规则类型: FIXED-固定发放, EVENT-事件触发, PERFORMANCE-绩效关联, HOLIDAY-节日触发',
+    `point_value_min`   INT          NOT NULL COMMENT '积分最小值',
+    `point_value_max`   INT          NOT NULL COMMENT '积分最大值(固定积分时与最小值相同)',
+    `trigger_condition` VARCHAR(200) DEFAULT NULL COMMENT '触发条件描述',
+    `status`            TINYINT      NOT NULL DEFAULT 1 COMMENT '状态 1-启用 0-禁用',
+    `created_at`        DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `updated_at`        DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    `created_by`        BIGINT       DEFAULT NULL COMMENT '创建人',
+    `updated_by`        BIGINT       DEFAULT NULL COMMENT '更新人',
+    `deleted`           TINYINT      NOT NULL DEFAULT 0 COMMENT '逻辑删除 0-未删除 1-已删除',
+    `version`           INT          NOT NULL DEFAULT 0 COMMENT '乐观锁版本号',
+    PRIMARY KEY (`id`),
+    INDEX `idx_name` (`name`),
+    INDEX `idx_rule_type` (`rule_type`),
+    INDEX `idx_status` (`status`)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '积分规则表';

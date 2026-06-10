@@ -1,0 +1,56 @@
+# ===== AWSomeShop 根目录 .gitignore =====
+# 各子项目（awsome-shop-*）有各自的 .gitignore；本文件覆盖根目录工作区与跨项目产物。
+
+# ---------- 构建产物 ----------
+# Java / Maven
+**/target/
+*.jar
+!**/gradle/wrapper/gradle-wrapper.jar
+*.class
+
+# 前端 / Node
+**/node_modules/
+**/dist/
+**/.vite/
+*.tsbuildinfo
+
+# Android / Gradle
+**/.gradle/
+**/build/
+*.apk
+*.aab
+local.properties
+
+# ---------- 本机配置 / 密钥 ----------
+.env
+.env.local
+*.local
+**/application-local-override.*
+
+# ---------- 日志 / 运行时 ----------
+*.log
+/tmp/awsome/
+*.pid
+
+# ---------- IDE ----------
+.idea/
+.vscode/
+*.iml
+.DS_Store
+
+# ---------- 工具产物 ----------
+# graphify 知识图谱输出
+graphify-out/
+graphify-corpus/
+
+# AI-DLC 流程文档（如需归档可移除此行）
+# aidlc-docs/
+
+# 本次开发产生的规划/审计临时文件（按需保留）
+task_plan.md
+findings.md
+progress.md
+
+# ---------- 其它 ----------
+*.swp
+*~

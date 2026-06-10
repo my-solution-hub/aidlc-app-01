@@ -339,7 +339,7 @@ export class EksStack extends cdk.Stack {
     clusterSg.addIngressRule(
       albSecurityGroup,
       ec2.Port.tcp(8088),
-      'Allow ALB → gateway pods (port 8088)',
+      'Allow ALB to reach gateway pods on port 8088',
     );
 
     // TargetGroupBinding (managed by AWS LB Controller's CRD).

@@ -211,6 +211,45 @@ export class EksStack extends cdk.Stack {
     sharedConfig.node.addDependency(namespaceManifest);
 
     // ─────────────────────────────────────────────
+    // Per-service DB Secrets — derived from Aurora master secret + service-specific schema name.
+    // K8s Secrets are populated at deploy time via CFN dynamic references
+    // (resolve:secretsmanager) so plaintext doesn't appear in CDK source/template.
+    // ─────────────────────────────────────────────
+
+    const dbMasterSecret = dbCluster.secret!;
+    const dbHost = dbCluster.clusterEndpoint.hostname;
+    const dbPort = cdk.Token.asString(dbCluster.clusterEndpoint.port);
+
+    const dbServices: Array<{ secretName: string; schema: string }> = [
+      { secretName: 'auth-db-secret', schema: 'awsome_shop_auth' },
+      { secretName: 'product-db-secret', schema: 'awsome_shop_product' },
+      { secretName: 'points-db-secret', schema: 'awsome_shop_point' },
+      { secretName: 'order-db-secret', schema: 'awsome_shop_order' },
+    ];
+
+    const usernameRef = dbMasterSecret.secretValueFromJson('username').unsafeUnwrap();
+    const passwordRef = dbMasterSecret.secretValueFromJson('password').unsafeUnwrap();
+
+    for (const { secretName, schema } of dbServices) {
+      const url =
+        `jdbc:mysql://${dbHost}:${dbPort}/${schema}` +
+        `?useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC&useSSL=true&allowPublicKeyRetrieval=true`;
+
+      const secret = this.cluster.addManifest(`DbSecret-${secretName}`, {
+        apiVersion: 'v1',
+        kind: 'Secret',
+        type: 'Opaque',
+        metadata: { name: secretName, namespace: 'awsome-shop' },
+        stringData: {
+          url,
+          username: usernameRef,
+          password: passwordRef,
+        },
+      });
+      secret.node.addDependency(namespaceManifest);
+    }
+
+    // ─────────────────────────────────────────────
     // Amazon CloudWatch Observability Addon (Application Signals)
     //
     // The addon creates several SAs in amazon-cloudwatch namespace

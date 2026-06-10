@@ -1,22 +1,22 @@
-# Production Environment Configuration
-# 生产环境配置
+# Production Environment Configuration (EKS)
+# 生产环境配置 - Auth Service
 
 # 说明:
-# - 日志输出到文件 logs/app.log，JSON 格式 + 审计日志 logs/audit.log
-# - 日志级别: 项目包 INFO，框架包 WARN
-# - 使用 AsyncAppender 提升性能
-# - 生产环境配置必须使用环境变量，避免在代码中硬编码敏感信息
-# - 所有环境变量必须在部署前配置，否则应用启动失败
+# - 部署在 EKS，DB / Redis 通过 K8s Secret 与 ConfigMap 注入
+# - SPRING_DATASOURCE_URL / SPRING_DATASOURCE_USERNAME / SPRING_DATASOURCE_PASSWORD
+#   由 deployment.yaml 从 auth-db-secret 注入（覆盖 spring.datasource 下面的占位）
+# - SPRING_DATA_REDIS_HOST / SPRING_DATA_REDIS_PORT 由 deployment.yaml 从 shared-config 注入
+# - JWT_SECRET / ENCRYPTION_KEY 当前用 dev 默认值便于跑通；正式环境需通过 env 覆盖
+
+server:
+  port: 8001
 
 spring:
-  # Redis 配置
+  # Redis 配置 (host/port 由 env 注入)
   data:
     redis:
-      host: ${REDIS_HOST}
-      port: ${REDIS_PORT:6379}
       database: ${REDIS_DATABASE:0}
-      password: ${REDIS_PASSWORD}
-      # 生产环境增加连接池配置
+      password: ${REDIS_PASSWORD:}
       lettuce:
         pool:
           max-active: 20
@@ -24,15 +24,10 @@ spring:
           min-idle: 5
           max-wait: 5000ms
 
-  # 数据源配置
+  # 数据源 (url/username/password 由 env 注入)
   datasource:
-    url: jdbc:mysql://${DB_HOST}:${DB_PORT:3306}/${DB_NAME}?useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC&useSSL=true&requireSSL=true
-    username: ${DB_USERNAME}
-    password: ${DB_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
     type: com.alibaba.druid.pool.DruidDataSource
-
-    # Druid 连接池配置 (生产环境)
     druid:
       initial-size: 10
       min-idle: 5
@@ -45,34 +40,24 @@ spring:
       time-between-eviction-runs-millis: 60000
       min-evictable-idle-time-millis: 300000
 
-      # SQL 监控配置
-      filter:
-        stat:
-          enabled: true
-          log-slow-sql: true
-          slow-sql-millis: 2000
-        wall:
-          enabled: true
+# 日志配置
+logging:
+  level:
+    root: INFO
+    com.awsome: INFO
 
 # Security 配置
 security:
   jwt:
-    # JWT 签名密钥 (生产环境必须使用环境变量，禁止硬编码)
-    secret: ${JWT_SECRET}
-    # JWT Token 过期时间 (单位: 秒，默认2小时)
+    secret: ${JWT_SECRET:awsomeshop-prod-jwt-secret-change-me-must-be-at-least-256-bits-long-for-hmac-sha256}
     expiration: ${JWT_EXPIRATION:7200}
-    # JWT Token 发行者
     issuer: ${JWT_ISSUER:awsome-shop-auth-service}
-  # 防暴力破解配置
   login:
-    # 登录失败最大次数
     max-failed-attempts: ${MAX_FAILED_ATTEMPTS:5}
-    # 账号锁定时长 (单位: 秒，默认30分钟)
     lock-duration: ${LOCK_DURATION:1800}
 
 # Shop 配置
 shop:
   security:
     encryption:
-      # AES-256 加密密钥 (32字节，生产环境必须使用环境变量，禁止硬编码)
-      key: ${ENCRYPTION_KEY}
+      key: ${ENCRYPTION_KEY:awsomeshop32byteEncryptionKeyAa01}

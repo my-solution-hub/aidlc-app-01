@@ -7,7 +7,7 @@ WORKDIR /build
 
 COPY . .
 RUN --mount=type=cache,target=/root/.m2 \
-    mvn -B -DskipTests clean package
+    mvn -B -Dmaven.test.skip=true clean package
 
 # ---- Runtime stage ----
 FROM eclipse-temurin:21-jre

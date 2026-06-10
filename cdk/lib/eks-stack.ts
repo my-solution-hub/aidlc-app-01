@@ -326,6 +326,10 @@ export class EksStack extends cdk.Stack {
       port: 80,
       protocol: elbv2.ApplicationProtocol.HTTP,
       defaultTargetGroups: [gatewayTargetGroup],
+      // open=false: do NOT auto-add 0.0.0.0/0 to the SG. The ALB SG is
+      // already locked down to the CloudFront origin-facing prefix list,
+      // and we want to keep it that way.
+      open: false,
     });
 
     // Allow ALB SG → cluster SG on the gateway pod port so traffic

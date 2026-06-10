@@ -47,6 +47,7 @@ export interface UserDTO {
   nickname: string;
   role: string;
   status: string;
+  employeeId?: string;
   lastLoginAt: string;
   createdAt: string;
 }
@@ -54,6 +55,9 @@ export interface UserDTO {
 export interface ListUserRequest {
   page?: number;
   size?: number;
+  username?: string;
+  role?: string;
+  status?: string;
 }
 
 export interface CreateUserRequest {
@@ -61,6 +65,13 @@ export interface CreateUserRequest {
   password: string;
   nickname: string;
   role: string;
+  employeeId?: string;
+}
+
+export interface UpdateUserRequest {
+  nickname?: string;
+  role?: string;
+  employeeId?: string;
 }
 
 // ---- Product ----
@@ -215,6 +226,9 @@ export interface ExchangeRecordDTO {
   orderNo: string;
   productName: string;
   productDesc: string;
+  productImageUrl?: string;
+  userId?: number;
+  quantity?: number;
   employeeName: string;
   pointsCost: number;
   exchangeTime: string;
@@ -260,4 +274,11 @@ export interface ListExchangeRecordRequest {
   status?: string;
   startTime?: string;
   endTime?: string;
+}
+
+// ---- File ----
+
+export interface UploadResultDTO {
+  filename: string;
+  url: string;
 }

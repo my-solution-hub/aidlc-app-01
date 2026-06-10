@@ -174,9 +174,10 @@ jobs:
       - name: Build (Vite)
         working-directory: awsome-shop-frontend
         env:
-          # Empty base URL → axios uses relative paths → CloudFront /api/*
-          # behavior routes to the ALB → gateway. No nginx in this path.
-          VITE_API_BASE_URL: ""
+          # "/" → axios issues same-origin requests against CloudFront,
+          # which forwards /api/* to the ALB. Empty string would fall
+          # through `||` to the localhost dev fallback in request.ts.
+          VITE_API_BASE_URL: "/"
         run: npm run build
 
       - name: Sync to S3

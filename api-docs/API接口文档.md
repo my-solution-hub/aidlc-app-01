@@ -1,8 +1,31 @@
 # AWSomeShop 后端 API 接口文档（REST / 完整版）
 
 > 风格：RESTful · 统一经 API 网关访问（默认 `http://localhost:8088`）
-> 字段定义为权威来源：各服务运行时 springdoc 生成的 OpenAPI 3（`api-docs/*-openapi.json`）；交互式文档见 `http://localhost:8088/swagger-ui.html`（右上角下拉切换服务）。
 > 字段标注 `*` 表示必填。`?` 查询参数；`{}` 路径参数。
+
+## 📎 标准 OpenAPI 规范（机器可读，权威来源）
+
+本文档的端点与字段均以下列 OpenAPI 3 规范为准：
+
+| 文件 | 说明 |
+|---|---|
+| **`awsomeshop-openapi.yaml`** | **合并版（推荐）**：含网关前缀 `/auth /product /point /order`，4 服务全部端点，可直接导入 Postman/Apifox/ReDoc |
+| `awsomeshop-openapi.json` | 同上，JSON 格式 |
+| `{auth,product,point,order}-openapi.json` | 各服务单独的 OpenAPI（路径不含网关前缀，为服务本地视图）|
+| `http://localhost:8088/swagger-ui.html` | 在线交互式（右上角下拉切换 4 服务，可试调）|
+
+## 网关路径前缀（重要）
+
+经网关访问时，每个服务的接口都带**服务前缀**，网关 `StripPrefix` 后转发：
+
+| 服务 | 网关前缀 | 示例（网关地址 → 服务实际地址）|
+|---|---|---|
+| auth | `/auth` | `POST /auth/api/auth/login` → auth `/api/auth/login` |
+| product | `/product` | `GET /product/api/products` → product `/api/products` |
+| point | `/point` | `GET /point/api/points/balance` → point `/api/points/balance` |
+| order | `/order` | `POST /order/api/orders` → order `/api/orders` |
+
+> 下文各端点路径以**服务内路径**（不含前缀）书写，便于阅读；经网关调用时请在前面加对应服务前缀（如 `/product` + `/api/products` = `/product/api/products`）。`awsomeshop-openapi.yaml` 中已是带前缀的完整路径。
 
 ## 通用约定
 
@@ -241,6 +264,9 @@
 ---
 
 ## 附：在线 / 机器可读文档
+- **统一规范（权威）**：`awsomeshop-openapi.yaml` / `awsomeshop-openapi.json`（与本文件同目录）
+  - 合并 4 服务全部端点（38 路径 / 45 接口 / 72 schema），路径均带网关前缀（`/auth/api/...`、`/product/api/...`、`/point/api/...`、`/order/api/...`），`servers = http://localhost:8088`
+  - 可直接导入 Postman / Apifox / ReDoc，或用 openapi-generator 生成客户端 SDK
 - 统一 Swagger UI（网关，下拉切换 4 服务）：`http://localhost:8088/swagger-ui.html`
-- 各服务 OpenAPI JSON：`GET http://localhost:{8001-8004}/v3/api-docs`，离线快照见 `api-docs/*-openapi.json`
-- 可导入 Postman / Apifox / ReDoc，或用 openapi-generator 生成客户端 SDK
+- 各服务 OpenAPI JSON：`GET http://localhost:{8001-8004}/v3/api-docs`，离线快照见 `{auth,product,point,order}-openapi.json`（不含网关前缀）
+- 重新导出方式见 `README.md`

@@ -77,7 +77,7 @@
 - [x] 前端 src/services/api/*.ts 全部改 REST 动词/路径 + request.ts 加 patch
 - [x] 5 后端 mvn BUILD SUCCESS + 前端 npm build ✅
 - [x] codex 验证 5 项一致性：前后端路径/动词匹配、order client、gateway 路由、文档；发现 4 处不一致已全部修复并复验 RESOLVED
-- [x] 生成标准 API 文档：API接口文档.md（+ 各服务 springdoc /v3/api-docs 运行时自动生成）
+- [x] 生成标准 API 文档：api-docs/API接口文档.md（+ 各服务 springdoc /v3/api-docs 运行时自动生成）
 
 ## 最终状态
 前后端 API 已完整 REST 化并一致；标准接口文档已生成。运行时 OpenAPI 由 springdoc 自动暴露。

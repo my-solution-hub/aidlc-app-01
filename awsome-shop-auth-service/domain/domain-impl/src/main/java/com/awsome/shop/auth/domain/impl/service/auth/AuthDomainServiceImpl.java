@@ -116,10 +116,15 @@ public class AuthDomainServiceImpl implements AuthDomainService {
         String username = jwtService.getUsernameFromToken(token);
         String role = jwtService.getRoleFromToken(token);
 
-        // 旧 token 加入黑名单
-        tokenCacheService.addToBlacklist(token, jwtService.getExpirationSeconds());
-
         // 签发新 token
-        return jwtService.generateToken(userId, username, role);
+        String newToken = jwtService.generateToken(userId, username, role);
+
+        // 仅当新旧 token 不同时才将旧 token 加入黑名单
+        // （同一秒内签发的 token 可能相同，避免误杀）
+        if (!newToken.equals(token)) {
+            tokenCacheService.addToBlacklist(token, jwtService.getExpirationSeconds());
+        }
+
+        return newToken;
     }
 }

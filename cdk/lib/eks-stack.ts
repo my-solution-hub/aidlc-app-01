@@ -178,24 +178,22 @@ export class EksStack extends cdk.Stack {
     // We create a placeholder ALB for CloudFront to reference
     // ─────────────────────────────────────────────
 
-    // ALB Security Group — open to internet (CloudFront origin access
-    // is enforced via custom origin header validated by the application).
-    // NOTE: CloudFront managed prefix list exceeds SG rule limits (~130 entries),
-    // so we use open ingress + origin header verification instead.
+    // AWS-managed prefix list for CloudFront origin-facing IPs.
+    // The prefix list consumes ~55 SG rule slots per reference, so we use
+    // a single rule with port range 80-443 to stay within the default 60-rule quota.
+    const cloudfrontPrefixList = ec2.PrefixList.fromLookup(this, 'CloudFrontPrefixList', {
+      prefixListName: 'com.amazonaws.global.cloudfront.origin-facing',
+    });
+
     const albSecurityGroup = new ec2.SecurityGroup(this, 'AlbSecurityGroup', {
       vpc,
-      description: 'Security group for ALB - internet-facing',
+      description: 'Security group for ALB - CloudFront only',
       allowAllOutbound: true,
     });
     albSecurityGroup.addIngressRule(
-      ec2.Peer.anyIpv4(),
-      ec2.Port.tcp(80),
-      'Allow HTTP',
-    );
-    albSecurityGroup.addIngressRule(
-      ec2.Peer.anyIpv4(),
-      ec2.Port.tcp(443),
-      'Allow HTTPS',
+      ec2.Peer.prefixList(cloudfrontPrefixList.prefixListId),
+      ec2.Port.tcpRange(80, 443),
+      'Allow HTTP/HTTPS from CloudFront only',
     );
 
     const alb = new elbv2.ApplicationLoadBalancer(this, 'Alb', {

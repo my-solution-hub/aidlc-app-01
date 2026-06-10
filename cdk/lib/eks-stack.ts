@@ -262,8 +262,9 @@ export class EksStack extends cdk.Stack {
     });
 
     // ─────────────────────────────────────────────
-    // ALB reference (created by Ingress controller)
-    // We create a placeholder ALB for CloudFront to reference
+    // ALB — public ingress for CloudFront origin.
+    // SG locks ingress to CloudFront's origin-facing prefix list
+    // so the ALB isn't directly hit from arbitrary internet traffic.
     // ─────────────────────────────────────────────
 
     // AWS-managed prefix list for CloudFront origin-facing IPs.
@@ -293,6 +294,68 @@ export class EksStack extends cdk.Stack {
     });
 
     this.alb = alb;
+
+    // ─────────────────────────────────────────────
+    // ALB → Gateway pods via TargetGroupBinding
+    //
+    // Pattern: AWS LB Controller's TargetGroupBinding CRD lets us
+    // manually own the ALB + listener + target group, while the
+    // controller keeps the target group's IP membership in sync with
+    // the K8s service's pod IPs. CloudFront's origin already points
+    // at this ALB, so once the listener answers we're end-to-end
+    // without touching the CDN stack.
+    // ─────────────────────────────────────────────
+
+    const gatewayTargetGroup = new elbv2.ApplicationTargetGroup(this, 'GatewayTargetGroup', {
+      vpc,
+      port: 8088,
+      protocol: elbv2.ApplicationProtocol.HTTP,
+      targetType: elbv2.TargetType.IP,
+      healthCheck: {
+        path: '/actuator/health/readiness',
+        port: '8088',
+        protocol: elbv2.Protocol.HTTP,
+        interval: cdk.Duration.seconds(15),
+        healthyThresholdCount: 2,
+        unhealthyThresholdCount: 3,
+      },
+      deregistrationDelay: cdk.Duration.seconds(30),
+    });
+
+    alb.addListener('AlbHttpListener', {
+      port: 80,
+      protocol: elbv2.ApplicationProtocol.HTTP,
+      defaultTargetGroups: [gatewayTargetGroup],
+    });
+
+    // Allow ALB SG → cluster SG on the gateway pod port so traffic
+    // forwarded by the ALB can actually reach pods running on the
+    // managed node group.
+    const clusterSg = ec2.SecurityGroup.fromSecurityGroupId(
+      this,
+      'EksClusterPrimarySg',
+      this.cluster.clusterSecurityGroupId,
+    );
+    clusterSg.addIngressRule(
+      albSecurityGroup,
+      ec2.Port.tcp(8088),
+      'Allow ALB → gateway pods (port 8088)',
+    );
+
+    // TargetGroupBinding (managed by AWS LB Controller's CRD).
+    // The controller watches awsome-shop/gateway-service and keeps
+    // the target group's registered IPs in sync with the pod IPs.
+    const gatewayTgb = this.cluster.addManifest('GatewayTargetGroupBinding', {
+      apiVersion: 'elbv2.k8s.aws/v1beta1',
+      kind: 'TargetGroupBinding',
+      metadata: { name: 'gateway-tgb', namespace: 'awsome-shop' },
+      spec: {
+        serviceRef: { name: 'gateway-service', port: 8088 },
+        targetGroupARN: gatewayTargetGroup.targetGroupArn,
+        targetType: 'ip',
+      },
+    });
+    gatewayTgb.node.addDependency(namespaceManifest);
 
     // ─────────────────────────────────────────────
     // Cleanup: Remove Kubernetes resources on stack deletion

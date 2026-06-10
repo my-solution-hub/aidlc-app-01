@@ -55,12 +55,19 @@ export class EksStack extends cdk.Stack {
     // ECR Repositories
     // ─────────────────────────────────────────────
 
-    const services = ['api-gateway', 'auth-service', 'product-service', 'points-service', 'order-service'];
+    const services = [
+      'awsome-shop-gateway-service',
+      'awsome-shop-auth-service',
+      'awsome-shop-product-service',
+      'awsome-shop-points-service',
+      'awsome-shop-order-service',
+      'awsome-shop-frontend',
+    ];
 
     const repos: Record<string, ecr.Repository> = {};
     for (const svc of services) {
       repos[svc] = new ecr.Repository(this, `Ecr-${svc}`, {
-        repositoryName: `awsomeshop/${svc}`,
+        repositoryName: svc,
         removalPolicy: cdk.RemovalPolicy.DESTROY,
         emptyOnDelete: true,
         lifecycleRules: [
@@ -202,6 +209,44 @@ export class EksStack extends cdk.Stack {
     });
 
     this.alb = alb;
+
+    // ─────────────────────────────────────────────
+    // Cleanup: Remove Kubernetes resources on stack deletion
+    // This ensures ALBs/NLBs created by Ingress are deleted
+    // before CloudFormation tries to remove VPC/subnets.
+    // ─────────────────────────────────────────────
+
+    const cleanupManifest = this.cluster.addManifest('CleanupJob', {
+      apiVersion: 'batch/v1',
+      kind: 'Job',
+      metadata: {
+        name: 'pre-delete-cleanup',
+        namespace: 'awsome-shop',
+        annotations: {
+          'helm.sh/hook': 'pre-delete',
+        },
+      },
+      spec: {
+        template: {
+          spec: {
+            serviceAccountName: 'awsome-shop-sa',
+            containers: [
+              {
+                name: 'cleanup',
+                image: 'bitnami/kubectl:latest',
+                command: [
+                  '/bin/sh',
+                  '-c',
+                  'kubectl delete ingress --all -n awsome-shop --ignore-not-found && kubectl delete svc --field-selector spec.type=LoadBalancer -n awsome-shop --ignore-not-found && sleep 60',
+                ],
+              },
+            ],
+            restartPolicy: 'Never',
+          },
+        },
+        backoffLimit: 1,
+      },
+    });
 
     // ─────────────────────────────────────────────
     // Outputs

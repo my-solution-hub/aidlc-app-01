@@ -4,6 +4,16 @@ on:
   push:
     branches:
       - release
+  workflow_dispatch:
+    inputs:
+      deploy-all:
+        description: 'Force deploy all components'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'false'
+          - 'true'
 
 permissions:
   id-token: write
@@ -52,7 +62,7 @@ jobs:
   # ============================================================
   deploy-cdk:
     needs: detect-changes
-    if: needs.detect-changes.outputs.cdk == 'true'
+    if: needs.detect-changes.outputs.cdk == 'true' || github.event.inputs.deploy-all == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

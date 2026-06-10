@@ -66,3 +66,148 @@ logging:
   level:
     root: INFO
     com.awsome: INFO
+
+# ==================== Gateway routing (docker) ====================
+# Spring Cloud Gateway routes are a list structure and cannot be supplied
+# purely via env vars, so they are defined here for the docker profile.
+# Backend service base URLs default to the compose service hostnames on the
+# internal container port (8081) and can be overridden via env, e.g.
+# GATEWAY_SERVICES_AUTH, GATEWAY_AUTH_VALIDATE_URL.
+gateway:
+  services:
+    auth: ${GATEWAY_SERVICES_AUTH:http://auth-service:8081}
+    product: ${GATEWAY_SERVICES_PRODUCT:http://product-service:8081}
+    point: ${GATEWAY_SERVICES_POINT:http://points-service:8081}
+    order: ${GATEWAY_SERVICES_ORDER:http://order-service:8081}
+  auth:
+    validate-url: ${GATEWAY_AUTH_VALIDATE_URL:http://auth-service:8081/api/internal/auth/validate}
+
+spring.cloud.gateway.server.webflux.routes:
+  # ---- API Docs ----
+  - id: auth-docs
+    uri: ${gateway.services.auth}
+    predicates:
+      - Path=/v3/api-docs/auth
+    filters:
+      - RewritePath=/v3/api-docs/auth, /v3/api-docs
+      - SwaggerServersRewrite
+    metadata:
+      auth-required: false
+  - id: product-docs
+    uri: ${gateway.services.product}
+    predicates:
+      - Path=/v3/api-docs/product
+    filters:
+      - RewritePath=/v3/api-docs/product, /v3/api-docs
+      - SwaggerServersRewrite
+    metadata:
+      auth-required: false
+  - id: point-docs
+    uri: ${gateway.services.point}
+    predicates:
+      - Path=/v3/api-docs/point
+    filters:
+      - RewritePath=/v3/api-docs/point, /v3/api-docs
+      - SwaggerServersRewrite
+    metadata:
+      auth-required: false
+  - id: order-docs
+    uri: ${gateway.services.order}
+    predicates:
+      - Path=/v3/api-docs/order
+    filters:
+      - RewritePath=/v3/api-docs/order, /v3/api-docs
+      - SwaggerServersRewrite
+    metadata:
+      auth-required: false
+  # ---- Public REST (no auth) ----
+  # Most specific public paths first so they win over the authenticated
+  # per-service routes below (gateway evaluates routes in order).
+  - id: auth-public
+    uri: ${gateway.services.auth}
+    predicates:
+      - Path=/api/auth/login,/api/auth/register,/api/auth/logout
+    metadata:
+      auth-required: false
+  - id: product-public
+    uri: ${gateway.services.product}
+    predicates:
+      - Path=/api/products/**,/api/categories/**,/api/files/**
+      - Method=GET
+    metadata:
+      auth-required: false
+  # ---- Authenticated REST (auth required) ----
+  # Grouped by target service using the most-specific prefix per service.
+  # Admin routes (/api/admin/**) only need auth-required: true; the
+  # AuthenticationGatewayFilter enforces role==ADMIN via the "/admin/"
+  # path segment.
+  - id: auth-service
+    uri: ${gateway.services.auth}
+    predicates:
+      - Path=/api/users/**,/api/admin/users/**
+    metadata:
+      auth-required: true
+  - id: product-service
+    uri: ${gateway.services.product}
+    predicates:
+      - Path=/api/products/**,/api/categories/**,/api/files/**,/api/admin/products/**,/api/admin/categories/**
+    metadata:
+      auth-required: true
+  - id: points-service
+    uri: ${gateway.services.point}
+    predicates:
+      - Path=/api/points/**,/api/admin/points/**,/api/admin/point-rules/**
+    metadata:
+      auth-required: true
+  - id: order-service
+    uri: ${gateway.services.order}
+    predicates:
+      - Path=/api/orders/**,/api/admin/orders/**
+    metadata:
+      auth-required: true
+  # ---- Service-prefix routes (used by the frontend: /auth, /product, /point, /order) ----
+  - id: auth-proxy
+    uri: ${gateway.services.auth}
+    predicates:
+      - Path=/auth/**
+    filters:
+      - StripPrefix=1
+    metadata:
+      auth-required: false
+  - id: product-proxy
+    uri: ${gateway.services.product}
+    predicates:
+      - Path=/product/**
+    filters:
+      - StripPrefix=1
+    metadata:
+      auth-required: false
+  - id: point-proxy
+    uri: ${gateway.services.point}
+    predicates:
+      - Path=/point/**
+    filters:
+      - StripPrefix=1
+    metadata:
+      auth-required: false
+  - id: order-proxy
+    uri: ${gateway.services.order}
+    predicates:
+      - Path=/order/**
+    filters:
+      - StripPrefix=1
+    metadata:
+      auth-required: false
+
+# SpringDoc - Swagger aggregation
+springdoc:
+  swagger-ui:
+    urls:
+      - name: auth
+        url: /v3/api-docs/auth
+      - name: product
+        url: /v3/api-docs/product
+      - name: point
+        url: /v3/api-docs/point
+      - name: order
+        url: /v3/api-docs/order

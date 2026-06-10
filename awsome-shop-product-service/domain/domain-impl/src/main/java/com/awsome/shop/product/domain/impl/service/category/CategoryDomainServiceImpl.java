@@ -1,5 +1,6 @@
 package com.awsome.shop.product.domain.impl.service.category;
 
+import com.awsome.shop.product.common.enums.CategoryErrorCode;
 import com.awsome.shop.product.common.enums.SampleErrorCode;
 import com.awsome.shop.product.common.exception.BusinessException;
 import com.awsome.shop.product.domain.model.category.CategoryEntity;
@@ -38,6 +39,15 @@ public class CategoryDomainServiceImpl implements CategoryDomainService {
     @Transactional
     public CategoryEntity create(String name, Long parentId, String icon,
                                  Integer sortOrder, Integer status, String description) {
+        // BR-PROD-003 / CAT_002: 最大层级深度 2 级
+        // parentId 非空时校验父分类存在，且父分类必须是一级分类（自身 parentId 为 null）
+        if (parentId != null) {
+            CategoryEntity parent = getById(parentId);
+            if (parent.getParentId() != null) {
+                throw new BusinessException(CategoryErrorCode.LEVEL_EXCEEDED);
+            }
+        }
+
         CategoryEntity entity = new CategoryEntity();
         entity.setName(name);
         entity.setParentId(parentId);

@@ -4,6 +4,8 @@ import com.awsome.shop.point.common.dto.PageResult;
 import com.awsome.shop.point.domain.model.account.PointAccountEntity;
 import com.awsome.shop.point.domain.model.account.PointTransactionEntity;
 
+import java.util.List;
+
 /**
  * 积分账户仓储接口（Port）
  */
@@ -11,6 +13,9 @@ public interface PointAccountRepository {
 
     /** 按用户查询账户，不存在返回 null */
     PointAccountEntity findByUserId(Long userId);
+
+    /** 查询所有已有账户的用户ID */
+    List<Long> findAllUserIds();
 
     /** 创建账户 */
     PointAccountEntity create(PointAccountEntity account);

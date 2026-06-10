@@ -17,5 +17,7 @@ public class RegisterRequest {
 
     private String nickname;
 
+    private String employeeId;
+
     private String role = "EMPLOYEE";
 }

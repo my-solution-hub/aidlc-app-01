@@ -5,6 +5,8 @@ import NotFound from "../pages/NotFound";
 import EmployeeLayout from "../components/Layout/EmployeeLayout";
 import AdminLayout from "../components/Layout/AdminLayout";
 import ShopHome from "../pages/ShopHome";
+import ProductDetail from "../pages/ProductDetail";
+import ConfirmRedemption from "../pages/ConfirmRedemption";
 import MyOrders from "../pages/MyOrders";
 import MyPoints from "../pages/MyPoints";
 import Dashboard from "../pages/Dashboard";
@@ -35,6 +37,8 @@ const router = createBrowserRouter([
     ),
     children: [
       { index: true, element: <ShopHome /> },
+      { path: "products/:id", element: <ProductDetail /> },
+      { path: "orders/confirm/:productId", element: <ConfirmRedemption /> },
       { path: "orders", element: <MyOrders /> },
       { path: "points", element: <MyPoints /> },
     ],

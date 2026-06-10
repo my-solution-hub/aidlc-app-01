@@ -71,9 +71,31 @@
     "sold": "Redeemed",
     "soldUnit": "",
     "redeem": "Redeem",
+    "redeemNow": "Redeem Now",
     "redeemSuccess": "Redeemed successfully",
     "redeemFailed": "Redemption failed",
     "noProducts": "No products available",
+    "back": "Back",
+    "productDetail": {
+      "category": "Category",
+      "stock": "Stock",
+      "description": "Description",
+      "soldOut": "Sold Out",
+      "offShelf": "Off Shelf",
+      "loadFailed": "Failed to load product"
+    },
+    "confirmRedemption": {
+      "title": "Confirm Redemption",
+      "subtitle": "Please confirm your redemption details",
+      "product": "Product",
+      "pointsCost": "Points Required",
+      "currentBalance": "Current Balance",
+      "remaining": "Balance After",
+      "insufficient": "Insufficient points",
+      "confirm": "Confirm Redemption",
+      "cancel": "Cancel",
+      "loadFailed": "Failed to load redemption details"
+    },
     "orders": {
       "title": "My Orders",
       "subtitle": "View your points redemption orders",

@@ -65,8 +65,21 @@ public class ExchangeRecordApplicationServiceImpl implements ExchangeRecordAppli
 
     @Override
     public ExchangeRecordDTO updateStatus(UpdateExchangeStatusRequest request) {
+        // 取消前读取原记录，用于退款补偿（BR-ORDER-007）
+        ExchangeRecordEntity before = exchangeRecordDomainService.getById(request.getId());
+        boolean cancelling = "CANCELLED".equals(request.getStatus())
+                && !"CANCELLED".equals(before.getStatus());
+
         ExchangeRecordEntity updated = exchangeRecordDomainService.updateStatus(
                 request.getId(), request.getStatus(), request.getTrackingNumber());
+
+        // 取消时自动退还积分 + 恢复库存（BR-ORDER-007）。
+        // 状态已更新；补偿失败仅记录日志，需人工介入，不回滚状态。
+        if (cancelling) {
+            safeRefundPoints(before.getUserId(), before.getPointsCost());
+            int qty = before.getQuantity() == null ? 1 : before.getQuantity();
+            safeRestoreStock(before.getProductId(), qty);
+        }
         return toDTO(updated);
     }
 
@@ -84,39 +97,37 @@ public class ExchangeRecordApplicationServiceImpl implements ExchangeRecordAppli
         String description = product.path("description").asText(null);
         int pointsCost = pointsPrice * quantity;
 
-        boolean stockDeducted = false;
-        boolean pointsDeducted = false;
+        // Saga 执行顺序：先扣积分，再扣库存（BR-ORDER-003）。
+        // 原因：积分是虚拟资产，回滚更安全可靠；库存扣减失败时回滚积分。
         try {
-            // 1. 扣减库存
-            exchangeRemoteClient.deductStock(productId, quantity);
-            stockDeducted = true;
-
-            // 2. 扣减积分
-            try {
-                exchangeRemoteClient.deductPoints(userId, pointsCost);
-                pointsDeducted = true;
-            } catch (SagaException e) {
-                // 补偿：恢复库存
-                safeRestoreStock(productId, quantity);
-                throw new BusinessException(OrderErrorCode.DEDUCT_POINTS_FAILED, e.getMessage());
-            }
-
-            // 3. 持久化兑换记录
-            ExchangeRecordEntity entity = buildEntity(request, productId, productName,
-                    description, imageUrl, quantity, pointsCost);
-            try {
-                ExchangeRecordEntity saved = exchangeRecordDomainService.save(entity);
-                return toDTO(saved);
-            } catch (Exception e) {
-                // 补偿：恢复库存 + 退还积分
-                safeRestoreStock(productId, quantity);
-                safeRefundPoints(userId, pointsCost);
-                log.error("兑换记录持久化失败, productId={}, userId={}", productId, userId, e);
-                throw new BusinessException(OrderErrorCode.EXCHANGE_PERSIST_FAILED, e);
-            }
+            // 1. 扣减积分
+            exchangeRemoteClient.deductPoints(userId, pointsCost);
         } catch (SagaException e) {
-            // 步骤1（扣减库存）失败，无需补偿
+            // 步骤1（扣减积分）失败，无需补偿
+            throw new BusinessException(OrderErrorCode.DEDUCT_POINTS_FAILED, e.getMessage());
+        }
+
+        try {
+            // 2. 扣减库存
+            exchangeRemoteClient.deductStock(productId, quantity);
+        } catch (SagaException e) {
+            // 补偿：退还积分
+            safeRefundPoints(userId, pointsCost);
             throw new BusinessException(OrderErrorCode.DEDUCT_STOCK_FAILED, e.getMessage());
+        }
+
+        // 3. 持久化兑换记录
+        ExchangeRecordEntity entity = buildEntity(request, productId, productName,
+                description, imageUrl, quantity, pointsCost);
+        try {
+            ExchangeRecordEntity saved = exchangeRecordDomainService.save(entity);
+            return toDTO(saved);
+        } catch (Exception e) {
+            // 补偿：退还积分 + 恢复库存
+            safeRefundPoints(userId, pointsCost);
+            safeRestoreStock(productId, quantity);
+            log.error("兑换记录持久化失败, productId={}, userId={}", productId, userId, e);
+            throw new BusinessException(OrderErrorCode.EXCHANGE_PERSIST_FAILED, e);
         }
     }
 

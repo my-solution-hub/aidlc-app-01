@@ -12,7 +12,15 @@ public final class RouteConstants {
 
     public static final String HEADER_REQUEST_ID = "X-Request-Id";
     public static final String HEADER_OPERATOR_ID = "X-Operator-Id";
+    public static final String HEADER_USER_ROLE = "X-User-Role";
     public static final String HEADER_AUTHORIZATION = "Authorization";
+
+    // ==================== Authorization ====================
+
+    /** Path segment marking an ADMIN_ONLY endpoint. */
+    public static final String PATH_SEGMENT_ADMIN = "/admin/";
+    /** Required role for ADMIN_ONLY endpoints. */
+    public static final String ROLE_ADMIN = "ADMIN";
 
     // ==================== Route Metadata Keys ====================
 
@@ -20,7 +28,6 @@ public final class RouteConstants {
 
     // ==================== Path Prefixes ====================
 
-    public static final String PATH_PREFIX_PUBLIC = "/api/v1/public/";
     public static final String PATH_PREFIX_DOCS = "/v3/api-docs/";
 
     // ==================== Gateway Attributes ====================

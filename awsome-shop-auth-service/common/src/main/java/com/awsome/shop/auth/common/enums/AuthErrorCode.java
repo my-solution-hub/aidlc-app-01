@@ -15,7 +15,8 @@ public enum AuthErrorCode implements ErrorCode {
     ACCOUNT_DISABLED("AUTH_003", "账户已被禁用"),
     INVALID_TOKEN("AUTH_004", "Token 无效或已过期"),
     USER_NOT_FOUND("AUTH_005", "用户不存在"),
-    USERNAME_ALREADY_EXISTS("AUTH_006", "用户名已存在");
+    USERNAME_ALREADY_EXISTS("AUTH_006", "用户名已存在"),
+    EMPLOYEE_ID_ALREADY_EXISTS("AUTH_007", "工号已存在");
 
     private final String code;
     private final String message;

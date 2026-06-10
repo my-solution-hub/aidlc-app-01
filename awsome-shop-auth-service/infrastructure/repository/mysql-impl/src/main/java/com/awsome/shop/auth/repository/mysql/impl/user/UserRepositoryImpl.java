@@ -31,6 +31,14 @@ public class UserRepositoryImpl implements UserRepository {
     }
 
     @Override
+    public UserEntity findByEmployeeId(String employeeId) {
+        LambdaQueryWrapper<UserPO> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(UserPO::getEmployeeId, employeeId);
+        UserPO po = userMapper.selectOne(wrapper);
+        return po == null ? null : toEntity(po);
+    }
+
+    @Override
     public UserEntity findById(Long id) {
         UserPO po = userMapper.selectById(id);
         return po == null ? null : toEntity(po);
@@ -68,6 +76,7 @@ public class UserRepositoryImpl implements UserRepository {
         entity.setUsername(po.getUsername());
         entity.setPasswordHash(po.getPasswordHash());
         entity.setNickname(po.getNickname());
+        entity.setEmployeeId(po.getEmployeeId());
         entity.setRole(po.getRole());
         entity.setStatus(po.getStatus());
         entity.setFailedLoginAttempts(po.getFailedLoginAttempts());
@@ -84,6 +93,7 @@ public class UserRepositoryImpl implements UserRepository {
         po.setUsername(entity.getUsername());
         po.setPasswordHash(entity.getPasswordHash());
         po.setNickname(entity.getNickname());
+        po.setEmployeeId(entity.getEmployeeId());
         po.setRole(entity.getRole());
         po.setStatus(entity.getStatus());
         po.setFailedLoginAttempts(entity.getFailedLoginAttempts());

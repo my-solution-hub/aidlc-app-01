@@ -7,24 +7,25 @@ import type {
   UpdateExchangeRecordStatusRequest,
 } from "../../types/api";
 
-const BASE = "/order/api/v1/admin/exchange-record";
+const BASE = "/api/admin/orders";
 
 export function listExchangeRecords(
   data: ListExchangeRecordRequest,
 ): Promise<PageResult<ExchangeRecordDTO>> {
-  return request.post<PageResult<ExchangeRecordDTO>>(`${BASE}/list`, data);
+  return request.get<PageResult<ExchangeRecordDTO>>(BASE, { params: data });
 }
 
 export function getExchangeRecordStats(): Promise<ExchangeRecordStatsDTO> {
-  return request.post<ExchangeRecordStatsDTO>(`${BASE}/stats`);
+  return request.get<ExchangeRecordStatsDTO>(`${BASE}/stats`);
 }
 
 export function getExchangeRecord(id: number): Promise<ExchangeRecordDTO> {
-  return request.post<ExchangeRecordDTO>(`${BASE}/get`, { id });
+  return request.get<ExchangeRecordDTO>(`${BASE}/${id}`);
 }
 
 export function updateExchangeRecordStatus(
   data: UpdateExchangeRecordStatusRequest,
 ): Promise<ExchangeRecordDTO> {
-  return request.post<ExchangeRecordDTO>(`${BASE}/update-status`, data);
+  const { id, ...body } = data;
+  return request.put<ExchangeRecordDTO>(`${BASE}/${id}/status`, body);
 }

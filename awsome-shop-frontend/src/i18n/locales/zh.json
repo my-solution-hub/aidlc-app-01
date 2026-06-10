@@ -71,9 +71,31 @@
     "sold": "已兑换",
     "soldUnit": "件",
     "redeem": "兑换",
+    "redeemNow": "立即兑换",
     "redeemSuccess": "兑换成功",
     "redeemFailed": "兑换失败",
     "noProducts": "暂无商品",
+    "back": "返回",
+    "productDetail": {
+      "category": "分类",
+      "stock": "库存",
+      "description": "商品描述",
+      "soldOut": "已售罄",
+      "offShelf": "已下架",
+      "loadFailed": "加载商品失败"
+    },
+    "confirmRedemption": {
+      "title": "确认兑换",
+      "subtitle": "请确认您的兑换信息",
+      "product": "兑换商品",
+      "pointsCost": "所需积分",
+      "currentBalance": "当前积分余额",
+      "remaining": "兑换后剩余",
+      "insufficient": "积分不足，无法兑换",
+      "confirm": "确认兑换",
+      "cancel": "取消",
+      "loadFailed": "加载兑换信息失败"
+    },
     "orders": {
       "title": "我的兑换记录",
       "subtitle": "查看您的积分兑换订单",

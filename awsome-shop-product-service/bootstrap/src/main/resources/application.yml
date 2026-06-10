@@ -34,6 +34,11 @@ spring:
 server:
   port: 8080
 
+# 文件上传配置（BR-PROD-008 / FR-PROD-002）
+file:
+  upload:
+    dir: ${UPLOAD_DIR:./uploads}
+
 # MyBatis-Plus 配置
 mybatis-plus:
   mapper-locations: classpath*:/mapper/**/*.xml

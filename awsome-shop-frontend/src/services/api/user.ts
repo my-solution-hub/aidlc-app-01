@@ -6,22 +6,32 @@ import type {
   CreateUserRequest,
 } from "../../types/api";
 
-const USER_BASE = "/auth/api/v1/public/auth/user";
+const ADMIN_USER_BASE = "/api/admin/users";
 
 export function listUsers(data: ListUserRequest): Promise<PageResult<UserDTO>> {
-  return request.post<PageResult<UserDTO>>(`${USER_BASE}/list`, data);
+  return request.get<PageResult<UserDTO>>(ADMIN_USER_BASE, { params: data });
 }
 
 export function createUser(data: CreateUserRequest): Promise<UserDTO> {
-  return request.post<UserDTO>(`${USER_BASE}/create`, data);
+  return request.post<UserDTO>(ADMIN_USER_BASE, data);
+}
+
+export function getUser(id: number): Promise<UserDTO> {
+  return request.get<UserDTO>(`${ADMIN_USER_BASE}/${id}`);
+}
+
+export function updateUser(
+  id: number,
+  data: Partial<CreateUserRequest>,
+): Promise<UserDTO> {
+  return request.put<UserDTO>(`${ADMIN_USER_BASE}/${id}`, data);
 }
 
 export function updateUserStatus(
   userId: number,
   status: string,
 ): Promise<UserDTO> {
-  return request.post<UserDTO>(`${USER_BASE}/update-status`, {
-    userId,
+  return request.patch<UserDTO>(`${ADMIN_USER_BASE}/${userId}/status`, {
     status,
   });
 }

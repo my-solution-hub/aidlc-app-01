@@ -6,6 +6,8 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 
+import java.util.List;
+
 /**
  * 积分账户 Mapper
  */
@@ -15,4 +17,7 @@ public interface PointAccountMapper extends BaseMapper<PointAccountPO> {
     @Select("SELECT id, user_id, balance, total_earned, total_used, created_at, updated_at, version "
             + "FROM point_account WHERE user_id = #{userId}")
     PointAccountPO selectByUserId(@Param("userId") Long userId);
+
+    @Select("SELECT user_id FROM point_account ORDER BY user_id ASC")
+    List<Long> selectAllUserIds();
 }

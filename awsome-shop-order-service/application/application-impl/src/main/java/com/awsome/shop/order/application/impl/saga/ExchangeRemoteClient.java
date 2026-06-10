@@ -7,6 +7,7 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import java.time.Duration;
 import java.util.Map;
 
 /**
@@ -20,6 +21,9 @@ import java.util.Map;
 public class ExchangeRemoteClient {
 
     private static final String SUCCESS_CODE = "SUCCESS";
+
+    /** 跨服务调用超时（BR-ORDER-009：3 秒） */
+    private static final Duration CALL_TIMEOUT = Duration.ofSeconds(3);
 
     private final WebClient webClient;
     private final String productBaseUrl;
@@ -37,8 +41,7 @@ public class ExchangeRemoteClient {
      * 查询商品详情，返回解包后的 data 节点。
      */
     public JsonNode getProduct(Long productId) {
-        JsonNode data = post(productBaseUrl + "/api/v1/public/product/get",
-                Map.of("id", productId), "查询商品");
+        JsonNode data = get(productBaseUrl + "/api/products/" + productId, "查询商品");
         if (data == null || data.isNull()) {
             throw new SagaException("商品不存在: " + productId);
         }
@@ -49,7 +52,7 @@ public class ExchangeRemoteClient {
      * 扣减库存。
      */
     public void deductStock(Long productId, int quantity) {
-        post(productBaseUrl + "/api/v1/internal/product/deduct-stock",
+        post(productBaseUrl + "/api/internal/products/deduct-stock",
                 Map.of("productId", productId, "quantity", quantity), "扣减库存");
     }
 
@@ -57,7 +60,7 @@ public class ExchangeRemoteClient {
      * 恢复库存（库存补偿）。
      */
     public void restoreStock(Long productId, int quantity) {
-        post(productBaseUrl + "/api/v1/internal/product/restore-stock",
+        post(productBaseUrl + "/api/internal/products/restore-stock",
                 Map.of("productId", productId, "quantity", quantity), "恢复库存");
     }
 
@@ -65,7 +68,7 @@ public class ExchangeRemoteClient {
      * 扣减积分。
      */
     public void deductPoints(Long userId, int amount) {
-        post(pointBaseUrl + "/api/v1/internal/point/adjust",
+        post(pointBaseUrl + "/api/internal/points/adjust",
                 Map.of("userId", userId,
                         "amount", amount,
                         "direction", "DEDUCT",
@@ -77,12 +80,30 @@ public class ExchangeRemoteClient {
      * 退还积分（积分补偿）。
      */
     public void refundPoints(Long userId, int amount) {
-        post(pointBaseUrl + "/api/v1/internal/point/adjust",
+        post(pointBaseUrl + "/api/internal/points/adjust",
                 Map.of("userId", userId,
                         "amount", amount,
                         "direction", "ADD",
                         "type", "REFUND",
                         "description", "兑换商品"), "退还积分");
+    }
+
+    /**
+     * 发送 GET 请求并解包响应信封，失败抛出 {@link SagaException}。
+     */
+    private JsonNode get(String url, String action) {
+        JsonNode response;
+        try {
+            response = webClient.get()
+                    .uri(url)
+                    .retrieve()
+                    .bodyToMono(JsonNode.class)
+                    .block(CALL_TIMEOUT);
+        } catch (Exception e) {
+            log.error("{} 远程调用异常, url={}", action, url, e);
+            throw new SagaException(action + "远程调用异常: " + e.getMessage(), e);
+        }
+        return unwrap(response, url, action);
     }
 
     /**
@@ -97,12 +118,18 @@ public class ExchangeRemoteClient {
                     .bodyValue(body)
                     .retrieve()
                     .bodyToMono(JsonNode.class)
-                    .block();
+                    .block(CALL_TIMEOUT);
         } catch (Exception e) {
             log.error("{} 远程调用异常, url={}", action, url, e);
             throw new SagaException(action + "远程调用异常: " + e.getMessage(), e);
         }
+        return unwrap(response, url, action);
+    }
 
+    /**
+     * 解包 {"code","message","data"} 响应信封，code != "SUCCESS" 视为失败。
+     */
+    private JsonNode unwrap(JsonNode response, String url, String action) {
         if (response == null) {
             throw new SagaException(action + "返回为空");
         }

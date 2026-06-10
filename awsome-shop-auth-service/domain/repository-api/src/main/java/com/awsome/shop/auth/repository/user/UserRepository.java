@@ -10,6 +10,8 @@ public interface UserRepository {
 
     UserEntity findByUsername(String username);
 
+    UserEntity findByEmployeeId(String employeeId);
+
     UserEntity findById(Long id);
 
     void save(UserEntity entity);

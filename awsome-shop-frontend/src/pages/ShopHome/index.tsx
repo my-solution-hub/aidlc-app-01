@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useSearchParams } from "react-router";
+import { useNavigate, useSearchParams } from "react-router";
 import { useTranslation } from "react-i18next";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
@@ -8,21 +8,15 @@ import Chip from "@mui/material/Chip";
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
 import CircularProgress from "@mui/material/CircularProgress";
-import Dialog from "@mui/material/Dialog";
-import DialogTitle from "@mui/material/DialogTitle";
-import DialogContent from "@mui/material/DialogContent";
-import DialogActions from "@mui/material/DialogActions";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import ShoppingBagIcon from "@mui/icons-material/ShoppingBag";
 import Inventory2Icon from "@mui/icons-material/Inventory2";
 import TollIcon from "@mui/icons-material/Toll";
 import { listProducts } from "../../services/api/product";
-import { redeemProduct } from "../../services/api/order";
 import { getBalance } from "../../services/api/point";
 import type { ProductDTO } from "../../types/api";
 import { useAuthStore } from "../../store/useAuthStore";
 import { AppSnackbar, useSnackbar } from "../../components/AppSnackbar";
-import { BusinessError } from "../../services/request";
 
 const CATEGORIES = [
   { key: "", label: "全部" },
@@ -48,6 +42,7 @@ function getCategoryStyle(category: string) {
 export default function ShopHome() {
   const { t } = useTranslation();
   const snackbar = useSnackbar();
+  const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
   const [searchParams] = useSearchParams();
   const query = searchParams.get("q") ?? "";
@@ -55,8 +50,6 @@ export default function ShopHome() {
   const [activeCategory, setActiveCategory] = useState("");
   const [products, setProducts] = useState<ProductDTO[]>([]);
   const [loading, setLoading] = useState(false);
-  const [detail, setDetail] = useState<ProductDTO | null>(null);
-  const [redeeming, setRedeeming] = useState(false);
   const [balance, setBalance] = useState<number | null>(null);
 
   const gridRef = useRef<HTMLDivElement>(null);
@@ -96,28 +89,6 @@ export default function ShopHome() {
 
   const handleBrowse = () => {
     gridRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
-
-  const handleRedeem = async (product: ProductDTO) => {
-    if (!user) return;
-    setRedeeming(true);
-    try {
-      await redeemProduct({
-        productId: product.id,
-        quantity: 1,
-        userId: user.userId,
-        employeeName: user.displayName,
-      });
-      snackbar.showSuccess(t("employee.redeemSuccess"));
-      setDetail(null);
-      fetchBalance();
-    } catch (err) {
-      snackbar.showError(
-        err instanceof BusinessError ? err.message : t("employee.redeemFailed"),
-      );
-    } finally {
-      setRedeeming(false);
-    }
   };
 
   const displayPoints = useMemo(
@@ -246,7 +217,7 @@ export default function ShopHome() {
               return (
                 <Card
                   key={product.id}
-                  onClick={() => setDetail(product)}
+                  onClick={() => navigate(`/products/${product.id}`)}
                   sx={{
                     borderRadius: "12px",
                     border: "1px solid",
@@ -348,13 +319,9 @@ export default function ShopHome() {
                         size="small"
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleRedeem(product);
+                          navigate(`/orders/confirm/${product.id}`);
                         }}
-                        disabled={
-                          redeeming ||
-                          product.status !== 1 ||
-                          product.stock <= 0
-                        }
+                        disabled={product.status !== 1 || product.stock <= 0}
                         sx={{
                           borderRadius: "8px",
                           px: "14px",
@@ -375,94 +342,6 @@ export default function ShopHome() {
           </Box>
         )}
       </Box>
-
-      {/* Product detail dialog */}
-      {detail && (
-        <Dialog
-          open
-          onClose={() => setDetail(null)}
-          slotProps={{ paper: { sx: { borderRadius: "12px", width: 480 } } }}
-        >
-          <DialogTitle sx={{ fontSize: 18, fontWeight: 700, color: "#1E293B" }}>
-            {detail.name}
-          </DialogTitle>
-          <DialogContent
-            sx={{ display: "flex", flexDirection: "column", gap: "12px" }}
-          >
-            <Box
-              sx={{
-                height: 200,
-                borderRadius: "8px",
-                bgcolor: getCategoryStyle(detail.category).bg,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                overflow: "hidden",
-              }}
-            >
-              {detail.imageUrl ? (
-                <Box
-                  component="img"
-                  src={detail.imageUrl}
-                  alt={detail.name}
-                  sx={{ width: "100%", height: "100%", objectFit: "cover" }}
-                />
-              ) : (
-                <Inventory2Icon
-                  sx={{
-                    fontSize: 64,
-                    color: getCategoryStyle(detail.category).color,
-                  }}
-                />
-              )}
-            </Box>
-            {detail.description && (
-              <Typography sx={{ fontSize: 13, color: "#64748B" }}>
-                {detail.description}
-              </Typography>
-            )}
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-              }}
-            >
-              <Box sx={{ display: "flex", alignItems: "center", gap: "4px" }}>
-                <TollIcon sx={{ fontSize: 20, color: "#D97706" }} />
-                <Typography
-                  sx={{ fontSize: 20, fontWeight: 700, color: "#D97706" }}
-                >
-                  {detail.pointsPrice.toLocaleString()}
-                </Typography>
-              </Box>
-              <Typography sx={{ fontSize: 13, color: "#64748B" }}>
-                {t("admin.products.stock")} {detail.stock}
-              </Typography>
-            </Box>
-          </DialogContent>
-          <DialogActions sx={{ p: "16px 24px" }}>
-            <Button
-              onClick={() => setDetail(null)}
-              sx={{ textTransform: "none", color: "#64748B" }}
-            >
-              {t("common.cancel")}
-            </Button>
-            <Button
-              variant="contained"
-              onClick={() => handleRedeem(detail)}
-              disabled={redeeming || detail.status !== 1 || detail.stock <= 0}
-              sx={{ textTransform: "none", borderRadius: "8px" }}
-            >
-              {redeeming ? (
-                <CircularProgress size={18} sx={{ color: "#fff" }} />
-              ) : (
-                t("employee.redeem")
-              )}
-            </Button>
-          </DialogActions>
-        </Dialog>
-      )}
 
       <AppSnackbar state={snackbar.state} onClose={snackbar.close} />
     </Box>

@@ -13,6 +13,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.stream.Collectors;
 
 /**
@@ -29,6 +30,11 @@ public class PointAccountRepositoryImpl implements PointAccountRepository {
     public PointAccountEntity findByUserId(Long userId) {
         PointAccountPO po = accountMapper.selectByUserId(userId);
         return po == null ? null : toEntity(po);
+    }
+
+    @Override
+    public List<Long> findAllUserIds() {
+        return accountMapper.selectAllUserIds();
     }
 
     @Override

@@ -18,5 +18,7 @@ public class AuthValidateResponse {
 
     private String operatorId;
 
+    private String role;
+
     private String message;
 }

@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -23,6 +24,18 @@ public class ExchangeRecordDomainServiceImpl implements ExchangeRecordDomainServ
 
     private static final Set<String> ALLOWED_STATUSES =
             Set.of("PENDING_DELIVERY", "DELIVERING", "COMPLETED", "CANCELLED");
+
+    /**
+     * 状态流转图（BR-ORDER-006）。仅允许前进，不可回退/跳转：
+     * PENDING_DELIVERY → DELIVERING | CANCELLED
+     * DELIVERING       → COMPLETED  | CANCELLED
+     * 对应规格 PENDING/READY/COMPLETED/CANCELLED。
+     */
+    private static final Map<String, Set<String>> STATUS_TRANSITIONS = Map.of(
+            "PENDING_DELIVERY", Set.of("DELIVERING", "CANCELLED"),
+            "DELIVERING", Set.of("COMPLETED", "CANCELLED"),
+            "COMPLETED", Set.of(),
+            "CANCELLED", Set.of());
 
     private final ExchangeRecordRepository exchangeRecordRepository;
 
@@ -67,6 +80,15 @@ public class ExchangeRecordDomainServiceImpl implements ExchangeRecordDomainServ
             throw new BusinessException(OrderErrorCode.INVALID_EXCHANGE_STATUS, status);
         }
         ExchangeRecordEntity entity = getById(id);
+        // 状态流转校验（BR-ORDER-006）：仅允许合法的状态变更
+        String current = entity.getStatus();
+        if (!status.equals(current)) {
+            Set<String> allowedNext = STATUS_TRANSITIONS.getOrDefault(current, Set.of());
+            if (!allowedNext.contains(status)) {
+                throw new BusinessException(OrderErrorCode.INVALID_EXCHANGE_STATUS,
+                        current + " → " + status);
+            }
+        }
         exchangeRecordRepository.updateStatus(id, status, trackingNumber);
         entity.setStatus(status);
         if (trackingNumber != null) {

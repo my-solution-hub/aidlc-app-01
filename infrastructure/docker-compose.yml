@@ -1,0 +1,246 @@
+name: awsomeshop
+
+# ------------------------------------------------------------------
+# AWSomeShop one-click stack.
+#
+# All backend services run with SPRING_PROFILES_ACTIVE=docker, which forces
+# server.port=8081 inside every container (see each service's
+# application-docker.yml). Tables are created by each service's Flyway
+# migrations on startup; MySQL init only creates the databases.
+#
+#   Edit .env first:  cp .env.example .env
+#   Bring it up:      docker compose up --build
+#   Frontend:         http://localhost:${FRONTEND_PORT:-3000}
+#   Gateway API:      http://localhost:${GATEWAY_PORT:-8080}
+# ------------------------------------------------------------------
+
+x-jvm-healthcheck: &jvm-healthcheck
+  # eclipse-temurin:21-jre is Ubuntu-based (has bash, no curl) — probe the
+  # actuator port over a raw TCP socket.
+  test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/localhost/8081' 2>/dev/null || exit 1"]
+  interval: 15s
+  timeout: 5s
+  retries: 10
+  start_period: 60s
+
+services:
+
+  mysql:
+    image: mysql:8.4
+    container_name: awsomeshop-mysql
+    ports:
+      - "${MYSQL_PORT:-3306}:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+    command: >
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./mysql:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${MYSQL_ROOT_PASSWORD:-root}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks:
+      - awsomeshop-net
+
+  redis:
+    image: redis:7-alpine
+    container_name: awsomeshop-redis
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+    networks:
+      - awsomeshop-net
+
+  auth-service:
+    build:
+      context: ../awsome-shop-auth-service
+    image: awsomeshop/auth-service:local
+    container_name: awsomeshop-auth
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: awsome_shop_auth
+      DB_USERNAME: ${DB_USERNAME:-root}
+      DB_PASSWORD: ${DB_PASSWORD:-root}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      JWT_SECRET: ${JWT_SECRET:-local-dev-secret-key-for-jwt-token-must-be-at-least-256-bits-long-for-hmac-sha256}
+      JWT_EXPIRATION: ${JWT_EXPIRATION:-7200}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:-localDevEncryptionKey1234567890ab}
+    healthcheck: *jvm-healthcheck
+    networks:
+      - awsomeshop-net
+
+  product-service:
+    build:
+      context: ../awsome-shop-product-service
+    image: awsomeshop/product-service:local
+    container_name: awsomeshop-product
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: awsome_shop_product
+      DB_USERNAME: ${DB_USERNAME:-root}
+      DB_PASSWORD: ${DB_PASSWORD:-root}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      JWT_SECRET: ${JWT_SECRET:-local-dev-secret-key-for-jwt-token-must-be-at-least-256-bits-long-for-hmac-sha256}
+      JWT_EXPIRATION: ${JWT_EXPIRATION:-7200}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:-localDevEncryptionKey1234567890ab}
+    healthcheck: *jvm-healthcheck
+    networks:
+      - awsomeshop-net
+
+  points-service:
+    build:
+      context: ../awsome-shop-points-service
+    image: awsomeshop/points-service:local
+    container_name: awsomeshop-points
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: awsome_shop_point
+      DB_USERNAME: ${DB_USERNAME:-root}
+      DB_PASSWORD: ${DB_PASSWORD:-root}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      JWT_SECRET: ${JWT_SECRET:-local-dev-secret-key-for-jwt-token-must-be-at-least-256-bits-long-for-hmac-sha256}
+      JWT_EXPIRATION: ${JWT_EXPIRATION:-7200}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:-localDevEncryptionKey1234567890ab}
+    healthcheck: *jvm-healthcheck
+    networks:
+      - awsomeshop-net
+
+  order-service:
+    build:
+      context: ../awsome-shop-order-service
+    image: awsomeshop/order-service:local
+    container_name: awsomeshop-order
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      product-service:
+        condition: service_healthy
+      points-service:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: awsome_shop_order
+      DB_USERNAME: ${DB_USERNAME:-root}
+      DB_PASSWORD: ${DB_PASSWORD:-root}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      JWT_SECRET: ${JWT_SECRET:-local-dev-secret-key-for-jwt-token-must-be-at-least-256-bits-long-for-hmac-sha256}
+      JWT_EXPIRATION: ${JWT_EXPIRATION:-7200}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:-localDevEncryptionKey1234567890ab}
+      # Cross-service calls (Saga). Relaxed-binding overrides for
+      # shop.remote.product.base-url / shop.remote.point.base-url, which have
+      # NO env placeholder in the code (default http://localhost:800x).
+      SHOP_REMOTE_PRODUCT_BASE_URL: http://product-service:8081
+      SHOP_REMOTE_POINT_BASE_URL: http://points-service:8081
+    healthcheck: *jvm-healthcheck
+    networks:
+      - awsomeshop-net
+
+  gateway-service:
+    build:
+      context: ../awsome-shop-gateway-service
+    image: awsomeshop/gateway-service:local
+    container_name: awsomeshop-gateway
+    ports:
+      - "${GATEWAY_PORT:-8080}:8081"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      auth-service:
+        condition: service_healthy
+      product-service:
+        condition: service_healthy
+      points-service:
+        condition: service_healthy
+      order-service:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: awsome_shop_gateway
+      DB_USERNAME: ${DB_USERNAME:-root}
+      DB_PASSWORD: ${DB_PASSWORD:-root}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      JWT_SECRET: ${JWT_SECRET:-local-dev-secret-key-for-jwt-token-must-be-at-least-256-bits-long-for-hmac-sha256}
+      JWT_EXPIRATION: ${JWT_EXPIRATION:-7200}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:-localDevEncryptionKey1234567890ab}
+      # Backend route targets (defaults already point here, set explicitly
+      # for clarity). Auth-token validation endpoint has no default in code.
+      GATEWAY_SERVICES_AUTH: http://auth-service:8081
+      GATEWAY_SERVICES_PRODUCT: http://product-service:8081
+      GATEWAY_SERVICES_POINT: http://points-service:8081
+      GATEWAY_SERVICES_ORDER: http://order-service:8081
+      GATEWAY_AUTH_VALIDATE_URL: http://auth-service:8081/api/v1/internal/auth/validate
+    healthcheck: *jvm-healthcheck
+    networks:
+      - awsomeshop-net
+
+  frontend:
+    build:
+      context: ../awsome-shop-frontend
+      args:
+        VITE_API_BASE_URL: ""
+    image: awsomeshop/frontend:local
+    container_name: awsomeshop-frontend
+    ports:
+      - "${FRONTEND_PORT:-3000}:80"
+    depends_on:
+      gateway-service:
+        condition: service_healthy
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    networks:
+      - awsomeshop-net
+
+volumes:
+  mysql-data:
+
+networks:
+  awsomeshop-net:
+    driver: bridge

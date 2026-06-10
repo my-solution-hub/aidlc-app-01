@@ -18,6 +18,8 @@ public class UserEntity {
 
     private String nickname;
 
+    private String employeeId;
+
     private String role;
 
     private String status;

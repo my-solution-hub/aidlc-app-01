@@ -1,23 +1,27 @@
-import request from '../request';
+import request from "../request";
 import type {
   PageResult,
   ExchangeRecordDTO,
   ExchangeRequest,
   ListOrderRequest,
-} from '../../types/api';
+} from "../../types/api";
 
-const ORDER_BASE = '/order/api/v1/public/order';
+const ORDER_BASE = "/api/orders";
 
-export function redeemProduct(data: ExchangeRequest): Promise<ExchangeRecordDTO> {
-  return request.post<ExchangeRecordDTO>(`${ORDER_BASE}/exchange`, data);
+export function redeemProduct(
+  data: ExchangeRequest,
+): Promise<ExchangeRecordDTO> {
+  return request.post<ExchangeRecordDTO>(ORDER_BASE, data);
 }
 
 export function listMyOrders(
   data: ListOrderRequest,
 ): Promise<PageResult<ExchangeRecordDTO>> {
-  return request.post<PageResult<ExchangeRecordDTO>>(`${ORDER_BASE}/list`, data);
+  return request.get<PageResult<ExchangeRecordDTO>>(ORDER_BASE, {
+    params: data,
+  });
 }
 
 export function getMyOrder(id: number): Promise<ExchangeRecordDTO> {
-  return request.post<ExchangeRecordDTO>(`${ORDER_BASE}/get`, { id });
+  return request.get<ExchangeRecordDTO>(`${ORDER_BASE}/${id}`);
 }

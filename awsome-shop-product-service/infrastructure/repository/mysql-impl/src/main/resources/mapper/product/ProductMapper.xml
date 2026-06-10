@@ -25,6 +25,16 @@
         ORDER BY created_at DESC
     </select>
 
+    <!-- 按主键查询并加悲观锁（库存并发控制 BR-PROD-007） -->
+    <select id="selectByIdForUpdate" resultMap="productResultMap">
+        SELECT id, name, sku, category, brand, points_price, market_price, stock, sold_count,
+               status, description, image_url, subtitle, delivery_method, service_guarantee,
+               promotion, colors, specs, created_at, updated_at, created_by, updated_by, deleted, version
+        FROM product
+        WHERE id = #{id} AND deleted = 0
+        FOR UPDATE
+    </select>
+
     <!-- 按分类名称统计商品数量 -->
     <select id="countGroupByCategory" resultType="map">
         SELECT category, COUNT(*) AS cnt

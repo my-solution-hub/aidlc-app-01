@@ -3,6 +3,7 @@ package com.awsome.shop.gateway.infrastructure.filter;
 import com.awsome.shop.gateway.common.constants.RouteConstants;
 import com.awsome.shop.gateway.common.enums.GatewayErrorCode;
 import com.awsome.shop.gateway.common.exception.AuthenticationException;
+import com.awsome.shop.gateway.common.exception.AuthorizationException;
 import com.awsome.shop.gateway.domain.auth.model.AuthenticationResult;
 import com.awsome.shop.gateway.domain.auth.model.TokenInfo;
 import com.awsome.shop.gateway.domain.auth.service.AuthenticationService;
@@ -67,15 +68,26 @@ public class AuthenticationGatewayFilter implements GlobalFilter, Ordered {
                                 GatewayErrorCode.AUTH_TOKEN_INVALID, result.getMessage()));
                     }
 
-                    log.debug("[{}] Authenticated operatorId: {}", requestId, result.getOperatorId());
+                    log.debug("[{}] Authenticated operatorId: {}, role: {}",
+                            requestId, result.getOperatorId(), result.getRole());
+
+                    // ADMIN_ONLY endpoints require role == ADMIN (BR/GW-002)
+                    if (isAdminOnlyPath(path) && !RouteConstants.ROLE_ADMIN.equals(result.getRole())) {
+                        log.warn("[{}] Forbidden: role '{}' cannot access admin path {}",
+                                requestId, result.getRole(), path);
+                        return Mono.error(new AuthorizationException(GatewayErrorCode.AUTHZ_ADMIN_FORBIDDEN));
+                    }
 
                     // Store operatorId for downstream filters
                     exchange.getAttributes().put(RouteConstants.ATTR_OPERATOR_ID, result.getOperatorId());
 
-                    // Add operatorId header to request
-                    ServerHttpRequest mutatedRequest = exchange.getRequest().mutate()
-                            .header(RouteConstants.HEADER_OPERATOR_ID, result.getOperatorId())
-                            .build();
+                    // Add operatorId + role headers to request
+                    ServerHttpRequest.Builder requestBuilder = exchange.getRequest().mutate()
+                            .header(RouteConstants.HEADER_OPERATOR_ID, result.getOperatorId());
+                    if (result.getRole() != null) {
+                        requestBuilder.header(RouteConstants.HEADER_USER_ROLE, result.getRole());
+                    }
+                    ServerHttpRequest mutatedRequest = requestBuilder.build();
 
                     return chain.filter(exchange.mutate().request(mutatedRequest).build());
                 });
@@ -87,10 +99,16 @@ public class AuthenticationGatewayFilter implements GlobalFilter, Ordered {
     }
 
     private boolean isPublicPath(String path) {
-        return path.startsWith(RouteConstants.PATH_PREFIX_PUBLIC)
-                || path.startsWith(RouteConstants.PATH_PREFIX_DOCS)
+        // Public REST API access is governed by route metadata (auth-required:
+        // false), not by a fixed path prefix. Only infrastructure paths that
+        // have no route metadata are short-circuited here.
+        return path.startsWith(RouteConstants.PATH_PREFIX_DOCS)
                 || path.startsWith("/swagger-ui")
                 || path.startsWith("/actuator");
+    }
+
+    private boolean isAdminOnlyPath(String path) {
+        return path != null && path.contains(RouteConstants.PATH_SEGMENT_ADMIN);
     }
 
     private boolean isAuthRequired(ServerWebExchange exchange) {

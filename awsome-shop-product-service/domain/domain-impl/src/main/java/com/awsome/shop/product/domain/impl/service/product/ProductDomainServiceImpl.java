@@ -39,7 +39,11 @@ public class ProductDomainServiceImpl implements ProductDomainService {
         if (quantity <= 0) {
             throw new BusinessException(ProductErrorCode.INVALID_QUANTITY);
         }
-        ProductEntity entity = getById(productId);
+        // BR-PROD-007: 悲观锁（SELECT ... FOR UPDATE）在同一事务中锁定行，串行化并发扣减
+        ProductEntity entity = productRepository.getByIdForUpdate(productId);
+        if (entity == null) {
+            throw new BusinessException(SampleErrorCode.RESOURCE_NOT_FOUND);
+        }
         int current = entity.getStock() == null ? 0 : entity.getStock();
         if (current < quantity) {
             throw new BusinessException(ProductErrorCode.INSUFFICIENT_STOCK,

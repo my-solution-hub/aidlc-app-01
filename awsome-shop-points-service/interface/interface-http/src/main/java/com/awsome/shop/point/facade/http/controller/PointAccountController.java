@@ -12,9 +12,12 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
@@ -24,26 +27,28 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @Tag(name = "PointAccount", description = "积分账户")
 @RestController
-@RequestMapping("/api/v1")
+@RequestMapping("/api")
 @RequiredArgsConstructor
 public class PointAccountController {
 
     private final PointAccountApplicationService pointAccountApplicationService;
 
     @Operation(summary = "查询积分余额")
-    @PostMapping("/public/point/balance")
-    public Result<PointAccountDTO> balance(@RequestBody @Valid BalanceRequest request) {
+    @GetMapping("/points/balance")
+    public Result<PointAccountDTO> balance(@RequestParam Long userId) {
+        BalanceRequest request = new BalanceRequest();
+        request.setUserId(userId);
         return Result.success(pointAccountApplicationService.getBalance(request));
     }
 
     @Operation(summary = "分页查询积分流水")
-    @PostMapping("/public/point/transaction/list")
-    public Result<PageResult<PointTransactionDTO>> transactions(@RequestBody @Valid ListTransactionRequest request) {
+    @GetMapping("/points/transactions")
+    public Result<PageResult<PointTransactionDTO>> transactions(@ModelAttribute @Valid ListTransactionRequest request) {
         return Result.success(pointAccountApplicationService.listTransactions(request));
     }
 
     @Operation(summary = "积分调整（内部/管理员）")
-    @PostMapping("/internal/point/adjust")
+    @PostMapping("/internal/points/adjust")
     public Result<PointAccountDTO> adjust(@RequestBody @Valid AdjustPointRequest request) {
         return Result.success(pointAccountApplicationService.adjust(request));
     }

@@ -12,6 +12,16 @@ public interface ProductRepository {
 
     ProductEntity getById(Long id);
 
+    /**
+     * 按主键查询并加悲观锁（SELECT ... FOR UPDATE）。
+     *
+     * <p>用于库存扣减的并发控制（BR-PROD-007），必须在事务内调用。</p>
+     *
+     * @param id 商品主键
+     * @return 商品实体，不存在时返回 null
+     */
+    ProductEntity getByIdForUpdate(Long id);
+
     ProductEntity getBySku(String sku);
 
     PageResult<ProductEntity> page(int page, int size, String name, String category);

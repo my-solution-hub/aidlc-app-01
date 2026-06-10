@@ -6,36 +6,37 @@ import type {
   UpdateCategoryRequest,
 } from "../../types/api";
 
-const CATEGORY_BASE = "/product/api/v1/public/category";
+const CATEGORY_BASE = "/api/categories";
+const ADMIN_CATEGORY_BASE = "/api/admin/categories";
 
 export function listCategories(
-  data: ListCategoryRequest,
+  data?: ListCategoryRequest,
 ): Promise<CategoryDTO[]> {
-  return request.post<CategoryDTO[]>(`${CATEGORY_BASE}/list`, data);
+  return request.get<CategoryDTO[]>(`${CATEGORY_BASE}/tree`, { params: data });
 }
 
 export function createCategory(
   data: CreateCategoryRequest,
 ): Promise<CategoryDTO> {
-  return request.post<CategoryDTO>(`${CATEGORY_BASE}/create`, data);
+  return request.post<CategoryDTO>(ADMIN_CATEGORY_BASE, data);
 }
 
 export function updateCategory(
   data: UpdateCategoryRequest,
 ): Promise<CategoryDTO> {
-  return request.post<CategoryDTO>(`${CATEGORY_BASE}/update`, data);
+  const { id, ...body } = data;
+  return request.put<CategoryDTO>(`${ADMIN_CATEGORY_BASE}/${id}`, body);
 }
 
 export function deleteCategory(id: number): Promise<void> {
-  return request.post<void>(`${CATEGORY_BASE}/delete`, { id });
+  return request.delete<void>(`${ADMIN_CATEGORY_BASE}/${id}`);
 }
 
 export function updateCategoryStatus(
   id: number,
   status: number,
 ): Promise<CategoryDTO> {
-  return request.post<CategoryDTO>(`${CATEGORY_BASE}/update-status`, {
-    id,
+  return request.patch<CategoryDTO>(`${ADMIN_CATEGORY_BASE}/${id}/status`, {
     status,
   });
 }

@@ -11,6 +11,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 /**
  * 积分账户领域服务实现
  */
@@ -28,6 +30,11 @@ public class PointAccountDomainServiceImpl implements PointAccountDomainService 
             account = repository.create(account);
         }
         return account;
+    }
+
+    @Override
+    public List<Long> listAllUserIds() {
+        return repository.findAllUserIds();
     }
 
     @Override

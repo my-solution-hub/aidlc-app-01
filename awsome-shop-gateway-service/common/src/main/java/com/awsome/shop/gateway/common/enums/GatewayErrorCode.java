@@ -15,6 +15,8 @@ public enum GatewayErrorCode implements ErrorCode {
     AUTH_TOKEN_EXPIRED("AUTH_003", "Authorization token has expired"),
     AUTH_SERVICE_UNAVAILABLE("AUTH_004", "Authentication service is unavailable"),
 
+    AUTHZ_ADMIN_FORBIDDEN("AUTHZ_001", "权限不足"),
+
     GATEWAY_SERVICE_UNAVAILABLE("SYS_001", "Backend service is unavailable"),
     GATEWAY_TIMEOUT("SYS_002", "Backend service timeout"),
     GATEWAY_INTERNAL_ERROR("SYS_003", "Gateway internal error"),

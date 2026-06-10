@@ -11,7 +11,7 @@ gateway:
     point: http://localhost:8003
     order: http://localhost:8004
   auth:
-    validate-url: http://localhost:8001/api/v1/internal/auth/validate
+    validate-url: http://localhost:8001/api/internal/auth/validate
 
 # Spring Cloud Gateway Routes
 spring:
@@ -61,61 +61,54 @@ spring:
               metadata:
                 auth-required: false
 
-            # ==================== Public Routes (no auth) ====================
+            # ==================== Public REST Routes (no auth) ====================
+            # Most specific public paths first so they win over the authenticated
+            # per-service routes below (gateway evaluates routes in order).
             - id: auth-public
               uri: ${gateway.services.auth}
               predicates:
-                - Path=/api/v1/public/auth/**
+                - Path=/api/auth/login,/api/auth/register,/api/auth/logout
               metadata:
                 auth-required: false
 
             - id: product-public
               uri: ${gateway.services.product}
               predicates:
-                - Path=/api/v1/public/product/**
+                - Path=/api/products/**,/api/categories/**,/api/files/**
+                - Method=GET
               metadata:
                 auth-required: false
 
-            - id: point-public
-              uri: ${gateway.services.point}
-              predicates:
-                - Path=/api/v1/public/point/**
-              metadata:
-                auth-required: false
-
-            - id: order-public
-              uri: ${gateway.services.order}
-              predicates:
-                - Path=/api/v1/public/order/**
-              metadata:
-                auth-required: false
-
-            # ==================== Protected Routes (auth required) ====================
-            - id: auth-protected
+            # ==================== Authenticated REST Routes (auth required) ====================
+            # Grouped by target service using the most-specific prefix per service.
+            # Admin routes (/api/admin/**) only need auth-required: true; the
+            # AuthenticationGatewayFilter enforces role==ADMIN via the "/admin/"
+            # path segment.
+            - id: auth-service
               uri: ${gateway.services.auth}
               predicates:
-                - Path=/api/v1/auth/**
+                - Path=/api/users/**,/api/admin/users/**
               metadata:
                 auth-required: true
 
-            - id: product-protected
+            - id: product-service
               uri: ${gateway.services.product}
               predicates:
-                - Path=/api/v1/product/**
+                - Path=/api/products/**,/api/categories/**,/api/files/**,/api/admin/products/**,/api/admin/categories/**
               metadata:
                 auth-required: true
 
-            - id: point-protected
+            - id: points-service
               uri: ${gateway.services.point}
               predicates:
-                - Path=/api/v1/point/**
+                - Path=/api/points/**,/api/admin/points/**,/api/admin/point-rules/**
               metadata:
                 auth-required: true
 
-            - id: order-protected
+            - id: order-service
               uri: ${gateway.services.order}
               predicates:
-                - Path=/api/v1/order/**
+                - Path=/api/orders/**,/api/admin/orders/**
               metadata:
                 auth-required: true
 

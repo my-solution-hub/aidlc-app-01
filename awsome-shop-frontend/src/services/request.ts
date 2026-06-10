@@ -1,5 +1,5 @@
-import axios, { type AxiosRequestConfig } from 'axios';
-import type { Result } from '../types/api';
+import axios, { type AxiosRequestConfig } from "axios";
+import type { Result } from "../types/api";
 
 // ---- Business error ----
 
@@ -13,19 +13,19 @@ export class BusinessError extends Error {
   constructor(code: string, message: string) {
     super(message);
     this.code = code;
-    this.name = 'BusinessError';
+    this.name = "BusinessError";
   }
 }
 
 // ---- Constants ----
 
-const SUCCESS_CODE = 'SUCCESS';
-const TOKEN_KEY = 'token';
+const SUCCESS_CODE = "SUCCESS";
+const TOKEN_KEY = "token";
 
 // ---- Axios instance ----
 
 const instance = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080',
+  baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:8088",
   timeout: 15000,
 });
 
@@ -57,12 +57,14 @@ instance.interceptors.response.use(
     }
 
     // Business error
-    return Promise.reject(new BusinessError(result.code, result.message || '请求失败'));
+    return Promise.reject(
+      new BusinessError(result.code, result.message || "请求失败"),
+    );
   },
   (error) => {
     if (error.response?.status === 401) {
       localStorage.removeItem(TOKEN_KEY);
-      window.location.href = '/login';
+      window.location.href = "/login";
     }
     return Promise.reject(error);
   },
@@ -83,12 +85,24 @@ const request = {
     return instance.get(url, config) as Promise<T>;
   },
 
-  post<T>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T> {
+  post<T>(
+    url: string,
+    data?: unknown,
+    config?: AxiosRequestConfig,
+  ): Promise<T> {
     return instance.post(url, data, config) as Promise<T>;
   },
 
   put<T>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T> {
     return instance.put(url, data, config) as Promise<T>;
+  },
+
+  patch<T>(
+    url: string,
+    data?: unknown,
+    config?: AxiosRequestConfig,
+  ): Promise<T> {
+    return instance.patch(url, data, config) as Promise<T>;
   },
 
   delete<T>(url: string, config?: AxiosRequestConfig): Promise<T> {

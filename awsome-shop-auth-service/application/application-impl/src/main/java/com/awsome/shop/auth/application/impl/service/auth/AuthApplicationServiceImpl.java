@@ -2,6 +2,7 @@ package com.awsome.shop.auth.application.impl.service.auth;
 
 import com.awsome.shop.auth.application.api.dto.auth.LoginRequest;
 import com.awsome.shop.auth.application.api.dto.auth.LoginResponse;
+import com.awsome.shop.auth.application.api.dto.auth.TokenValidation;
 import com.awsome.shop.auth.application.api.service.auth.AuthApplicationService;
 import com.awsome.shop.auth.domain.model.user.UserEntity;
 import com.awsome.shop.auth.domain.service.auth.AuthDomainService;
@@ -42,5 +43,15 @@ public class AuthApplicationServiceImpl implements AuthApplicationService {
     @Override
     public String validateToken(String token) {
         return authDomainService.validateToken(token);
+    }
+
+    @Override
+    public TokenValidation validateTokenDetail(String token) {
+        String operatorId = authDomainService.validateToken(token);
+        if (operatorId == null) {
+            return TokenValidation.invalid();
+        }
+        String role = jwtService.getRoleFromToken(token);
+        return TokenValidation.valid(operatorId, role);
     }
 }

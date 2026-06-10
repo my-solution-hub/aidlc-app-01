@@ -32,6 +32,12 @@ public class ProductRepositoryImpl implements ProductRepository {
     }
 
     @Override
+    public ProductEntity getByIdForUpdate(Long id) {
+        ProductPO po = productMapper.selectByIdForUpdate(id);
+        return po == null ? null : toEntity(po);
+    }
+
+    @Override
     public ProductEntity getBySku(String sku) {
         LambdaQueryWrapper<ProductPO> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(ProductPO::getSku, sku);

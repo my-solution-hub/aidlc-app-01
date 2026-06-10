@@ -42,16 +42,23 @@ export class EksStack extends cdk.Stack {
       authenticationMode: eks.AuthenticationMode.API_AND_CONFIG_MAP,
     });
 
-    // Cluster admin access for the developer IAM principal
-    new eks.AccessEntry(this, 'YagrxuAccessEntry', {
-      cluster: this.cluster,
-      principal: 'arn:aws:iam::613477150601:user/yagrxu',
-      accessPolicies: [
-        eks.AccessPolicy.fromAccessPolicyName('AmazonEKSClusterAdminPolicy', {
-          accessScopeType: eks.AccessScopeType.CLUSTER,
-        }),
-      ],
-    });
+    // Cluster admin access for developer / console-admin IAM principals
+    const clusterAdminPrincipals = [
+      { id: 'YagrxuAccessEntry', arn: `arn:aws:iam::${this.account}:user/yagrxu` },
+      { id: 'AdminRoleAccessEntry', arn: `arn:aws:iam::${this.account}:role/Admin` },
+    ];
+
+    for (const { id, arn } of clusterAdminPrincipals) {
+      new eks.AccessEntry(this, id, {
+        cluster: this.cluster,
+        principal: arn,
+        accessPolicies: [
+          eks.AccessPolicy.fromAccessPolicyName('AmazonEKSClusterAdminPolicy', {
+            accessScopeType: eks.AccessScopeType.CLUSTER,
+          }),
+        ],
+      });
+    }
 
     // Fargate Profile — all workloads run on Fargate
     this.cluster.addFargateProfile('DefaultProfile', {

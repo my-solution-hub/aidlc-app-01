@@ -84,9 +84,6 @@ jobs:
         working-directory: cdk
         run: npm ci
 
-      - name: Install CDK CLI
-        run: npm install -g aws-cdk@latest
-
       - name: CDK Diff
         working-directory: cdk
         run: npx cdk diff

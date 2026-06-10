@@ -9,7 +9,7 @@ const app = new cdk.App();
 
 const env: cdk.Environment = {
   account: process.env.CDK_DEFAULT_ACCOUNT || process.env.AWS_ACCOUNT_ID,
-  region: process.env.CDK_DEFAULT_REGION || process.env.AWS_REGION || 'ap-southeast-1',
+  region: process.env.CDK_DEFAULT_REGION || process.env.AWS_REGION || 'us-east-1',
 };
 
 // 1. VPC & Networking

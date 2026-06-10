@@ -1,129 +1,90 @@
-# AWSomeShop 前端功能清單（有的 / 部分 / 沒有的）
+# AWSomeShop 前端功能清單（已驗證版）
 
-> 目的：盤點前端 `awsome-shop-frontend` 目前**已實作 / 部分實作 / 未實作**的功能，作為補功能的依據。後端 API 串接缺口另見 `Olivia-AWSomeShop-後端API缺口與規格.md`。
+> 以**實際程式碼**為準（前端頁面 / service 層 + 後端 controller + gateway 路由皆查證過）。判斷標準依需求：
+> - **A 類（視為完成）**：前端 UI + 呼叫程式碼已寫好，後端正常供資料即可運作。
+> - **B 類（不完整）**：前端本身缺頁面/欄位/邏輯，需補（部分後端已備）。
 >
-> - 來源：`AWSomeShop-前端需求差距分析.md`、`awsome-shop-frontend/src/`
+> - 來源：`awsome-shop-frontend/src/`；四個後端服務 controller；gateway `application-local.yml`
 > - 日期：2026-06-10
-> - 圖例：✅ 已完成　⚠️ 部分完成　❌ 未實作 / 缺失　🔴 規格不一致
 
 ---
 
-## 一、整體完成度
+## ✅ 前後端契約：已對齊
 
-25 條使用者故事：約 **14 條完整、7 條部分、4 條缺失或與需求不符**。
-管理端（Admin）完成度明顯高於員工端（Employee）兌換主流程。
+前端 service 層已於 commit `1302e4c（前后端 API 全面 REST 化 + 规格对齐）`改為標準 REST，與後端一致。實測對照：
 
-| 模組 | 故事 | 狀態 |
+| 前端 service | 後端端點 | 一致 |
 |---|---|---|
-| A 認證/註冊登入 | US-001~003, 025 | ⚠️ 大致完成 |
-| B 商品瀏覽/搜尋/詳情 | US-004~007 | ⚠️ 部分 |
-| C 兌換流程 | US-010, 011 | ⚠️ 部分 |
-| D 我的訂單/兌換歷史 | US-012 | ⚠️ 部分 |
-| E 我的積分 | US-008, 009 | ⚠️ 大致完成 |
-| F 管理-商品管理 | US-013~016 | ⚠️ 大致完成 |
-| G 管理-分類管理 | US-017~019 | ✅ 完成 |
-| H 管理-積分管理 | US-020~022 | ❌ 不符需求 |
-| I 管理-兌換記錄管理 | US-023, 024 | ✅ 完成（超出） |
-| J 管理-使用者管理 | 設計補充 | ✅ 完成 |
-| K 儀表板 | 無正式 FR/US | ✅ 完成 |
-| L 圖片處理 | NFR-FE-020/021 | ❌ 多數缺失 |
-| M i18n | 原範圍外 | ⚠️ 額外實作 |
-| N 非功能需求 | NFR-FE-001~024 | ⚠️ 部分 |
+| `auth.ts` → `POST /api/auth/login` | `POST /api/auth/login` | ✅ |
+| `product.ts` → `GET /api/products`、`POST/PUT/DELETE/PATCH /api/admin/products/{id}` | 同 | ✅ |
+| `point.ts` → `GET /api/points/balance?userId`、`/transactions` | 同 | ✅ |
+| `order.ts` → `POST /api/orders`、`GET /api/orders` | 同 | ✅ |
+| `category / user / pointRule / exchangeRecord` | 對應 `/api/...` REST | ✅ |
+
+回應包裝 `Result<T>` / `PageResult<T>` 兩邊一致。**先前文件所述「契約不一致」已不成立**，那是早期 RPC 版的舊狀態。
+
+> 小提醒（非契約問題）：`request.ts` baseURL 預設 `http://localhost:8088`，gateway 實際 `8080`，部署時用 `VITE_API_BASE_URL` 對齊即可。
 
 ---
 
-## 二、✅ 已完整實作的功能
+## A. 前端已完整（後端供資料即可用）
 
-- **登入 / 登出 / 角色守衛**：JWT 存 localStorage、401 攔截跳登入、AuthGuard 依角色（employee/admin）守衛、刷新還原登入狀態。
-- **商品列表 + 搜尋**：卡片網格、空狀態、售罄禁用兌換鈕、URL `?q=` 搜尋。
-- **發起兌換（基本）**：扣積分/減庫存/建記錄，成功 Snackbar + 刷新餘額。
-- **我的訂單列表**：表格 + 空狀態。
-- **我的積分**：餘額/累計獲得/累計使用統計卡、千分位、變動歷史列表 + 正負色彩。
-- **管理-分類管理**：二級樹形、增刪改、啟用停用、搜尋、狀態篩選（US-017/018/019 完整）。
-- **管理-商品管理**：列表（搜尋/分類篩選/分頁每頁 8）、新增、編輯、刪除（確認 Dialog）。
-- **管理-兌換記錄管理**：統計卡、搜尋、狀態/日期範圍篩選、分頁、詳情 Dialog（更新狀態+物流單號）、CSV 匯出（US-023/024，超出需求）。
-- **管理-使用者管理**：列表、新增、啟用停用、分頁。
-- **儀表板**：四指標卡 + 近期兌換表格。
-- **i18n 框架**：i18next，多數頁面 `t()`，可切換並持久化。
-
----
-
-## 三、⚠️ 部分完成（功能在但不完整）
-
-| 功能 | 故事 | 缺什麼 |
+| 功能 | 頁面 | 對應後端 |
 |---|---|---|
-| 員工註冊 | US-001 | 缺「工號」欄位；缺前端校驗（用戶名 3-20 位、密碼長度） |
-| 按分類瀏覽 | US-004 | 分類清單**硬編碼**，未接 API；無二級分類、無麵包屑 |
-| 搜尋商品 | US-005 | 無 300ms 防抖；空結果共用「暫無商品」 |
-| 發起兌換 | US-010 | 僅 Snackbar，未顯示兌換單號/自取資訊；前端未主動比對餘額擋下 |
-| 兌換歷史列表 | US-012 | 無詳情入口 |
-| 積分變動歷史 | US-009 | `type` 顯示英文枚舉，未中文映射 |
-| 商品新增/編輯 | US-013 | 表單缺「庫存 `stock`」輸入；分類下拉硬編碼 |
-| 表單校驗 | BR 1.3 | 僅必填判斷，無積分正整數/庫存非負/圖片格式校驗 |
-| 圖片載入失敗佔位 | NFR-FE-021 | 無 imageUrl 時有 Icon 佔位，但未掛 onError 失敗佔位 |
-| i18n 覆蓋 | — | 殘餘硬編碼中文（ShopHome 分類、CreateProduct 下拉、Dashboard 部分、PointRules 樣式） |
+| 登入 / 登出 / 角色守衛 | Login / AuthGuard | `/api/auth/login`、`/logout` |
+| 商品列表 + 搜尋 | ShopHome（主體） | `GET /api/products` |
+| 商品詳情頁 | ProductDetail | `GET /api/products/{id}` |
+| 兌換確認頁（含兌換後餘額、餘額不足禁用） | ConfirmRedemption | `/api/products/{id}`、`/api/points/balance`、`POST /api/orders` |
+| 我的訂單列表 | MyOrders | `GET /api/orders` |
+| 我的積分（餘額 + 明細） | MyPoints | `/api/points/balance`、`/api/points/transactions` |
+| 管理-商品管理（列表/新增/編輯/刪除） | Products | `/api/products`、`/api/admin/products/**` |
+| 管理-分類管理 | Categories | `/api/categories/tree`、`/api/admin/categories/**` |
+| 管理-兌換記錄管理（統計/篩選/詳情/匯出） | ExchangeRecords | `/api/admin/orders/**` |
+| 管理-使用者管理 | Users | `/api/admin/users/**` |
+| 儀表板 | Dashboard | 組合多個既有 API |
+| 註冊（基本） | Register | `POST /api/auth/register` |
 
 ---
 
-## 四、❌ 未實作 / 缺失的功能
+## B. 不完整（需補前端，括號內為後端狀態）
 
-### P0 — 核心流程缺口
+### B-1 功能性缺口
 
-1. **商品詳情頁（US-006）**：無獨立 `/products/:id`，改用 Dialog；未顯示「當前積分餘額對比」。
-2. **兌換二次確認頁（US-010/011）**：無 `/orders/confirm/:productId`，未顯示「兌換後餘額」、餘額為負未禁用。
-3. **員工積分列表（US-020）**：無頁面。
-4. **手動調整積分（US-021）**：無調整彈窗。
-5. **每月發放配置（US-022）**：無配置表單；統計卡「本月發放/覆蓋員工」顯示佔位「—」。
+| # | 功能 | 缺什麼（前端） | 後端狀態 |
+|---|---|---|---|
+| 1 | 積分管理三件套（US-020/021/022） | 前端做成「積分規則 CRUD（PointRules）」，非需求要的「員工積分列表 / 手動調整 / 發放配置」→ 需重做頁面 | ✅ 已有 `/api/admin/users`、`/api/points/balance`、`/api/internal/points/adjust`、`/api/admin/points/config`、`/api/internal/points/distribute` |
+| 2 | 圖片上傳 UI（BR 6.2） | 商品表單無上傳元件 | ✅ 已有 `POST /api/files/upload` |
+| 3 | 註冊工號 `employeeId`（US-001） | 註冊表單缺工號欄位 | ⚠️ 後端 user 模型支援工號（唯一校驗 `AUTH_007`）；public `RegisterRequest` 是否開放此欄位待確認 |
+| 4 | 分類串接 API（US-004） | ShopHome / CreateProduct 仍硬編碼 `CATEGORIES`；無二級分類/麵包屑 | ✅ 已有 `GET /api/categories/tree`（樹形） → 只要補前端 |
+| 5 | 員工端分頁 / 無限滾動（US-004/007/009/012） | 商品/訂單/積分歷史寫死 `size:50` | ✅ 後端 list 支援分頁 → 只要補前端 |
+| 6 | 兌換歷史詳情入口（US-012） | MyOrders 無法點進詳情 | ✅ 已有 `GET /api/orders/{id}` |
 
-### P1 — 體驗 / 一致性
+### B-2 體驗 / NFR 小項（純前端）
 
-6. **員工端分頁/無限滾動（US-004/007/009/012）**：商品、訂單、積分歷史全寫死 `size:50` 一次抓。
-7. **兌換詳情**（US-012）：列表無法點進詳情。
-
-### P2 — 圖片 / NFR
-
-8. **圖片上傳功能（BR 6.2）**：無上傳 UI。
-9. **圖片懶加載（NFR-FE-020）**：直接 `<img>`，無 IntersectionObserver/LazyImage。
-10. **單元測試（NFR-MAINT-003）**：無測試框架、無測試。
+| # | 功能 | 缺什麼 |
+|---|---|---|
+| 7 | API 超時（NFR-FE-014） | `request.ts` 為 15s，需求 10s |
+| 8 | 積分類型中文映射（US-009） | MyPoints `txn.type` 顯示英文枚舉，未做 EARN/SPEND/ADJUST/REFUND → 中文 |
+| 9 | 商品表單「庫存」輸入（US-013） | CreateProduct 缺 `stock` 輸入欄位（API 已支援 `stock`） |
+| 10 | 圖片懶加載（NFR-FE-020） | 商品圖直接 `<img>`，未加 `loading="lazy"` |
+| 11 | 註冊前端校驗（US-001） | 無帳號長度（3–20）/密碼長度校驗 |
 
 ---
 
-## 五、🔴 規格不一致（需先收斂規格，非單純漏做）
+## C. 規格 / 待決事項（非單純漏做）
 
-| 項目 | 衝突 |
+| 項目 | 說明 |
 |---|---|
-| 積分管理方向 | 需求要「員工積分列表+手動調整+發放配置」，實作成「積分規則 CRUD（PointRules）」——方向不符，三條 Must Have 未做 |
-| 兌換狀態枚舉 | 前端 `PENDING_DELIVERY/DELIVERING/PROCESSING/COMPLETED/CANCELLED` vs 計畫 `PENDING/READY/COMPLETED/CANCELLED` |
-| 密碼長度 | US-001「≥8 位」vs business-rules「≥6 位」，前端皆未強制 |
-| API 超時 | 實作 15s vs NFR-FE-014 要求 10s |
-| i18n | 原 requirements 列為範圍外，但前端已實作 |
+| 密碼長度 | US-001 寫 ≥8、business-rules 寫 ≥6，需收斂後再做前端校驗 |
+| 兌換狀態枚舉 | 前端 `PENDING_DELIVERY/...` 與計畫 `PENDING/READY/...` 需對齊（含後端實際枚舉） |
+| 工號開放範圍 | 確認 public 註冊是否開放 `employeeId`，或工號僅由管理員建立 |
+| 可訪問性 WCAG 2.1 AA | 需手動 + 輔助技術驗證 |
 
 ---
 
-## 六、補功能待辦（依優先級，對應後端依賴）
+## 附：查證範圍
 
-> 後端依賴標記：🟢 後端已有端點　🟠 需後端新增（見 API 缺口文件）　⚪ 純前端
+- **直接讀過程式碼**：前端 `services/api/*.ts`、`request.ts`、ShopHome、ProductDetail、ConfirmRedemption、MyPoints、Register、Products/CreateProduct、router、useAuthStore、i18n locales；四個後端服務 controller；gateway `application-local.yml`。
+- **沿用差距分析（未逐行重看）**：MyOrders、Dashboard、Categories、ExchangeRecords、Users、Products 列表頁的內部細節。
 
-**P0**
-1. 積分管理三件套（US-020/021/022）🟠 — 需先確認「規則 CRUD」取代或並存
-2. 兌換確認頁含「兌換後餘額」（US-011）🟢（組合 balance+product）
-3. 商品詳情頁（US-006）🟢
-4. 分類串接取代硬編碼（US-004）🟢
-
-**P1**
-5. 員工端分頁/無限滾動（每頁 20）🟢
-6. 兌換狀態枚舉對齊 🔴（先收斂規格）
-7. 註冊補工號 + 校驗（US-001）🟠（工號需後端加欄位）
-8. 積分類型中文映射（US-009）⚪
-9. 商品表單補庫存輸入 ⚪ + 圖片上傳 🟠
-
-**P2**
-10. API 超時 15s→10s ⚪
-11. 圖片懶加載 + 失敗佔位 ⚪
-12. 單元測試框架 ⚪
-13. WCAG 2.1 AA 審查 ⚪（需手動驗證）
-14. 殘餘中文補 i18n + 更新 README ⚪
-
----
-
-*功能盤點以實際程式碼為依據。標 🔴 的規格衝突建議於 `awsome-shop-plan` 收斂後再動前端。串接所需後端 API 詳見 `Olivia-AWSomeShop-後端API缺口與規格.md`。*
+*前後端端點完整對照另見 `Olivia-AWSomeShop-後端API缺口與規格.md`（註：該檔目前仍含「契約不一致」的舊框架，需同步更正——契約其實已於 `1302e4c` 對齊）。*

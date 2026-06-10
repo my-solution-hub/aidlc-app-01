@@ -1,10 +1,14 @@
 package com.awsome.shop.point.facade.http.controller;
 
 import com.awsome.shop.point.application.api.dto.account.PointAccountDTO;
+import com.awsome.shop.point.application.api.dto.account.PointBalanceDTO;
 import com.awsome.shop.point.application.api.dto.account.PointTransactionDTO;
+import com.awsome.shop.point.application.api.dto.account.UserPointDTO;
 import com.awsome.shop.point.application.api.dto.account.request.AdjustPointRequest;
+import com.awsome.shop.point.application.api.dto.account.request.AdminAdjustPointRequest;
 import com.awsome.shop.point.application.api.dto.account.request.BalanceRequest;
 import com.awsome.shop.point.application.api.dto.account.request.ListTransactionRequest;
+import com.awsome.shop.point.application.api.dto.account.request.ListUserPointRequest;
 import com.awsome.shop.point.application.api.service.account.PointAccountApplicationService;
 import com.awsome.shop.point.common.dto.PageResult;
 import com.awsome.shop.point.common.result.Result;
@@ -51,5 +55,17 @@ public class PointAccountController {
     @PostMapping("/internal/points/adjust")
     public Result<PointAccountDTO> adjust(@RequestBody @Valid AdjustPointRequest request) {
         return Result.success(pointAccountApplicationService.adjust(request));
+    }
+
+    @Operation(summary = "员工积分列表（管理端）")
+    @GetMapping("/admin/points/users")
+    public Result<PageResult<UserPointDTO>> listUserPoints(@ModelAttribute @Valid ListUserPointRequest request) {
+        return Result.success(pointAccountApplicationService.listUserPoints(request));
+    }
+
+    @Operation(summary = "管理端手动调整积分")
+    @PostMapping("/admin/points/adjust")
+    public Result<PointBalanceDTO> adminAdjust(@RequestBody @Valid AdminAdjustPointRequest request) {
+        return Result.success(pointAccountApplicationService.adminAdjust(request));
     }
 }

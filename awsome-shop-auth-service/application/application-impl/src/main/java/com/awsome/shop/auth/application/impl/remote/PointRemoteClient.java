@@ -42,7 +42,7 @@ public class PointRemoteClient {
      * @param userId 新注册用户ID
      */
     public void initPointAccount(Long userId) {
-        String url = pointBaseUrl + "/api/v1/internal/point/adjust";
+        String url = pointBaseUrl + "/api/internal/points/adjust";
         try {
             JsonNode response = webClient.post()
                     .uri(url)

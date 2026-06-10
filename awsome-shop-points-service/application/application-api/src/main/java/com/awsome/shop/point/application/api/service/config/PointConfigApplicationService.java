@@ -1,6 +1,7 @@
 package com.awsome.shop.point.application.api.service.config;
 
 import com.awsome.shop.point.application.api.dto.config.DistributionConfigDTO;
+import com.awsome.shop.point.application.api.dto.config.PointGrantStatsDTO;
 import com.awsome.shop.point.application.api.dto.config.request.UpdateDistributionConfigRequest;
 
 /**
@@ -13,6 +14,13 @@ public interface PointConfigApplicationService {
 
     /** 更新积分发放配置 */
     DistributionConfigDTO updateDistributionConfig(UpdateDistributionConfigRequest request);
+
+    /**
+     * 获取积分发放统计（US-022）。
+     *
+     * @param month 统计月份（YYYY-MM），为 null 时使用当前月
+     */
+    PointGrantStatsDTO getDistributionStats(String month);
 
     /**
      * 执行积分自动发放：为所有已有账户发放配置额度。

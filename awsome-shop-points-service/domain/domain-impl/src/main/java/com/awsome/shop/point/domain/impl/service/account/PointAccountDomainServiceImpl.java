@@ -4,6 +4,7 @@ import com.awsome.shop.point.common.dto.PageResult;
 import com.awsome.shop.point.common.enums.PointErrorCode;
 import com.awsome.shop.point.common.exception.BusinessException;
 import com.awsome.shop.point.domain.model.account.PointAccountEntity;
+import com.awsome.shop.point.domain.model.account.PointGrantStatsEntity;
 import com.awsome.shop.point.domain.model.account.PointTransactionEntity;
 import com.awsome.shop.point.domain.service.account.PointAccountDomainService;
 import com.awsome.shop.point.repository.account.PointAccountRepository;
@@ -11,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -87,6 +89,40 @@ public class PointAccountDomainServiceImpl implements PointAccountDomainService 
     @Override
     public PageResult<PointTransactionEntity> pageTransactions(Long userId, int page, int size, String type) {
         return repository.pageTransactions(userId, page, size, type);
+    }
+
+    @Override
+    public PageResult<PointAccountEntity> pageAccounts(int page, int size, Long userId) {
+        return repository.pageAccounts(page, size, userId);
+    }
+
+    @Override
+    @Transactional
+    public PointAccountEntity adjustByAdmin(Long userId, int amount, String reason) {
+        if (amount == 0) {
+            throw new BusinessException(PointErrorCode.INVALID_AMOUNT);
+        }
+        PointAccountEntity account = getOrCreate(userId);
+        if (amount < 0) {
+            int deductAmount = -amount;
+            if (account.getBalance() < deductAmount) {
+                throw new BusinessException(PointErrorCode.INSUFFICIENT_BALANCE,
+                        (Object[]) new Object[]{account.getBalance(), deductAmount});
+            }
+            account.setBalance(account.getBalance() - deductAmount);
+            account.setTotalUsed(account.getTotalUsed() + deductAmount);
+        } else {
+            account.setBalance(account.getBalance() + amount);
+            account.setTotalEarned(account.getTotalEarned() + amount);
+        }
+        repository.updateBalance(account);
+        recordTransaction(userId, "ADJUST", amount, account.getBalance(), reason);
+        return account;
+    }
+
+    @Override
+    public PointGrantStatsEntity statDistribution(LocalDateTime start, LocalDateTime end) {
+        return repository.statDistribution(start, end);
     }
 
     private PointAccountEntity newAccount(Long userId, int balance) {

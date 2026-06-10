@@ -2,17 +2,20 @@ package com.awsome.shop.point.repository.mysql.impl.account;
 
 import com.awsome.shop.point.common.dto.PageResult;
 import com.awsome.shop.point.domain.model.account.PointAccountEntity;
+import com.awsome.shop.point.domain.model.account.PointGrantStatsEntity;
 import com.awsome.shop.point.domain.model.account.PointTransactionEntity;
 import com.awsome.shop.point.repository.account.PointAccountRepository;
 import com.awsome.shop.point.repository.mysql.mapper.account.PointAccountMapper;
 import com.awsome.shop.point.repository.mysql.mapper.account.PointTransactionMapper;
 import com.awsome.shop.point.repository.mysql.po.account.PointAccountPO;
+import com.awsome.shop.point.repository.mysql.po.account.PointGrantStatsPO;
 import com.awsome.shop.point.repository.mysql.po.account.PointTransactionPO;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -79,6 +82,35 @@ public class PointAccountRepositoryImpl implements PointAccountRepository {
         pageResult.setPages(result.getPages());
         pageResult.setRecords(result.getRecords().stream().map(this::toTxnEntity).collect(Collectors.toList()));
         return pageResult;
+    }
+
+    @Override
+    public PageResult<PointAccountEntity> pageAccounts(int page, int size, Long userId) {
+        IPage<PointAccountPO> result =
+                accountMapper.selectPageAccounts(new Page<>(page, size), userId);
+        PageResult<PointAccountEntity> pageResult = new PageResult<>();
+        pageResult.setCurrent(result.getCurrent());
+        pageResult.setSize(result.getSize());
+        pageResult.setTotal(result.getTotal());
+        pageResult.setPages(result.getPages());
+        pageResult.setRecords(result.getRecords().stream().map(this::toEntity).collect(Collectors.toList()));
+        return pageResult;
+    }
+
+    @Override
+    public PointGrantStatsEntity statDistribution(LocalDateTime start, LocalDateTime end) {
+        PointGrantStatsPO po = transactionMapper.statDistribution(start, end);
+        PointGrantStatsEntity entity = new PointGrantStatsEntity();
+        if (po == null) {
+            entity.setGrantedTotal(0);
+            entity.setCoveredEmployees(0);
+            entity.setLastGrantedAt(null);
+        } else {
+            entity.setGrantedTotal(po.getGrantedTotal() == null ? 0 : po.getGrantedTotal());
+            entity.setCoveredEmployees(po.getCoveredEmployees() == null ? 0 : po.getCoveredEmployees());
+            entity.setLastGrantedAt(po.getLastGrantedAt());
+        }
+        return entity;
     }
 
     private PointAccountEntity toEntity(PointAccountPO po) {

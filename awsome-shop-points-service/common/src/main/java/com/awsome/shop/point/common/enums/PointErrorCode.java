@@ -15,7 +15,10 @@ public enum PointErrorCode implements ErrorCode {
     INVALID_AMOUNT("PARAM_POINT_001", "积分变动数量非法"),
 
     /** 积分规则不存在 */
-    RULE_NOT_FOUND("NOT_FOUND_POINT_002", "积分规则不存在");
+    RULE_NOT_FOUND("NOT_FOUND_POINT_002", "积分规则不存在"),
+
+    /** 积分发放配置非法 */
+    POINT_CONFIG_INVALID("PARAM_POINT_002", "积分发放配置非法");
 
     private final String code;
     private final String message;

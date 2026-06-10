@@ -1,6 +1,7 @@
 package com.awsome.shop.point.facade.http.controller;
 
 import com.awsome.shop.point.application.api.dto.config.DistributionConfigDTO;
+import com.awsome.shop.point.application.api.dto.config.PointGrantStatsDTO;
 import com.awsome.shop.point.application.api.dto.config.request.UpdateDistributionConfigRequest;
 import com.awsome.shop.point.application.api.service.config.PointConfigApplicationService;
 import com.awsome.shop.point.common.result.Result;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
@@ -38,6 +40,12 @@ public class PointConfigController {
     @PutMapping("/admin/points/config")
     public Result<DistributionConfigDTO> updateConfig(@RequestBody @Valid UpdateDistributionConfigRequest request) {
         return Result.success(pointConfigApplicationService.updateDistributionConfig(request));
+    }
+
+    @Operation(summary = "积分发放统计")
+    @GetMapping("/admin/points/config/stats")
+    public Result<PointGrantStatsDTO> getStats(@RequestParam(required = false) String month) {
+        return Result.success(pointConfigApplicationService.getDistributionStats(month));
     }
 
     @Operation(summary = "手动触发积分自动发放（内部/测试）")

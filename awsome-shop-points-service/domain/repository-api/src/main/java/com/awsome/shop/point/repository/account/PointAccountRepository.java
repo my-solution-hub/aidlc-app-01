@@ -2,8 +2,10 @@ package com.awsome.shop.point.repository.account;
 
 import com.awsome.shop.point.common.dto.PageResult;
 import com.awsome.shop.point.domain.model.account.PointAccountEntity;
+import com.awsome.shop.point.domain.model.account.PointGrantStatsEntity;
 import com.awsome.shop.point.domain.model.account.PointTransactionEntity;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -28,4 +30,10 @@ public interface PointAccountRepository {
 
     /** 分页查询用户流水 */
     PageResult<PointTransactionEntity> pageTransactions(Long userId, int page, int size, String type);
+
+    /** 分页查询积分账户（管理端员工积分列表），keyword 为可选用户ID精确过滤 */
+    PageResult<PointAccountEntity> pageAccounts(int page, int size, Long userId);
+
+    /** 统计指定时间区间 [start, end) 内 type=DISTRIBUTION 的发放情况 */
+    PointGrantStatsEntity statDistribution(LocalDateTime start, LocalDateTime end);
 }

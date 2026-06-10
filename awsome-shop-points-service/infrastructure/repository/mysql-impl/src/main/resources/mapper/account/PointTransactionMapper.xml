@@ -13,4 +13,15 @@
         ORDER BY created_at DESC
     </select>
 
+    <select id="statDistribution" resultType="com.awsome.shop.point.repository.mysql.po.account.PointGrantStatsPO">
+        SELECT
+            COALESCE(SUM(amount), 0)        AS grantedTotal,
+            COUNT(DISTINCT user_id)         AS coveredEmployees,
+            MAX(created_at)                 AS lastGrantedAt
+        FROM point_transaction
+        WHERE type = 'DISTRIBUTION'
+          AND created_at &gt;= #{start}
+          AND created_at &lt; #{end}
+    </select>
+
 </mapper>

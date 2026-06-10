@@ -60,6 +60,10 @@ shop:
   security:
     encryption:
       key: ${ENCRYPTION_KEY:dockerEncryptionKey1234567890ab}
+  remote:
+    # 员工积分列表充填用户信息时调用 auth-service
+    auth:
+      base-url: ${SHOP_REMOTE_AUTH_BASE_URL:http://auth-service:8081}
 
 # 日志配置
 logging:

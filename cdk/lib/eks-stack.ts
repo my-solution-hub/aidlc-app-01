@@ -62,19 +62,7 @@ export class EksStack extends cdk.Stack {
       });
     }
 
-    // Fargate Profile — kept temporarily during migration to managed node group.
-    // Removal is Step 2 (must pre-drain pods or EKS API will refuse delete).
-    this.cluster.addFargateProfile('DefaultProfile', {
-      selectors: [
-        { namespace: 'default' },
-        { namespace: 'awsome-shop' },
-        { namespace: 'kube-system' },
-      ],
-      subnetSelection: { subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS },
-    });
-
-    // Managed node group — Step 1 of Fargate→EC2 migration. Coexists with the
-    // Fargate profile until Step 2 removes the profile.
+    // Managed node group — runs all workloads on EC2 (migrated off Fargate).
     this.cluster.addNodegroupCapacity('DefaultNg', {
       instanceTypes: [new ec2.InstanceType('t3.large')],
       desiredSize: 3,

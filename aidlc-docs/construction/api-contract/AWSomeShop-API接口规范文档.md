@@ -1,10 +1,11 @@
 # AWSomeShop API 接口规范文档
 
-> **版本**: v1.0  
+> **版本**: v1.1  
 > **更新日期**: 2026-06-10  
 > **用途**: 前后端团队协作契约，前端据此调用 API，后端据此实现 API  
 > **基础路径**: `http://{gateway-host}:8080`  
-> **认证方式**: JWT Bearer Token（在 Header 中传递 `Authorization: Bearer {token}`）
+> **认证方式**: JWT Bearer Token（在 Header 中传递 `Authorization: Bearer {token}`）  
+> **风格**: RESTful — 按语义使用 GET/POST/PUT/DELETE 方法
 
 ---
 
@@ -24,9 +25,14 @@
 ## 通用约定
 
 ### 请求方式
-- 所有接口统一使用 **POST** 方法
-- 请求体格式: `application/json`
+- 遵循 RESTful 风格，按语义使用不同 HTTP 方法：
+  - **GET**: 查询/获取资源（无请求体，参数通过 URL Path 或 Query String 传递）
+  - **POST**: 创建资源、执行动作（如登录、兑换）
+  - **PUT**: 全量/部分更新资源
+  - **DELETE**: 删除资源
+- 请求体格式（POST/PUT）: `application/json`
 - 字符编码: `UTF-8`
+- GET 请求的分页和筛选参数通过 Query String 传递，如 `?pageNum=1&pageSize=10&keyword=耳机`
 
 ### 统一响应信封
 
@@ -59,13 +65,9 @@
 
 ### 分页约定
 
-**请求参数**:
-```json
-{
-  "pageNum": 1,
-  "pageSize": 10,
-  ...其他筛选条件
-}
+**GET 请求分页参数**（通过 Query String）:
+```
+GET /api/v1/public/products?pageNum=1&pageSize=10&keyword=耳机
 ```
 
 **响应格式**:
@@ -223,11 +225,11 @@
 
 ### 1.4 获取当前用户信息
 
-**POST** `/api/v1/public/auth/current-user`  
+**GET** `/api/v1/public/auth/me`  
 **认证**: 需要  
 **说明**: 获取当前登录用户的详细信息
 
-**请求体**: 空 `{}`
+**请求参数**: 无（用户身份从 Token 中解析）
 
 **成功响应** (200):
 ```json
@@ -251,7 +253,7 @@
 
 ### 1.5 修改密码
 
-**POST** `/api/v1/public/auth/change-password`  
+**PUT** `/api/v1/public/auth/password`  
 **认证**: 需要  
 **说明**: 用户自助修改密码
 
@@ -283,22 +285,16 @@
 
 ### 2.1 用户列表（管理员）
 
-**POST** `/api/v1/admin/user/list`  
+**GET** `/api/v1/admin/users`  
 **认证**: ADMIN  
 **关联故事**: US-020
 
-**请求体**:
-```json
-{
-  "pageNum": 1,
-  "pageSize": 10,
-  "keyword": "李",
-  "role": "EMPLOYEE",
-  "status": "ACTIVE"
-}
+**Query 参数**:
+```
+GET /api/v1/admin/users?pageNum=1&pageSize=10&keyword=李&role=EMPLOYEE&status=ACTIVE
 ```
 
-| 字段 | 类型 | 必填 | 说明 |
+| 参数 | 类型 | 必填 | 说明 |
 |------|------|------|------|
 | pageNum | int | 否 | 页码，默认1 |
 | pageSize | int | 否 | 每页条数，默认10，最大50 |
@@ -337,20 +333,20 @@
 
 ### 2.2 启用/禁用用户（管理员）
 
-**POST** `/api/v1/admin/user/update-status`  
+**PUT** `/api/v1/admin/users/{userId}/status`  
 **认证**: ADMIN
+
+**路径参数**: `userId` — 用户ID
 
 **请求体**:
 ```json
 {
-  "userId": 1,
   "status": "DISABLED"
 }
 ```
 
 | 字段 | 类型 | 必填 | 说明 |
 |------|------|------|------|
-| userId | long | 是 | 用户ID |
 | status | string | 是 | ACTIVE/DISABLED |
 
 **成功响应** (200):
@@ -368,24 +364,16 @@
 
 ### 3.1 产品列表（员工浏览）
 
-**POST** `/api/v1/public/product/list`  
+**GET** `/api/v1/public/products`  
 **认证**: 需要  
 **关联故事**: US-004, US-005, US-007
 
-**请求体**:
-```json
-{
-  "pageNum": 1,
-  "pageSize": 12,
-  "categoryId": 5,
-  "keyword": "耳机",
-  "status": "ACTIVE",
-  "sortBy": "createdAt",
-  "sortOrder": "DESC"
-}
+**Query 参数**:
+```
+GET /api/v1/public/products?pageNum=1&pageSize=12&categoryId=5&keyword=耳机&sortBy=createdAt&sortOrder=DESC
 ```
 
-| 字段 | 类型 | 必填 | 说明 |
+| 参数 | 类型 | 必填 | 说明 |
 |------|------|------|------|
 | pageNum | int | 否 | 页码，默认1 |
 | pageSize | int | 否 | 每页条数，默认12 |
@@ -427,16 +415,11 @@
 
 ### 3.2 产品详情
 
-**POST** `/api/v1/public/product/get`  
+**GET** `/api/v1/public/products/{productId}`  
 **认证**: 需要  
 **关联故事**: US-006
 
-**请求体**:
-```json
-{
-  "productId": 1
-}
-```
+**路径参数**: `productId` — 产品ID
 
 **成功响应** (200):
 ```json
@@ -464,7 +447,7 @@
 
 ### 3.3 创建产品（管理员）
 
-**POST** `/api/v1/admin/product/create`  
+**POST** `/api/v1/admin/products`  
 **认证**: ADMIN  
 **关联故事**: US-013
 
@@ -504,14 +487,15 @@
 
 ### 3.4 更新产品（管理员）
 
-**POST** `/api/v1/admin/product/update`  
+**PUT** `/api/v1/admin/products/{productId}`  
 **认证**: ADMIN  
 **关联故事**: US-014
+
+**路径参数**: `productId` — 产品ID
 
 **请求体**:
 ```json
 {
-  "productId": 1,
   "name": "Sony WH-1000XM5 无线降噪耳机（新色）",
   "description": "行业领先降噪，30小时续航，新增午夜蓝配色",
   "imageUrl": "https://cdn.example.com/products/sony-xm5-blue.jpg",
@@ -523,8 +507,7 @@
 
 | 字段 | 类型 | 必填 | 说明 |
 |------|------|------|------|
-| productId | long | 是 | 产品ID |
-| 其他字段 | - | 否 | 仅传需要修改的字段 |
+| 所有字段 | - | 否 | 仅传需要修改的字段 |
 
 **成功响应** (200):
 ```json
@@ -539,21 +522,21 @@
 
 ### 3.5 更新产品状态（管理员）
 
-**POST** `/api/v1/admin/product/update-status`  
+**PUT** `/api/v1/admin/products/{productId}/status`  
 **认证**: ADMIN  
 **关联故事**: US-015
+
+**路径参数**: `productId` — 产品ID
 
 **请求体**:
 ```json
 {
-  "productId": 1,
   "status": "INACTIVE"
 }
 ```
 
 | 字段 | 类型 | 必填 | 说明 |
 |------|------|------|------|
-| productId | long | 是 | 产品ID |
 | status | string | 是 | ACTIVE/INACTIVE/SOLD_OUT |
 
 **说明**: `INACTIVE` = 下架（逻辑删除），员工端不可见
@@ -562,11 +545,11 @@
 
 ### 3.6 产品列表（管理员视角）
 
-**POST** `/api/v1/admin/product/list`  
+**GET** `/api/v1/admin/products`  
 **认证**: ADMIN  
 **关联故事**: US-016
 
-**请求体**: 同 3.1，但 `status` 支持 ACTIVE/INACTIVE/SOLD_OUT/ALL
+**Query 参数**: 同 3.1，但 `status` 支持 ACTIVE/INACTIVE/SOLD_OUT/ALL
 
 **与员工列表的区别**:
 - 返回所有状态的产品（含下架）
@@ -578,11 +561,11 @@
 
 ### 4.1 分类树（员工/管理员共用）
 
-**POST** `/api/v1/public/category/tree`  
+**GET** `/api/v1/public/categories/tree`  
 **认证**: 需要  
 **关联故事**: US-004
 
-**请求体**: 空 `{}`
+**请求参数**: 无
 
 **成功响应** (200):
 ```json
@@ -632,7 +615,7 @@
 
 ### 4.2 创建分类（管理员）
 
-**POST** `/api/v1/admin/category/create`  
+**POST** `/api/v1/admin/categories`  
 **认证**: ADMIN  
 **关联故事**: US-017
 
@@ -668,14 +651,15 @@
 
 ### 4.3 更新分类（管理员）
 
-**POST** `/api/v1/admin/category/update`  
+**PUT** `/api/v1/admin/categories/{categoryId}`  
 **认证**: ADMIN  
 **关联故事**: US-018
+
+**路径参数**: `categoryId` — 分类ID
 
 **请求体**:
 ```json
 {
-  "categoryId": 5,
   "name": "无线蓝牙耳机",
   "description": "支持蓝牙5.0+的无线耳机",
   "sortOrder": 2
@@ -686,16 +670,13 @@
 
 ### 4.4 删除分类（管理员）
 
-**POST** `/api/v1/admin/category/delete`  
+**DELETE** `/api/v1/admin/categories/{categoryId}`  
 **认证**: ADMIN  
 **关联故事**: US-019
 
-**请求体**:
-```json
-{
-  "categoryId": 5
-}
-```
+**路径参数**: `categoryId` — 分类ID
+
+**请求体**: 无
 
 **失败响应 — 分类下有产品** (409):
 ```json
@@ -721,11 +702,11 @@
 
 ### 5.1 查询积分余额（员工）
 
-**POST** `/api/v1/public/point/balance`  
+**GET** `/api/v1/public/points/balance`  
 **认证**: 需要  
 **关联故事**: US-008
 
-**请求体**: 空 `{}`
+**请求参数**: 无（从 Token 中获取用户身份）
 
 **成功响应** (200):
 ```json
@@ -745,20 +726,16 @@
 
 ### 5.2 积分变动历史（员工）
 
-**POST** `/api/v1/public/point/transaction/list`  
+**GET** `/api/v1/public/points/transactions`  
 **认证**: 需要  
 **关联故事**: US-009
 
-**请求体**:
-```json
-{
-  "pageNum": 1,
-  "pageSize": 20,
-  "type": "EARN"
-}
+**Query 参数**:
+```
+GET /api/v1/public/points/transactions?pageNum=1&pageSize=20&type=EARN
 ```
 
-| 字段 | 类型 | 必填 | 说明 |
+| 参数 | 类型 | 必填 | 说明 |
 |------|------|------|------|
 | pageNum | int | 否 | 默认1 |
 | pageSize | int | 否 | 默认20 |
@@ -804,22 +781,16 @@
 
 ### 5.3 管理员查看全员积分列表
 
-**POST** `/api/v1/admin/point/account/list`  
+**GET** `/api/v1/admin/points/accounts`  
 **认证**: ADMIN  
 **关联故事**: US-020
 
-**请求体**:
-```json
-{
-  "pageNum": 1,
-  "pageSize": 10,
-  "keyword": "李明",
-  "sortBy": "balance",
-  "sortOrder": "DESC"
-}
+**Query 参数**:
+```
+GET /api/v1/admin/points/accounts?pageNum=1&pageSize=10&keyword=李明&sortBy=balance&sortOrder=DESC
 ```
 
-| 字段 | 类型 | 必填 | 说明 |
+| 参数 | 类型 | 必填 | 说明 |
 |------|------|------|------|
 | pageNum | int | 否 | 默认1 |
 | pageSize | int | 否 | 默认10 |
@@ -856,9 +827,10 @@
 
 ### 5.4 管理员手动调整积分
 
-**POST** `/api/v1/admin/point/adjust`  
+**POST** `/api/v1/admin/points/adjust`  
 **认证**: ADMIN  
-**关联故事**: US-021
+**关联故事**: US-021  
+**说明**: 这是一个"动作"型接口，非 CRUD，使用 POST
 
 **请求体**:
 ```json
@@ -901,18 +873,13 @@
 
 ### 5.5 管理员查看员工积分明细
 
-**POST** `/api/v1/admin/point/transaction/list`  
+**GET** `/api/v1/admin/points/transactions`  
 **认证**: ADMIN  
 **关联故事**: US-020
 
-**请求体**:
-```json
-{
-  "userId": 1,
-  "pageNum": 1,
-  "pageSize": 20,
-  "type": "ALL"
-}
+**Query 参数**:
+```
+GET /api/v1/admin/points/transactions?userId=1&pageNum=1&pageSize=20&type=ALL
 ```
 
 **响应格式**: 同 5.2，但可查看任意员工
@@ -921,16 +888,13 @@
 
 ### 5.6 积分规则列表（管理员）
 
-**POST** `/api/v1/admin/point-rule/list`  
+**GET** `/api/v1/admin/point-rules`  
 **认证**: ADMIN  
 **关联故事**: US-022
 
-**请求体**:
-```json
-{
-  "pageNum": 1,
-  "pageSize": 10
-}
+**Query 参数**:
+```
+GET /api/v1/admin/point-rules?pageNum=1&pageSize=10
 ```
 
 **成功响应** (200):
@@ -964,8 +928,8 @@
 
 ### 5.7 创建/更新积分规则（管理员）
 
-**POST** `/api/v1/admin/point-rule/create`  
-**POST** `/api/v1/admin/point-rule/update`  
+**POST** `/api/v1/admin/point-rules` — 创建  
+**PUT** `/api/v1/admin/point-rules/{ruleId}` — 更新  
 **认证**: ADMIN  
 **关联故事**: US-022
 
@@ -1001,13 +965,14 @@
 
 ### 5.8 启用/禁用积分规则
 
-**POST** `/api/v1/admin/point-rule/update-status`  
+**PUT** `/api/v1/admin/point-rules/{ruleId}/status`  
 **认证**: ADMIN
+
+**路径参数**: `ruleId` — 规则ID
 
 **请求体**:
 ```json
 {
-  "ruleId": 1,
   "status": "INACTIVE"
 }
 ```
@@ -1018,9 +983,10 @@
 
 ### 6.1 发起兑换（员工）
 
-**POST** `/api/v1/public/order/exchange`  
+**POST** `/api/v1/public/orders/exchange`  
 **认证**: 需要  
-**关联故事**: US-010, US-011
+**关联故事**: US-010, US-011  
+**说明**: 这是一个"动作"型接口（发起兑换事务），使用 POST
 
 **请求体**:
 ```json
@@ -1076,20 +1042,16 @@
 
 ### 6.2 员工兑换历史
 
-**POST** `/api/v1/public/order/list`  
+**GET** `/api/v1/public/orders`  
 **认证**: 需要  
 **关联故事**: US-012
 
-**请求体**:
-```json
-{
-  "pageNum": 1,
-  "pageSize": 10,
-  "status": "ALL"
-}
+**Query 参数**:
+```
+GET /api/v1/public/orders?pageNum=1&pageSize=10&status=ALL
 ```
 
-| 字段 | 类型 | 必填 | 说明 |
+| 参数 | 类型 | 必填 | 说明 |
 |------|------|------|------|
 | pageNum | int | 否 | 默认1 |
 | pageSize | int | 否 | 默认10 |
@@ -1126,16 +1088,11 @@
 
 ### 6.3 兑换详情
 
-**POST** `/api/v1/public/order/get`  
+**GET** `/api/v1/public/orders/{orderId}`  
 **认证**: 需要  
 **关联故事**: US-012
 
-**请求体**:
-```json
-{
-  "orderId": 1
-}
-```
+**路径参数**: `orderId` — 订单ID
 
 **成功响应** (200):
 ```json
@@ -1167,23 +1124,16 @@
 
 ### 6.4 管理员兑换记录列表
 
-**POST** `/api/v1/admin/exchange-record/list`  
+**GET** `/api/v1/admin/orders`  
 **认证**: ADMIN  
 **关联故事**: US-023
 
-**请求体**:
-```json
-{
-  "pageNum": 1,
-  "pageSize": 10,
-  "keyword": "李明",
-  "status": "SUCCESS",
-  "startTime": "2026-06-01T00:00:00Z",
-  "endTime": "2026-06-30T23:59:59Z"
-}
+**Query 参数**:
+```
+GET /api/v1/admin/orders?pageNum=1&pageSize=10&keyword=李明&status=SUCCESS&startTime=2026-06-01T00:00:00Z&endTime=2026-06-30T23:59:59Z
 ```
 
-| 字段 | 类型 | 必填 | 说明 |
+| 参数 | 类型 | 必填 | 说明 |
 |------|------|------|------|
 | pageNum | int | 否 | 默认1 |
 | pageSize | int | 否 | 默认10 |
@@ -1198,14 +1148,15 @@
 
 ### 6.5 管理员更新兑换状态
 
-**POST** `/api/v1/admin/exchange-record/update-status`  
+**PUT** `/api/v1/admin/orders/{orderId}/status`  
 **认证**: ADMIN  
 **关联故事**: US-024
+
+**路径参数**: `orderId` — 订单ID
 
 **请求体**:
 ```json
 {
-  "orderId": 1,
   "status": "PICKED_UP",
   "remark": "员工已自取"
 }
@@ -1213,7 +1164,6 @@
 
 | 字段 | 类型 | 必填 | 说明 |
 |------|------|------|------|
-| orderId | long | 是 | 订单ID |
 | status | string | 是 | 目标状态 |
 | remark | string | 否 | 备注 |
 
@@ -1232,15 +1182,12 @@
 
 ### 6.6 兑换统计（管理员）
 
-**POST** `/api/v1/admin/exchange-record/stats`  
+**GET** `/api/v1/admin/orders/stats`  
 **认证**: ADMIN
 
-**请求体**:
-```json
-{
-  "startTime": "2026-06-01T00:00:00Z",
-  "endTime": "2026-06-30T23:59:59Z"
-}
+**Query 参数**:
+```
+GET /api/v1/admin/orders/stats?startTime=2026-06-01T00:00:00Z&endTime=2026-06-30T23:59:59Z
 ```
 
 **成功响应** (200):
@@ -1390,3 +1337,4 @@
 | 版本 | 日期 | 变更说明 |
 |------|------|---------|
 | v1.0 | 2026-06-10 | 初始版本，覆盖全部 25 个用户故事的 API 定义 |
+| v1.1 | 2026-06-10 | 重构为 RESTful 风格，按语义使用 GET/POST/PUT/DELETE 方法，URL 改为复数名词资源路径 |

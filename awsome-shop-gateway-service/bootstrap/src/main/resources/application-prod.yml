@@ -1,22 +1,22 @@
-# Production Environment Configuration
-# 生产环境配置
+# Production Environment Configuration (EKS)
+# 生产环境配置 - Gateway Service
 
 # 说明:
-# - 日志输出到文件 logs/app.log，JSON 格式 + 审计日志 logs/audit.log
-# - 日志级别: 项目包 INFO，框架包 WARN
-# - 使用 AsyncAppender 提升性能
-# - 生产环境配置必须使用环境变量，避免在代码中硬编码敏感信息
-# - 所有环境变量必须在部署前配置，否则应用启动失败
+# - Gateway 不需要数据源（无 DB 访问）
+# - 使用环境变量配置后端服务地址
+# - 所有敏感信息通过 K8s Secrets 注入
+
+server:
+  port: 8088
 
 spring:
-  # Redis 配置
+  # Redis 配置 (用于限流/缓存)
   data:
     redis:
       host: ${REDIS_HOST}
       port: ${REDIS_PORT:6379}
       database: ${REDIS_DATABASE:0}
-      password: ${REDIS_PASSWORD}
-      # 生产环境增加连接池配置
+      password: ${REDIS_PASSWORD:}
       lettuce:
         pool:
           max-active: 20
@@ -24,55 +24,146 @@ spring:
           min-idle: 5
           max-wait: 5000ms
 
-  # 数据源配置
-  datasource:
-    url: jdbc:mysql://${DB_HOST}:${DB_PORT:3306}/${DB_NAME}?useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC&useSSL=true&requireSSL=true
-    username: ${DB_USERNAME}
-    password: ${DB_PASSWORD}
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    type: com.alibaba.druid.pool.DruidDataSource
+# 日志配置
+logging:
+  level:
+    root: WARN
+    com.awsome: INFO
 
-    # Druid 连接池配置 (生产环境)
-    druid:
-      initial-size: 10
-      min-idle: 5
-      max-active: 50
-      max-wait: 60000
-      test-while-idle: true
-      test-on-borrow: false
-      test-on-return: false
-      validation-query: SELECT 1
-      time-between-eviction-runs-millis: 60000
-      min-evictable-idle-time-millis: 300000
+# ==================== Gateway routing (prod/EKS) ====================
+# In EKS, services are resolved via Kubernetes DNS:
+#   http://<service-name>.<namespace>:<port>
+# Defaults assume same namespace (awsome-shop), override via env vars.
+gateway:
+  services:
+    auth: ${GATEWAY_SERVICES_AUTH:http://auth-service:8001}
+    product: ${GATEWAY_SERVICES_PRODUCT:http://product-service:8002}
+    point: ${GATEWAY_SERVICES_POINT:http://points-service:8003}
+    order: ${GATEWAY_SERVICES_ORDER:http://order-service:8004}
+  auth:
+    validate-url: ${GATEWAY_AUTH_VALIDATE_URL:http://auth-service:8001/api/internal/auth/validate}
+    timeout: ${GATEWAY_AUTH_TIMEOUT:5s}
 
-      # SQL 监控配置
-      filter:
-        stat:
-          enabled: true
-          log-slow-sql: true
-          slow-sql-millis: 2000
-        wall:
-          enabled: true
+spring.cloud.gateway.server.webflux.routes:
+  # ---- API Docs ----
+  - id: auth-docs
+    uri: ${gateway.services.auth}
+    predicates:
+      - Path=/v3/api-docs/auth
+    filters:
+      - RewritePath=/v3/api-docs/auth, /v3/api-docs
+      - SwaggerServersRewrite
+    metadata:
+      auth-required: false
+  - id: product-docs
+    uri: ${gateway.services.product}
+    predicates:
+      - Path=/v3/api-docs/product
+    filters:
+      - RewritePath=/v3/api-docs/product, /v3/api-docs
+      - SwaggerServersRewrite
+    metadata:
+      auth-required: false
+  - id: point-docs
+    uri: ${gateway.services.point}
+    predicates:
+      - Path=/v3/api-docs/point
+    filters:
+      - RewritePath=/v3/api-docs/point, /v3/api-docs
+      - SwaggerServersRewrite
+    metadata:
+      auth-required: false
+  - id: order-docs
+    uri: ${gateway.services.order}
+    predicates:
+      - Path=/v3/api-docs/order
+    filters:
+      - RewritePath=/v3/api-docs/order, /v3/api-docs
+      - SwaggerServersRewrite
+    metadata:
+      auth-required: false
+  # ---- Public REST (no auth) ----
+  - id: auth-public
+    uri: ${gateway.services.auth}
+    predicates:
+      - Path=/api/auth/login,/api/auth/register,/api/auth/logout
+    metadata:
+      auth-required: false
+  - id: product-public
+    uri: ${gateway.services.product}
+    predicates:
+      - Path=/api/products/**,/api/categories/**,/api/files/**
+      - Method=GET
+    metadata:
+      auth-required: false
+  # ---- Authenticated REST (auth required) ----
+  - id: auth-service
+    uri: ${gateway.services.auth}
+    predicates:
+      - Path=/api/users/**,/api/admin/users/**
+    metadata:
+      auth-required: true
+  - id: product-service
+    uri: ${gateway.services.product}
+    predicates:
+      - Path=/api/products/**,/api/categories/**,/api/files/**,/api/admin/products/**,/api/admin/categories/**
+    metadata:
+      auth-required: true
+  - id: points-service
+    uri: ${gateway.services.point}
+    predicates:
+      - Path=/api/points/**,/api/admin/points/**,/api/admin/point-rules/**
+    metadata:
+      auth-required: true
+  - id: order-service
+    uri: ${gateway.services.order}
+    predicates:
+      - Path=/api/orders/**,/api/admin/orders/**
+    metadata:
+      auth-required: true
+  # ---- Service-prefix routes (frontend proxy) ----
+  - id: auth-proxy
+    uri: ${gateway.services.auth}
+    predicates:
+      - Path=/auth/**
+    filters:
+      - StripPrefix=1
+    metadata:
+      auth-required: false
+  - id: product-proxy
+    uri: ${gateway.services.product}
+    predicates:
+      - Path=/product/**
+    filters:
+      - StripPrefix=1
+    metadata:
+      auth-required: false
+  - id: point-proxy
+    uri: ${gateway.services.point}
+    predicates:
+      - Path=/point/**
+    filters:
+      - StripPrefix=1
+    metadata:
+      auth-required: false
+  - id: order-proxy
+    uri: ${gateway.services.order}
+    predicates:
+      - Path=/order/**
+    filters:
+      - StripPrefix=1
+    metadata:
+      auth-required: false
 
-# Security 配置
-security:
-  jwt:
-    # JWT 签名密钥 (生产环境必须使用环境变量，禁止硬编码)
-    secret: ${JWT_SECRET}
-    # JWT Token 过期时间 (单位: 秒，默认2小时)
-    expiration: ${JWT_EXPIRATION:7200}
-    # JWT Token 发行者
-    issuer: ${JWT_ISSUER:awsome-shop-gateway-service}
-  # 防暴力破解配置
-  login:
-    # 登录失败最大次数
-    max-failed-attempts: ${MAX_FAILED_ATTEMPTS:5}
-    # 账号锁定时长 (单位: 秒，默认30分钟)
-    lock-duration: ${LOCK_DURATION:1800}
-
-# Shop 配置
-shop:
-  security:
-    encryption:
-      # AES-256 加密密钥 (32字节，生产环境必须使用环境变量，禁止硬编码)
-      key: ${ENCRYPTION_KEY}
+# SpringDoc - Swagger aggregation
+springdoc:
+  swagger-ui:
+    urls:
+      - name: auth
+        url: /v3/api-docs/auth
+      - name: product
+        url: /v3/api-docs/product
+      - name: point
+        url: /v3/api-docs/point
+      - name: order
+        url: /v3/api-docs/order

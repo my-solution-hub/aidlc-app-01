@@ -42,7 +42,7 @@ describe('EksStack', () => {
     template.hasResourceProperties('Custom::AWSCDK-EKS-FargateProfile', {
       Config: Match.objectLike({
         selectors: Match.arrayWith([
-          Match.objectLike({ namespace: 'awsomeshop' }),
+          Match.objectLike({ namespace: 'awsome-shop' }),
         ]),
       }),
     });

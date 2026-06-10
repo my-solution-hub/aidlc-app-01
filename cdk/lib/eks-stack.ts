@@ -45,7 +45,7 @@ export class EksStack extends cdk.Stack {
     this.cluster.addFargateProfile('DefaultProfile', {
       selectors: [
         { namespace: 'default' },
-        { namespace: 'awsomeshop' },
+        { namespace: 'awsome-shop' },
         { namespace: 'kube-system' },
       ],
       subnetSelection: { subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS },
@@ -76,7 +76,7 @@ export class EksStack extends cdk.Stack {
     const conditions = new cdk.CfnJson(this, 'OidcCondition', {
       value: {
         [`${this.cluster.clusterOpenIdConnectIssuer}:aud`]: 'sts.amazonaws.com',
-        [`${this.cluster.clusterOpenIdConnectIssuer}:sub`]: 'system:serviceaccount:awsomeshop:awsomeshop-sa',
+        [`${this.cluster.clusterOpenIdConnectIssuer}:sub`]: 'system:serviceaccount:awsome-shop:awsome-shop-sa',
       },
     });
 
@@ -163,7 +163,7 @@ export class EksStack extends cdk.Stack {
     this.cluster.addManifest('Namespace', {
       apiVersion: 'v1',
       kind: 'Namespace',
-      metadata: { name: 'awsomeshop' },
+      metadata: { name: 'awsome-shop' },
     });
 
     // ─────────────────────────────────────────────

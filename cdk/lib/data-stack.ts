@@ -35,7 +35,7 @@ export class DataStack extends cdk.Stack {
 
     this.dbCluster = new rds.DatabaseCluster(this, 'AuroraCluster', {
       engine: rds.DatabaseClusterEngine.auroraMysql({
-        version: rds.AuroraMysqlEngineVersion.VER_3_07_1,
+        version: rds.AuroraMysqlEngineVersion.VER_3_12_0,
       }),
       serverlessV2MinCapacity: 0.5,
       serverlessV2MaxCapacity: 4,

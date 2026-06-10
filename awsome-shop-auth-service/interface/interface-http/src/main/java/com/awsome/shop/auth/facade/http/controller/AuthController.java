@@ -1,6 +1,7 @@
 package com.awsome.shop.auth.facade.http.controller;
 
 import com.awsome.shop.auth.application.api.dto.auth.CurrentUserRequest;
+import com.awsome.shop.auth.application.api.dto.auth.ChangePasswordRequest;
 import com.awsome.shop.auth.application.api.dto.auth.LoginRequest;
 import com.awsome.shop.auth.application.api.dto.auth.LoginResponse;
 import com.awsome.shop.auth.application.api.dto.auth.RegisterRequest;
@@ -58,6 +59,24 @@ public class AuthController {
             request.setToken(extractToken(authorization));
         }
         return Result.success(userApplicationService.currentUser(request));
+    }
+
+    @Operation(summary = "修改密码 (AUTH-3)")
+    @PutMapping("/api/auth/password")
+    public Result<Void> changePassword(@RequestHeader(value = "X-Operator-Id") Long operatorId,
+                                       @RequestBody @Valid ChangePasswordRequest request) {
+        authApplicationService.changePassword(operatorId, request.getOldPassword(), request.getNewPassword());
+        return Result.success();
+    }
+
+    @Operation(summary = "刷新 Token (AUTH-6)")
+    @PostMapping("/api/auth/refresh")
+    public Result<LoginResponse> refreshToken(@RequestHeader(value = "Authorization") String authorization) {
+        String token = extractToken(authorization);
+        String newToken = authApplicationService.refreshToken(token);
+        LoginResponse response = new LoginResponse();
+        response.setToken(newToken);
+        return Result.success(response);
     }
 
     private String extractToken(String authorization) {

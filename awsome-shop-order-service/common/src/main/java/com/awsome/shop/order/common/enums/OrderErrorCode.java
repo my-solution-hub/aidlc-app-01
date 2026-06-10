@@ -35,7 +35,17 @@ public enum OrderErrorCode implements ErrorCode {
     /**
      * 兑换记录状态非法
      */
-    INVALID_EXCHANGE_STATUS("PARAM_001", "非法的兑换记录状态: {0}");
+    INVALID_EXCHANGE_STATUS("PARAM_001", "非法的兑换记录状态: {0}"),
+
+    /**
+     * 重复兑换请求（幂等拦截）(ORD-5)
+     */
+    DUPLICATE_EXCHANGE_REQUEST("CONFLICT_004", "重复的兑换请求，请勿重复提交"),
+
+    /**
+     * 兑换频率限制 (ORD-6)
+     */
+    EXCHANGE_RATE_LIMITED("CONFLICT_005", "兑换操作过于频繁，请1分钟后重试");
 
     private final String code;
     private final String message;

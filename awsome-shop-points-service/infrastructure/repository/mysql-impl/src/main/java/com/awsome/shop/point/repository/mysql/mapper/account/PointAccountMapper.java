@@ -24,4 +24,7 @@ public interface PointAccountMapper extends BaseMapper<PointAccountPO> {
 
     /** 分页查询账户列表（管理端），userId 非空时按用户ID精确过滤 */
     IPage<PointAccountPO> selectPageAccounts(IPage<PointAccountPO> page, @Param("userId") Long userId);
+
+    /** PTS-6: 原子性扣减积分，WHERE balance >= amount 防并发超扣，返回受影响行数 */
+    int atomicDeduct(@Param("accountId") Long accountId, @Param("amount") int amount);
 }

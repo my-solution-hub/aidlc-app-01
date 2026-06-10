@@ -23,6 +23,8 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+
 /**
  * 商品管理 Controller（RESTful）
  */
@@ -37,6 +39,17 @@ public class ProductController {
     @GetMapping("/api/products")
     public Result<PageResult<ProductDTO>> list(@Valid @ModelAttribute ListProductRequest request) {
         return Result.success(productApplicationService.list(request));
+    }
+
+    @Operation(summary = "热门推荐商品 (PROD-7) — 按销量 TOP 10")
+    @GetMapping("/api/products/recommended")
+    public Result<List<ProductDTO>> recommended() {
+        ListProductRequest request = new ListProductRequest();
+        request.setPage(1);
+        request.setSize(10);
+        request.setSortBy("soldCount");
+        request.setSortOrder("DESC");
+        return Result.success(productApplicationService.list(request).getRecords());
     }
 
     @Operation(summary = "商品详情查询")

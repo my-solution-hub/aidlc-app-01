@@ -18,4 +18,10 @@ public interface AuthApplicationService {
 
     /** 校验 token，返回携带 operatorId 与 role 的结果（网关鉴权调用） */
     TokenValidation validateTokenDetail(String token);
+
+    /** 修改密码 (AUTH-3) */
+    void changePassword(Long userId, String oldPassword, String newPassword);
+
+    /** 刷新 Token (AUTH-6) */
+    String refreshToken(String token);
 }

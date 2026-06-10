@@ -37,6 +37,9 @@ public class ExchangeRecordApplicationServiceImpl implements ExchangeRecordAppli
 
     private final ExchangeRecordDomainService exchangeRecordDomainService;
     private final ExchangeRemoteClient exchangeRemoteClient;
+    private final IdempotencyService idempotencyService;
+    private final ExchangeRateLimitService rateLimitService;
+    private final ExchangeNotificationService notificationService;
 
     @Override
     public ExchangeRecordDTO get(GetExchangeRecordRequest request) {
@@ -80,6 +83,8 @@ public class ExchangeRecordApplicationServiceImpl implements ExchangeRecordAppli
             int qty = before.getQuantity() == null ? 1 : before.getQuantity();
             safeRestoreStock(before.getProductId(), qty);
         }
+        // ORD-8: 状态变更通知
+        notificationService.notifyStatusChange(updated.getUserId(), updated.getOrderNo(), updated.getStatus());
         return toDTO(updated);
     }
 
@@ -89,8 +94,26 @@ public class ExchangeRecordApplicationServiceImpl implements ExchangeRecordAppli
         Long productId = request.getProductId();
         Long userId = request.getUserId();
 
+        // ORD-5: 幂等性检查
+        String idempotencyKey = request.getIdempotencyKey();
+        if (!idempotencyService.tryAcquire(idempotencyKey)) {
+            throw new BusinessException(OrderErrorCode.DUPLICATE_EXCHANGE_REQUEST);
+        }
+
+        // ORD-6: 频率限制
+        if (!rateLimitService.allowExchange(userId)) {
+            idempotencyService.release(idempotencyKey);
+            throw new BusinessException(OrderErrorCode.EXCHANGE_RATE_LIMITED);
+        }
+
         // 0. 查询商品信息（积分单价 + 名称等）
-        JsonNode product = exchangeRemoteClient.getProduct(productId);
+        JsonNode product;
+        try {
+            product = exchangeRemoteClient.getProduct(productId);
+        } catch (SagaException e) {
+            idempotencyService.release(idempotencyKey);
+            throw e;
+        }
         String productName = product.path("name").asText("");
         int pointsPrice = product.path("pointsPrice").asInt(0);
         String imageUrl = product.path("imageUrl").asText(null);
@@ -121,6 +144,8 @@ public class ExchangeRecordApplicationServiceImpl implements ExchangeRecordAppli
                 description, imageUrl, quantity, pointsCost);
         try {
             ExchangeRecordEntity saved = exchangeRecordDomainService.save(entity);
+            // ORD-8: 兑换成功通知
+            notificationService.notifyExchangeSuccess(userId, saved.getOrderNo(), productName);
             return toDTO(saved);
         } catch (Exception e) {
             // 补偿：退还积分 + 恢复库存

@@ -61,14 +61,17 @@ public class PointAccountDomainServiceImpl implements PointAccountDomainService 
             throw new BusinessException(PointErrorCode.INVALID_AMOUNT);
         }
         PointAccountEntity account = getOrCreate(userId);
-        if (account.getBalance() < amount) {
+        // PTS-6: 使用数据库级原子扣减，防并发超扣
+        boolean success = repository.atomicDeduct(account.getId(), amount);
+        if (!success) {
             throw new BusinessException(PointErrorCode.INSUFFICIENT_BALANCE,
                     (Object[]) new Object[]{account.getBalance(), amount});
         }
-        account.setBalance(account.getBalance() - amount);
+        // 刷新余额用于流水记录
+        int newBalance = account.getBalance() - amount;
+        account.setBalance(newBalance);
         account.setTotalUsed(account.getTotalUsed() + amount);
-        repository.updateBalance(account);
-        recordTransaction(userId, "REDEEM", -amount, account.getBalance(), description);
+        recordTransaction(userId, "REDEEM", -amount, newBalance, description);
         return account;
     }
 

@@ -61,6 +61,14 @@ public class PointAccountRepositoryImpl implements PointAccountRepository {
     }
 
     @Override
+    public boolean atomicDeduct(Long accountId, int amount) {
+        // 原子扣减: UPDATE point_account SET balance = balance - #{amount}, total_used = total_used + #{amount}
+        // WHERE id = #{id} AND balance >= #{amount}
+        int affected = accountMapper.atomicDeduct(accountId, amount);
+        return affected > 0;
+    }
+
+    @Override
     public void insertTransaction(PointTransactionEntity transaction) {
         PointTransactionPO po = new PointTransactionPO();
         po.setUserId(transaction.getUserId());

@@ -20,4 +20,10 @@ public class ListProductRequest {
     private String name;
 
     private String category;
+
+    /** 排序字段 (PROD-7): soldCount/pointsPrice/createdAt，默认 createdAt */
+    private String sortBy = "createdAt";
+
+    /** 排序方向: ASC/DESC，默认 DESC */
+    private String sortOrder = "DESC";
 }

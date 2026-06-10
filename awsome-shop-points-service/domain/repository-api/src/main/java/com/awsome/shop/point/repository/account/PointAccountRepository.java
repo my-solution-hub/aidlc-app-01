@@ -25,6 +25,9 @@ public interface PointAccountRepository {
     /** 更新账户余额/累计（乐观锁） */
     void updateBalance(PointAccountEntity account);
 
+    /** 原子性扣减积分 (PTS-6)：通过 SQL WHERE balance >= amount 防止并发超扣 */
+    boolean atomicDeduct(Long accountId, int amount);
+
     /** 新增一条流水 */
     void insertTransaction(PointTransactionEntity transaction);
 

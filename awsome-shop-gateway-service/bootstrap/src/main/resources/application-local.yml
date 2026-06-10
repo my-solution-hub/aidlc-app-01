@@ -13,10 +13,24 @@ gateway:
   auth:
     validate-url: http://localhost:8001/api/internal/auth/validate
 
-# Spring Cloud Gateway Routes
+# Rate Limiting Configuration (GW-1)
 spring:
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+
   cloud:
     gateway:
+      # Global default filters for rate limiting
+      default-filters:
+        - name: RequestRateLimiter
+          args:
+            redis-rate-limiter.replenishRate: 10
+            redis-rate-limiter.burstCapacity: 20
+            redis-rate-limiter.requestedTokens: 1
+            key-resolver: "#{@userKeyResolver}"
+            deny-empty-key: false
       server:
         webflux:
           routes:
@@ -100,6 +114,11 @@ spring:
               uri: ${gateway.services.auth}
               predicates:
                 - Path=/api/users/**,/api/admin/users/**
+              filters:
+                - name: CircuitBreaker
+                  args:
+                    name: authServiceCB
+                    fallbackUri: forward:/fallback/service-unavailable
               metadata:
                 auth-required: true
 
@@ -107,6 +126,11 @@ spring:
               uri: ${gateway.services.product}
               predicates:
                 - Path=/api/products/**,/api/categories/**,/api/files/**,/api/admin/products/**,/api/admin/categories/**
+              filters:
+                - name: CircuitBreaker
+                  args:
+                    name: productServiceCB
+                    fallbackUri: forward:/fallback/service-unavailable
               metadata:
                 auth-required: true
 
@@ -114,6 +138,11 @@ spring:
               uri: ${gateway.services.point}
               predicates:
                 - Path=/api/points/**,/api/admin/points/**,/api/admin/point-rules/**
+              filters:
+                - name: CircuitBreaker
+                  args:
+                    name: pointsServiceCB
+                    fallbackUri: forward:/fallback/service-unavailable
               metadata:
                 auth-required: true
 
@@ -121,6 +150,11 @@ spring:
               uri: ${gateway.services.order}
               predicates:
                 - Path=/api/orders/**,/api/admin/orders/**
+              filters:
+                - name: CircuitBreaker
+                  args:
+                    name: orderServiceCB
+                    fallbackUri: forward:/fallback/service-unavailable
               metadata:
                 auth-required: true
 

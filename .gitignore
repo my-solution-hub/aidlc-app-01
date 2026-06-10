@@ -37,6 +37,7 @@ local.properties
 .vscode/
 *.iml
 .DS_Store
+.kiro/
 
 # ---------- 工具产物 ----------
 # graphify 知识图谱输出

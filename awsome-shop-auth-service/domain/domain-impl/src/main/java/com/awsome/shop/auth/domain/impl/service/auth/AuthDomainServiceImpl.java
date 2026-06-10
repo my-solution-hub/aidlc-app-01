@@ -90,4 +90,36 @@ public class AuthDomainServiceImpl implements AuthDomainService {
         }
         return String.valueOf(jwtService.getUserIdFromToken(token));
     }
+
+    @Override
+    public void changePassword(Long userId, String oldPassword, String newPassword) {
+        UserEntity user = userRepository.findById(userId);
+        if (user == null) {
+            throw new BusinessException(AuthErrorCode.USER_NOT_FOUND);
+        }
+        if (!passwordEncoder.matches(oldPassword, user.getPasswordHash())) {
+            throw new BusinessException(AuthErrorCode.INVALID_CREDENTIALS);
+        }
+        user.setPasswordHash(passwordEncoder.encode(newPassword));
+        userRepository.update(user);
+    }
+
+    @Override
+    public String refreshToken(String token) {
+        if (token == null || !jwtService.validateToken(token)) {
+            throw new BusinessException(AuthErrorCode.INVALID_TOKEN);
+        }
+        if (tokenCacheService.isBlacklisted(token)) {
+            throw new BusinessException(AuthErrorCode.INVALID_TOKEN);
+        }
+        Long userId = jwtService.getUserIdFromToken(token);
+        String username = jwtService.getUsernameFromToken(token);
+        String role = jwtService.getRoleFromToken(token);
+
+        // 旧 token 加入黑名单
+        tokenCacheService.addToBlacklist(token, jwtService.getExpirationSeconds());
+
+        // 签发新 token
+        return jwtService.generateToken(userId, username, role);
+    }
 }

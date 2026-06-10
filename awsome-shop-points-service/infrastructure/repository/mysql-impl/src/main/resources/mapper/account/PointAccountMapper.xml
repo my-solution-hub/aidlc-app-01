@@ -3,6 +3,16 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.awsome.shop.point.repository.mysql.mapper.account.PointAccountMapper">
 
+    <!-- PTS-6: 原子性扣减，防止并发超扣 -->
+    <update id="atomicDeduct">
+        UPDATE point_account
+        SET balance = balance - #{amount},
+            total_used = total_used + #{amount},
+            updated_at = NOW()
+        WHERE id = #{accountId}
+          AND balance >= #{amount}
+    </update>
+
     <select id="selectPageAccounts" resultType="com.awsome.shop.point.repository.mysql.po.account.PointAccountPO">
         SELECT id, user_id, balance, total_earned, total_used, created_at, updated_at, version
         FROM point_account

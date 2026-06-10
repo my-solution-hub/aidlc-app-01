@@ -54,4 +54,14 @@ public class AuthApplicationServiceImpl implements AuthApplicationService {
         String role = jwtService.getRoleFromToken(token);
         return TokenValidation.valid(operatorId, role);
     }
+
+    @Override
+    public void changePassword(Long userId, String oldPassword, String newPassword) {
+        authDomainService.changePassword(userId, oldPassword, newPassword);
+    }
+
+    @Override
+    public String refreshToken(String token) {
+        return authDomainService.refreshToken(token);
+    }
 }

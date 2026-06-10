@@ -26,6 +26,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.lenient;
 
 /**
  * P0-ORD-1/ORD-2: 兑换流程（含余额/库存校验 + Saga 补偿）单元测试
@@ -38,6 +39,15 @@ class ExchangeRecordApplicationServiceImplTest {
 
     @Mock
     private ExchangeRemoteClient exchangeRemoteClient;
+
+    @Mock
+    private IdempotencyService idempotencyService;
+
+    @Mock
+    private ExchangeRateLimitService rateLimitService;
+
+    @Mock
+    private ExchangeNotificationService notificationService;
 
     @InjectMocks
     private ExchangeRecordApplicationServiceImpl service;
@@ -52,6 +62,11 @@ class ExchangeRecordApplicationServiceImplTest {
         request.setQuantity(1);
         request.setUserId(100L);
         request.setEmployeeName("李明");
+        request.setIdempotencyKey("test-key-123");
+
+        // Default: 幂等和限频均通过
+        lenient().when(idempotencyService.tryAcquire(any())).thenReturn(true);
+        lenient().when(rateLimitService.allowExchange(any())).thenReturn(true);
     }
 
     @Nested

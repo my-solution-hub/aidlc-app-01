@@ -96,7 +96,7 @@ class PointAccountDomainServiceImplTest {
 
             // then
             assertThat(result.getBalance()).isEqualTo(600);
-            assertThat(result.getTotalEarned()).isEqualTo(100);
+            assertThat(result.getTotalEarned()).isEqualTo(600); // 原始500 + 新增100
             verify(repository).updateBalance(account);
 
             ArgumentCaptor<PointTransactionEntity> txnCaptor = ArgumentCaptor.forClass(PointTransactionEntity.class);
@@ -131,6 +131,7 @@ class PointAccountDomainServiceImplTest {
             // given
             PointAccountEntity account = buildAccount(1L, 500);
             when(repository.findByUserId(1L)).thenReturn(account);
+            when(repository.atomicDeduct(1L, 200)).thenReturn(true);
 
             // when
             PointAccountEntity result = service.deduct(1L, 200, "兑换商品");
@@ -138,7 +139,7 @@ class PointAccountDomainServiceImplTest {
             // then
             assertThat(result.getBalance()).isEqualTo(300);
             assertThat(result.getTotalUsed()).isEqualTo(200);
-            verify(repository).updateBalance(account);
+            verify(repository).atomicDeduct(1L, 200);
             verify(repository).insertTransaction(any());
         }
 
@@ -148,11 +149,11 @@ class PointAccountDomainServiceImplTest {
             // given
             PointAccountEntity account = buildAccount(1L, 100);
             when(repository.findByUserId(1L)).thenReturn(account);
+            when(repository.atomicDeduct(1L, 200)).thenReturn(false);
 
             // when & then
             assertThatThrownBy(() -> service.deduct(1L, 200, "兑换商品"))
                     .isInstanceOf(BusinessException.class);
-            verify(repository, never()).updateBalance(any());
             verify(repository, never()).insertTransaction(any());
         }
 
@@ -171,6 +172,7 @@ class PointAccountDomainServiceImplTest {
             // given
             PointAccountEntity account = buildAccount(1L, 500);
             when(repository.findByUserId(1L)).thenReturn(account);
+            when(repository.atomicDeduct(1L, 500)).thenReturn(true);
 
             // when
             PointAccountEntity result = service.deduct(1L, 500, "全部扣减");

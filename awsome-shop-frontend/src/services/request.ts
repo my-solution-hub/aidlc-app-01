@@ -25,7 +25,10 @@ const TOKEN_KEY = "token";
 // ---- Axios instance ----
 
 const instance = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:8088",
+  // No domain by default: relative/same-origin requests (works when the SPA is
+  // served from the same host that routes /auth /product /point /order to the
+  // backend, e.g. CloudFront). Override with VITE_API_BASE_URL for local dev.
+  baseURL: import.meta.env.VITE_API_BASE_URL || "",
   timeout: 10000,
 });
 

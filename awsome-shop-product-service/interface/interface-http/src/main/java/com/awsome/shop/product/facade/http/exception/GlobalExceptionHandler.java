@@ -12,6 +12,8 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -121,6 +123,37 @@ public class GlobalExceptionHandler {
                 .body(Result.error(400002, "请求参数无效", errors));
     }
 
+    /**
+     * 处理客户端请求格式错误（参数类型不匹配 / 请求体无法解析）。
+     *
+     * <p>这些都属于 400 客户端错误，此前会落入兜底 Exception 处理器被误报为
+     * "系统错误 500"。统一在此归类为 400002，并给出可读的字段提示。</p>
+     *
+     * <p>注：缺少必填参数/文件（MissingServletRequestParameter/Part）继承自
+     * jakarta.servlet.ServletException，而本模块未引入 servlet-api 依赖，
+     * 无法在此引用，交由兜底处理器处理。</p>
+     */
+    @ExceptionHandler({
+            MethodArgumentTypeMismatchException.class,
+            HttpMessageNotReadableException.class
+    })
+    public ResponseEntity<Result<List<ErrorDetail>>> handleBadRequest(Exception e) {
+        String field = "";
+        String detail;
+        if (e instanceof MethodArgumentTypeMismatchException ex) {
+            field = ex.getName();
+            detail = "参数类型不正确: " + field;
+        } else {
+            detail = "请求体格式错误或无法解析";
+        }
+        log.warn("[全局异常处理] 客户端请求错误: {}", detail);
+
+        List<ErrorDetail> errors = new ArrayList<>();
+        errors.add(ErrorDetail.of(field, detail));
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(Result.error(400002, "请求参数无效", errors));
+    }
+
     // ==================== 业务异常（根据错误码动态返回状态码） ====================
 
     /**
@@ -190,6 +223,14 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Result<Void>> handleException(Exception e) {
+        // 数据库唯一键冲突（如重复 SKU / 用户名）。DuplicateKeyException 位于
+        // spring-tx，本模块编译期 classpath 不可见，故用类名字符串匹配（运行时一定存在）。
+        if (isDuplicateKey(e)) {
+            log.warn("[全局异常处理] 数据唯一键冲突: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(Result.error(409001, "资源已存在（唯一键冲突）"));
+        }
+
         log.error("[全局异常处理] 未知异常", e);
 
         // 不暴露内部实现细节
@@ -287,5 +328,19 @@ public class GlobalExceptionHandler {
             log.error("[全局异常处理] 解析错误码失败: errorCode={}", errorCode, e);
             return 500000;
         }
+    }
+    /** 沿异常因果链检测是否为数据库唯一键冲突（避免编译期依赖 spring-dao）。 */
+    private boolean isDuplicateKey(Throwable e) {
+        for (Throwable t = e; t != null; t = t.getCause()) {
+            String cn = t.getClass().getName();
+            if (cn.contains("DuplicateKey") || cn.contains("DuplicateEntry")) {
+                return true;
+            }
+            String msg = t.getMessage();
+            if (msg != null && (msg.contains("Duplicate entry") || msg.contains("uk_"))) {
+                return true;
+            }
+        }
+        return false;
     }
 }

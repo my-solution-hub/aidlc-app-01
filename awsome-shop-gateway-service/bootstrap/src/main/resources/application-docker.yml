@@ -165,11 +165,42 @@ spring.cloud.gateway.server.webflux.routes:
       - Path=/api/orders/**,/api/admin/orders/**
     metadata:
       auth-required: true
-  # ---- Service-prefix routes (used by the frontend: /auth, /product, /point, /order) ----
+  # ---- Service-prefix routes (used by frontend & Swagger: /auth, /product, /point, /order) ----
+  # IMPORTANT: these mirror the auth policy of the REST routes above. Public
+  # routes are declared BEFORE the catch-all authenticated proxy per service
+  # (gateway matches in order). The auth filter reads the ORIGINAL path (before
+  # StripPrefix), so "/auth/api/admin/..." still triggers the admin-role check.
+  # ---- auth ----
+  - id: auth-proxy-public
+    uri: ${gateway.services.auth}
+    predicates:
+      - Path=/auth/api/auth/login,/auth/api/auth/register,/auth/api/auth/logout,/auth/api/internal/**
+    filters:
+      - StripPrefix=1
+    metadata:
+      auth-required: false
   - id: auth-proxy
     uri: ${gateway.services.auth}
     predicates:
       - Path=/auth/**
+    filters:
+      - StripPrefix=1
+    metadata:
+      auth-required: true
+  # ---- product ----
+  - id: product-proxy-public
+    uri: ${gateway.services.product}
+    predicates:
+      - Path=/product/api/products/**,/product/api/categories/**,/product/api/files/**
+      - Method=GET
+    filters:
+      - StripPrefix=1
+    metadata:
+      auth-required: false
+  - id: product-proxy-internal
+    uri: ${gateway.services.product}
+    predicates:
+      - Path=/product/api/internal/**
     filters:
       - StripPrefix=1
     metadata:
@@ -181,6 +212,15 @@ spring.cloud.gateway.server.webflux.routes:
     filters:
       - StripPrefix=1
     metadata:
+      auth-required: true
+  # ---- point ----
+  - id: point-proxy-internal
+    uri: ${gateway.services.point}
+    predicates:
+      - Path=/point/api/internal/**
+    filters:
+      - StripPrefix=1
+    metadata:
       auth-required: false
   - id: point-proxy
     uri: ${gateway.services.point}
@@ -189,7 +229,8 @@ spring.cloud.gateway.server.webflux.routes:
     filters:
       - StripPrefix=1
     metadata:
-      auth-required: false
+      auth-required: true
+  # ---- order ----
   - id: order-proxy
     uri: ${gateway.services.order}
     predicates:
@@ -197,7 +238,7 @@ spring.cloud.gateway.server.webflux.routes:
     filters:
       - StripPrefix=1
     metadata:
-      auth-required: false
+      auth-required: true
 
 # SpringDoc - Swagger aggregation
 springdoc:

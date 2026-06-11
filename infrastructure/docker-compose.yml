@@ -210,7 +210,7 @@ services:
       GATEWAY_SERVICES_PRODUCT: http://product-service:8081
       GATEWAY_SERVICES_POINT: http://points-service:8081
       GATEWAY_SERVICES_ORDER: http://order-service:8081
-      GATEWAY_AUTH_VALIDATE_URL: http://auth-service:8081/api/v1/internal/auth/validate
+      GATEWAY_AUTH_VALIDATE_URL: http://auth-service:8081/api/internal/auth/validate
     healthcheck: *jvm-healthcheck
     networks:
       - awsomeshop-net

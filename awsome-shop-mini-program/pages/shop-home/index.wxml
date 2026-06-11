@@ -1,0 +1,103 @@
+<view class="page">
+  <!-- Hero banner -->
+  <view class="hero">
+    <view class="hero-text">
+      <view class="hero-title">本月精选好物</view>
+      <view class="hero-sub">用积分兑换您心仪的商品，每月更新</view>
+      <view class="hero-cta" bindtap="onBrowse">立即浏览 →</view>
+    </view>
+    <view class="hero-meta">
+      <view class="hero-points-chip">🪙 {{balanceFmt}} 积分</view>
+      <view class="hero-icon">🛍️</view>
+    </view>
+  </view>
+
+  <!-- Search -->
+  <view class="search-bar">
+    <view class="search-icon">🔍</view>
+    <input
+      class="search-input"
+      placeholder="搜索商品名称..."
+      placeholder-class="placeholder"
+      value="{{keyword}}"
+      bindinput="onKeywordInput"
+      bindconfirm="onSearch"
+      confirm-type="search"
+    />
+    <view wx:if="{{keyword}}" class="search-btn" bindtap="onSearch">搜索</view>
+  </view>
+
+  <!-- Category filter -->
+  <scroll-view class="category-scroll" scroll-x enable-flex>
+    <view class="category-list">
+      <view
+        wx:for="{{categories}}"
+        wx:key="key"
+        class="chip {{activeCategory === item.key ? 'chip-active' : ''}}"
+        data-key="{{item.key}}"
+        bindtap="onCategoryTap"
+      >
+        {{item.label}}
+      </view>
+    </view>
+  </scroll-view>
+
+  <!-- Loading -->
+  <view wx:if="{{loading}}" class="empty">
+    <view class="spinner"></view>
+  </view>
+
+  <!-- Empty -->
+  <view wx:elif="{{products.length === 0}}" class="empty">
+    <view class="empty-icon">📦</view>
+    <view class="muted">暂无商品</view>
+  </view>
+
+  <!-- Product grid -->
+  <view wx:else class="product-grid">
+    <view
+      wx:for="{{products}}"
+      wx:key="id"
+      class="product-card"
+      data-id="{{item.id}}"
+      bindtap="onProductTap"
+    >
+      <view class="product-image" style="background:{{item.categoryBg}}">
+        <image
+          wx:if="{{item.imageUrl}}"
+          src="{{item.imageUrl}}"
+          mode="aspectFill"
+          class="product-image-img"
+          lazy-load
+        />
+        <view wx:else class="product-image-placeholder" style="color:{{item.categoryColor}}">📦</view>
+      </view>
+      <view class="product-body">
+        <view class="product-name">{{item.name}}</view>
+        <view class="product-category">{{item.category}}</view>
+        <view class="product-sold muted">已兑换 {{item.soldCount || 0}} 件</view>
+        <view class="product-bottom">
+          <view class="product-price">
+            <text class="price-icon">🪙</text>
+            <text class="price-value">{{item.pointsPriceFmt}}</text>
+          </view>
+          <view
+            class="product-redeem {{item.unavailable ? 'product-redeem-disabled' : ''}}"
+            data-id="{{item.id}}"
+            data-unavailable="{{item.unavailable}}"
+            catchtap="onRedeemTap"
+          >
+            兑换
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view wx:if="{{loadingMore}}" class="empty">
+    <view class="spinner"></view>
+  </view>
+  <view wx:elif="{{!loading && products.length > 0 && page >= pages}}" class="end-hint muted">
+    没有更多了
+  </view>
+</view>

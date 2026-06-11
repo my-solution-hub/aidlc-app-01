@@ -1,0 +1,64 @@
+<view class="page">
+  <view wx:if="{{loading}}" class="empty">
+    <view class="spinner"></view>
+  </view>
+
+  <block wx:elif="{{product}}">
+    <view class="product-image" style="background:{{categoryBg}}">
+      <image
+        wx:if="{{product.imageUrl}}"
+        src="{{product.imageUrl}}"
+        mode="aspectFill"
+        class="product-image-img"
+      />
+      <view wx:else class="product-image-placeholder" style="color:{{categoryColor}}">📦</view>
+    </view>
+
+    <view class="info-card card">
+      <view class="product-name">{{product.name}}</view>
+
+      <view class="meta-row">
+        <view class="category-chip" style="background:{{categoryBg}}; color:{{categoryColor}}">{{product.category}}</view>
+        <view class="muted">库存 {{product.stock}}</view>
+      </view>
+
+      <view class="price-row">
+        <text class="price-icon">🪙</text>
+        <text class="price-value">{{pointsPriceFmt}}</text>
+        <text class="price-unit muted">积分</text>
+      </view>
+
+      <view wx:if="{{product.subtitle}}" class="muted subtitle">{{product.subtitle}}</view>
+
+      <view wx:if="{{product.description}}" class="section">
+        <view class="section-title">商品描述</view>
+        <view class="section-body">{{product.description}}</view>
+      </view>
+
+      <view wx:if="{{product.deliveryMethod}}" class="section-row">
+        <view class="muted">配送方式</view>
+        <view>{{product.deliveryMethod}}</view>
+      </view>
+
+      <view wx:if="{{product.serviceGuarantee}}" class="section-row">
+        <view class="muted">服务保障</view>
+        <view>{{product.serviceGuarantee}}</view>
+      </view>
+    </view>
+
+    <view class="footer">
+      <view class="btn-outline back-btn" bindtap="onBack">返回</view>
+      <view
+        class="btn-primary action-btn {{unavailable ? 'btn-disabled' : ''}}"
+        bindtap="onRedeem"
+      >
+        {{actionLabel}}
+      </view>
+    </view>
+  </block>
+
+  <view wx:else class="empty">
+    <view class="empty-icon">📦</view>
+    <view>商品不存在</view>
+  </view>
+</view>

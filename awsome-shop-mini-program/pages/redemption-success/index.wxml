@@ -1,0 +1,40 @@
+<view class="page" wx:if="{{record}}">
+  <view class="card success-card">
+    <view class="success-icon">✅</view>
+
+    <view class="title">兑换成功！</view>
+    <view class="muted">您的订单已提交，积分已扣除</view>
+
+    <view class="divider"></view>
+
+    <view class="info-block">
+      <view class="info-row">
+        <view class="muted">订单编号</view>
+        <view class="info-value">{{record.orderNo}}</view>
+      </view>
+      <view class="info-row">
+        <view class="muted">兑换商品</view>
+        <view class="info-value">{{record.productName}}</view>
+      </view>
+      <view class="info-row">
+        <view class="muted">扣除积分</view>
+        <view class="info-value cost-value">🪙 {{pointsCostFmt}} 积分</view>
+      </view>
+      <view class="info-row">
+        <view class="muted">剩余积分</view>
+        <view class="info-value">🪙 {{remainingFmt}} 积分</view>
+      </view>
+      <view class="info-row">
+        <view class="muted">预计送达</view>
+        <view class="info-value">3-5 个工作日</view>
+      </view>
+    </view>
+
+    <view class="divider"></view>
+
+    <view class="actions">
+      <view class="btn-primary" bindtap="onViewOrder">查看订单详情</view>
+      <view class="btn-outline" bindtap="onContinue">继续兑换</view>
+    </view>
+  </view>
+</view>

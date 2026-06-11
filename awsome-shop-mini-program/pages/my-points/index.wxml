@@ -1,0 +1,131 @@
+<view class="page">
+  <!-- Hero -->
+  <view class="hero">
+    <view class="hero-top">
+      <view>
+        <view class="hero-label">我的可用积分</view>
+        <view class="hero-balance">
+          <text class="hero-balance-num">{{balanceFmt}}</text>
+          <text class="hero-balance-unit">积分</text>
+        </view>
+      </view>
+      <view class="hero-icon">⭐</view>
+    </view>
+    <view class="hero-stats">
+      <view class="hero-stat">
+        <view class="hero-stat-num">{{totalEarnedFmt}}</view>
+        <view class="hero-stat-label">累计获得</view>
+      </view>
+      <view class="hero-stat">
+        <view class="hero-stat-num">{{totalUsedFmt}}</view>
+        <view class="hero-stat-label">累计使用</view>
+      </view>
+      <view class="hero-stat">
+        <view class="hero-stat-num">{{exchangeCount}}</view>
+        <view class="hero-stat-label">兑换次数</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- Quick entries -->
+  <view class="quick-grid">
+    <view class="quick-item" bindtap="goShop">
+      <view class="quick-icon" style="background:#EFF6FF; color:#2563EB">🏪</view>
+      <view class="quick-label">积分商城</view>
+    </view>
+    <view class="quick-item" bindtap="goOrders">
+      <view class="quick-icon" style="background:#FFF7ED; color:#D97706">🧾</view>
+      <view class="quick-label">兑换记录</view>
+    </view>
+    <view class="quick-item" bindtap="scrollToEarn">
+      <view class="quick-icon" style="background:#DCFCE7; color:#16A34A">📋</view>
+      <view class="quick-label">积分规则</view>
+    </view>
+    <view class="quick-item" bindtap="scrollToEarn">
+      <view class="quick-icon" style="background:#FEE2E2; color:#DC2626">❓</view>
+      <view class="quick-label">帮助中心</view>
+    </view>
+  </view>
+
+  <!-- Earn ways -->
+  <view id="earn-ways" class="card section-card">
+    <view class="section-title">积分获取途径</view>
+    <view class="divider"></view>
+    <view
+      wx:for="{{earnWays}}"
+      wx:key="key"
+      class="earn-row"
+    >
+      <view class="earn-icon" style="background:{{item.bg}}; color:{{item.color}}">{{item.icon}}</view>
+      <view class="earn-text">
+        <view class="earn-title">{{item.title}}</view>
+        <view class="earn-desc muted">{{item.desc}}</view>
+      </view>
+      <view class="earn-amount">{{item.amount}}</view>
+    </view>
+  </view>
+
+  <!-- Transactions -->
+  <view class="card section-card">
+    <view class="row">
+      <view class="section-title">积分明细</view>
+      <view class="filter-bar">
+        <view
+          wx:for="{{filters}}"
+          wx:key="key"
+          class="filter-chip {{activeFilter === item.key ? 'filter-active' : ''}}"
+          data-key="{{item.key}}"
+          bindtap="onFilterTap"
+        >
+          {{item.label}}
+        </view>
+      </view>
+    </view>
+    <view class="divider"></view>
+
+    <view wx:if="{{loading && displayTxns.length === 0}}" class="empty">
+      <view class="spinner"></view>
+    </view>
+    <view wx:elif="{{displayTxns.length === 0}}" class="empty">
+      <view class="empty-icon">🪙</view>
+      <view class="muted">暂无积分记录</view>
+    </view>
+    <view wx:else>
+      <view
+        wx:for="{{displayTxns}}"
+        wx:key="id"
+        class="txn-row"
+      >
+        <view class="txn-info">
+          <view class="txn-desc">{{item.description}}</view>
+          <view class="muted txn-time">{{item.timeFmt}}</view>
+        </view>
+        <view class="txn-amount-block">
+          <view class="txn-amount {{item.positive ? 'txn-positive' : 'txn-negative'}}">
+            {{item.sign}}{{item.amountFmt}}
+          </view>
+          <view class="muted txn-balance">余额: {{item.balanceFmt}}</view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- Account -->
+  <view wx:if="{{user}}" class="card section-card">
+    <view class="section-title">账户</view>
+    <view class="divider"></view>
+    <view class="info-row">
+      <view class="muted">用户名</view>
+      <view>{{user.username}}</view>
+    </view>
+    <view class="info-row">
+      <view class="muted">昵称</view>
+      <view>{{user.displayName}}</view>
+    </view>
+    <view class="info-row">
+      <view class="muted">角色</view>
+      <view>{{user.role === 'admin' ? '管理员' : '员工'}}</view>
+    </view>
+    <view class="logout-btn btn-outline" bindtap="onLogout">退出登录</view>
+  </view>
+</view>

@@ -1,0 +1,140 @@
+/* Global tokens — mirror awsome-shop-frontend theme (Tailwind/Slate palette + #2563EB primary). */
+page {
+  --primary: #2563EB;
+  --primary-dark: #1D4ED8;
+  --primary-soft: #EFF6FF;
+  --warning: #D97706;
+  --warning-soft: #FFF7ED;
+  --success: #16A34A;
+  --success-soft: #DCFCE7;
+  --danger: #DC2626;
+  --danger-soft: #FEE2E2;
+  --text-primary: #1E293B;
+  --text-secondary: #64748B;
+  --text-muted: #94A3B8;
+  --text-disabled: #CBD5E1;
+  --border: #E2E8F0;
+  --border-soft: #F1F5F9;
+  --bg-page: #F8FAFC;
+  --bg-card: #FFFFFF;
+
+  background-color: var(--bg-page);
+  color: var(--text-primary);
+  font-size: 28rpx;
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif;
+}
+
+view, text, button, input, textarea, scroll-view {
+  box-sizing: border-box;
+}
+
+button {
+  background: transparent;
+  padding: 0;
+  margin: 0;
+  font-size: inherit;
+  line-height: normal;
+  border: none;
+}
+
+button::after {
+  border: none;
+}
+
+/* Reusable cards & primitives. */
+.card {
+  background: var(--bg-card);
+  border-radius: 24rpx;
+  border: 2rpx solid var(--border-soft);
+  overflow: hidden;
+}
+
+.btn-primary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--primary);
+  color: #fff;
+  font-weight: 600;
+  border-radius: 16rpx;
+  padding: 22rpx 32rpx;
+  font-size: 30rpx;
+}
+
+.btn-primary[disabled] {
+  background: #CBD5E1;
+  color: #fff;
+}
+
+.btn-outline {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2rpx solid var(--border);
+  border-radius: 16rpx;
+  padding: 20rpx 32rpx;
+  color: var(--text-secondary);
+  font-size: 28rpx;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 12rpx 28rpx;
+  border-radius: 40rpx;
+  font-size: 26rpx;
+  background: #fff;
+  color: var(--text-secondary);
+  border: 2rpx solid var(--border);
+}
+
+.chip.chip-active {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+  font-weight: 600;
+}
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16rpx;
+  padding: 96rpx 0;
+  color: var(--text-secondary);
+}
+
+.empty-icon {
+  font-size: 80rpx;
+  opacity: .4;
+}
+
+.spinner {
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: 50%;
+  border: 4rpx solid var(--border-soft);
+  border-top-color: var(--primary);
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.section-title {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.muted {
+  color: var(--text-secondary);
+  font-size: 26rpx;
+}

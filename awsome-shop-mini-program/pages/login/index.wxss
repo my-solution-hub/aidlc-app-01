@@ -1,0 +1,156 @@
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+}
+
+.brand-panel {
+  background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%);
+  color: #fff;
+  padding: 100rpx 60rpx 80rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 16rpx;
+}
+
+.brand-icon {
+  font-size: 96rpx;
+  margin-bottom: 8rpx;
+}
+
+.brand-name {
+  font-size: 56rpx;
+  font-weight: 700;
+}
+
+.brand-subtitle {
+  font-size: 30rpx;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.brand-desc {
+  font-size: 26rpx;
+  color: rgba(255, 255, 255, 0.7);
+  white-space: pre-line;
+  line-height: 1.6;
+  margin-top: 8rpx;
+}
+
+.form-panel {
+  flex: 1;
+  background: #fff;
+  border-radius: 32rpx 32rpx 0 0;
+  margin-top: -32rpx;
+  padding: 56rpx 48rpx 48rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 32rpx;
+}
+
+.form-title {
+  font-size: 44rpx;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.form-subtitle {
+  font-size: 26rpx;
+  color: var(--text-secondary);
+  margin-top: -20rpx;
+}
+
+.alert-error {
+  background: var(--danger-soft);
+  color: var(--danger);
+  padding: 20rpx 28rpx;
+  border-radius: 16rpx;
+  font-size: 26rpx;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 10rpx;
+}
+
+.field-label {
+  font-size: 26rpx;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.field-input {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  height: 88rpx;
+  border: 2rpx solid var(--border);
+  border-radius: 16rpx;
+  padding: 0 24rpx;
+  background: #fff;
+}
+
+.field-prefix, .field-suffix {
+  font-size: 30rpx;
+  color: var(--text-secondary);
+}
+
+.field-suffix {
+  padding: 0 8rpx;
+}
+
+.input-text {
+  flex: 1;
+  font-size: 28rpx;
+  color: var(--text-primary);
+}
+
+.placeholder {
+  color: var(--text-disabled);
+}
+
+.login-btn {
+  height: 96rpx;
+  border-radius: 16rpx;
+  background: var(--primary);
+  color: #fff;
+  font-size: 32rpx;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.login-btn[disabled] {
+  background: #94A3B8;
+  color: #fff;
+}
+
+.spinner-light {
+  border-color: rgba(255, 255, 255, 0.3);
+  border-top-color: #fff;
+  width: 36rpx;
+  height: 36rpx;
+}
+
+.register-link {
+  display: flex;
+  justify-content: center;
+  gap: 8rpx;
+  font-size: 26rpx;
+}
+
+.link {
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.hint {
+  font-size: 24rpx;
+  color: var(--text-muted);
+  text-align: center;
+  margin-top: 8rpx;
+}

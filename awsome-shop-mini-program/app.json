@@ -1,0 +1,42 @@
+{
+  "pages": [
+    "pages/shop-home/index",
+    "pages/my-orders/index",
+    "pages/my-points/index",
+    "pages/login/index",
+    "pages/register/index",
+    "pages/product-detail/index",
+    "pages/confirm-redemption/index",
+    "pages/redemption-success/index",
+    "pages/order-detail/index"
+  ],
+  "window": {
+    "backgroundTextStyle": "light",
+    "navigationBarBackgroundColor": "#ffffff",
+    "navigationBarTitleText": "AWSome Shop",
+    "navigationBarTextStyle": "black",
+    "backgroundColor": "#F8FAFC"
+  },
+  "tabBar": {
+    "color": "#94A3B8",
+    "selectedColor": "#2563EB",
+    "backgroundColor": "#FFFFFF",
+    "borderStyle": "white",
+    "list": [
+      {
+        "pagePath": "pages/shop-home/index",
+        "text": "积分商城"
+      },
+      {
+        "pagePath": "pages/my-orders/index",
+        "text": "兑换记录"
+      },
+      {
+        "pagePath": "pages/my-points/index",
+        "text": "积分中心"
+      }
+    ]
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json"
+}

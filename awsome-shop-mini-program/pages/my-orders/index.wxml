@@ -1,0 +1,90 @@
+<view class="page">
+  <view class="header">
+    <view class="title">我的兑换记录</view>
+    <view class="muted">查看您的积分兑换订单</view>
+  </view>
+
+  <view class="search-bar">
+    <view class="search-icon">🔍</view>
+    <input
+      class="search-input"
+      placeholder="搜索订单编号或商品名称"
+      placeholder-class="placeholder"
+      value="{{keyword}}"
+      bindinput="onKeywordInput"
+    />
+  </view>
+
+  <scroll-view class="tab-scroll" scroll-x enable-flex>
+    <view class="tab-list">
+      <view
+        wx:for="{{tabs}}"
+        wx:key="key"
+        class="chip {{activeTab === item.key ? 'chip-active' : ''}}"
+        data-key="{{item.key}}"
+        bindtap="onTabTap"
+      >
+        {{item.label}}
+      </view>
+    </view>
+  </scroll-view>
+
+  <view wx:if="{{loading}}" class="empty">
+    <view class="spinner"></view>
+  </view>
+
+  <block wx:elif="{{displayRecords.length === 0}}">
+    <view class="empty">
+      <view class="empty-icon">🧾</view>
+      <view class="muted">暂无兑换记录</view>
+    </view>
+  </block>
+
+  <view wx:else class="record-list">
+    <view
+      wx:for="{{displayRecords}}"
+      wx:key="id"
+      class="card record-card"
+      data-id="{{item.id}}"
+      bindtap="onOrderTap"
+    >
+      <view class="record-head">
+        <view class="muted record-no">订单编号: {{item.orderNo}}</view>
+        <view class="status-chip" style="background:{{item.statusBg}}; color:{{item.statusColor}}">
+          {{item.statusLabel}}
+        </view>
+      </view>
+
+      <view class="record-body">
+        <view class="record-thumb">
+          <image
+            wx:if="{{item.productImageUrl}}"
+            src="{{item.productImageUrl}}"
+            mode="aspectFill"
+            class="record-thumb-img"
+          />
+          <view wx:else class="thumb-placeholder">📦</view>
+        </view>
+        <view class="record-info">
+          <view class="record-name">{{item.productName}}</view>
+          <view wx:if="{{item.productDesc}}" class="muted record-desc">{{item.productDesc}}</view>
+          <view wx:if="{{item.quantity}}" class="muted">x{{item.quantity}}</view>
+        </view>
+        <view class="record-points">{{item.pointsCostFmt}} 积分</view>
+      </view>
+
+      <view class="record-foot muted">
+        <view>{{item.timeFmt}}</view>
+        <view wx:if="{{item.trackingNumber}}">物流: {{item.trackingNumber}}</view>
+        <view class="record-action">查看详情 ›</view>
+      </view>
+    </view>
+  </view>
+
+  <view wx:if="{{loadingMore}}" class="empty">
+    <view class="spinner"></view>
+  </view>
+  <view wx:elif="{{!loading && displayRecords.length > 0 && page >= pages}}" class="end-hint muted">
+    没有更多了
+  </view>
+</view>

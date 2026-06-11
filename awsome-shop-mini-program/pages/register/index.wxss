@@ -1,0 +1,16 @@
+@import "../login/index.wxss";
+
+.register-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+}
+
+.alert-success {
+  background: var(--success-soft);
+  color: var(--success);
+  padding: 20rpx 28rpx;
+  border-radius: 16rpx;
+  font-size: 26rpx;
+}

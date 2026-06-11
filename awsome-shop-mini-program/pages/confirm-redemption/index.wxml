@@ -1,0 +1,62 @@
+<view class="page">
+  <view class="header">
+    <view class="title">确认兑换</view>
+    <view class="muted">请确认您的兑换信息</view>
+  </view>
+
+  <view wx:if="{{loading}}" class="empty">
+    <view class="spinner"></view>
+  </view>
+
+  <view wx:elif="{{product}}" class="card confirm-card">
+    <!-- Product summary -->
+    <view class="product-row">
+      <view class="product-thumb" style="background:{{categoryBg}}">
+        <image
+          wx:if="{{product.imageUrl}}"
+          src="{{product.imageUrl}}"
+          mode="aspectFill"
+          class="product-thumb-img"
+        />
+        <view wx:else class="thumb-placeholder" style="color:{{categoryColor}}">📦</view>
+      </view>
+      <view class="product-info">
+        <view class="product-name">{{product.name}}</view>
+        <view class="muted">{{product.category}}</view>
+      </view>
+    </view>
+
+    <view class="divider"></view>
+
+    <view class="summary">
+      <view class="summary-row">
+        <view class="muted">所需积分</view>
+        <view class="summary-value cost-value">🪙 {{costFmt}}</view>
+      </view>
+      <view class="summary-row">
+        <view class="muted">当前积分余额</view>
+        <view class="summary-value">🪙 {{balanceFmt}}</view>
+      </view>
+      <view class="divider"></view>
+      <view class="summary-row">
+        <view class="muted">兑换后剩余</view>
+        <view class="summary-value remaining-value {{insufficient ? 'remaining-bad' : 'remaining-good'}}">
+          🪙 {{remainingFmt}}
+        </view>
+      </view>
+    </view>
+
+    <view wx:if="{{insufficient}}" class="alert-error">积分不足，无法兑换</view>
+
+    <view class="actions">
+      <view class="btn-outline" bindtap="onCancel">取消</view>
+      <view
+        class="btn-primary {{insufficient || unavailable || redeeming ? 'btn-disabled' : ''}}"
+        bindtap="onConfirm"
+      >
+        <view wx:if="{{redeeming}}" class="spinner spinner-light"></view>
+        <text wx:else>确认兑换</text>
+      </view>
+    </view>
+  </view>
+</view>

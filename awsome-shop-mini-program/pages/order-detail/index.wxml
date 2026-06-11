@@ -1,0 +1,101 @@
+<view class="page">
+  <view wx:if="{{loading}}" class="empty">
+    <view class="spinner"></view>
+  </view>
+
+  <block wx:elif="{{order}}">
+    <view class="header card">
+      <view class="head-row">
+        <view>
+          <view class="title">订单详情</view>
+          <view class="muted small">订单编号: {{order.orderNo}}</view>
+        </view>
+        <view class="status-chip" style="background:{{statusBg}}; color:{{statusColor}}">
+          {{statusLabel}}
+        </view>
+      </view>
+    </view>
+
+    <!-- Timeline -->
+    <view class="card section-card">
+      <view class="section-title">订单状态</view>
+      <view class="divider"></view>
+      <view wx:if="{{isCancelled}}" class="cancelled-text">订单已取消</view>
+      <view wx:else class="timeline">
+        <view
+          wx:for="{{timeline}}"
+          wx:key="key"
+          class="timeline-row"
+        >
+          <view class="timeline-marker">
+            <view class="timeline-dot" style="background:{{item.dotColor}}"></view>
+            <view wx:if="{{!item.isLast}}" class="timeline-line" style="background:{{item.lineColor}}"></view>
+          </view>
+          <view
+            class="timeline-label"
+            style="color:{{item.textColor}}; font-weight:{{item.fontWeight}}"
+          >
+            {{item.label}}
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- Product -->
+    <view class="card section-card">
+      <view class="section-title">商品信息</view>
+      <view class="divider"></view>
+      <view class="product-row">
+        <view class="product-thumb">
+          <image
+            wx:if="{{order.productImageUrl}}"
+            src="{{order.productImageUrl}}"
+            mode="aspectFill"
+            class="product-thumb-img"
+          />
+          <view wx:else class="thumb-placeholder">📦</view>
+        </view>
+        <view class="product-info">
+          <view class="product-name">{{order.productName}}</view>
+          <view wx:if="{{order.quantity}}" class="muted">x{{order.quantity}}</view>
+        </view>
+        <view class="product-points">{{pointsCostFmt}} 积分</view>
+      </view>
+    </view>
+
+    <!-- Order info -->
+    <view class="card section-card">
+      <view class="section-title">订单信息</view>
+      <view class="divider"></view>
+      <view class="info-row">
+        <view class="muted">订单编号</view>
+        <view>{{order.orderNo}}</view>
+      </view>
+      <view class="info-row">
+        <view class="muted">下单时间</view>
+        <view>{{timeFmt}}</view>
+      </view>
+      <view class="info-row">
+        <view class="muted">支付方式</view>
+        <view>积分支付</view>
+      </view>
+      <view wx:if="{{order.trackingNumber}}" class="info-row">
+        <view class="muted">物流单号</view>
+        <view>{{order.trackingNumber}}</view>
+      </view>
+      <view class="info-row">
+        <view class="muted">收货人</view>
+        <view>{{order.employeeName || '—'}}</view>
+      </view>
+    </view>
+
+    <view class="footer">
+      <view class="btn-outline" bindtap="onBack">返回订单列表</view>
+    </view>
+  </block>
+
+  <view wx:else class="empty">
+    <view class="empty-icon">🧾</view>
+    <view class="muted">订单不存在</view>
+  </view>
+</view>

@@ -1,0 +1,58 @@
+<view class="register-page">
+  <view class="brand-panel">
+    <view class="brand-icon">🎁</view>
+    <view class="brand-name">AWSome Shop</view>
+    <view class="brand-subtitle">员工积分兑换平台</view>
+  </view>
+
+  <view class="form-panel">
+    <view class="form-title">创建账户</view>
+    <view class="form-subtitle">注册一个新账户开始使用</view>
+
+    <view wx:if="{{errorMsg}}" class="alert-error">{{errorMsg}}</view>
+    <view wx:if="{{successMsg}}" class="alert-success">{{successMsg}}</view>
+
+    <view class="field">
+      <view class="field-label">用户名</view>
+      <view class="field-input">
+        <view class="field-prefix">👤</view>
+        <input class="input-text" placeholder="请输入用户名" placeholder-class="placeholder" value="{{username}}" bindinput="onUsernameInput" />
+      </view>
+    </view>
+
+    <view class="field">
+      <view class="field-label">昵称</view>
+      <view class="field-input">
+        <view class="field-prefix">🪪</view>
+        <input class="input-text" placeholder="请输入昵称" placeholder-class="placeholder" value="{{nickname}}" bindinput="onNicknameInput" />
+      </view>
+    </view>
+
+    <view class="field">
+      <view class="field-label">工号</view>
+      <view class="field-input">
+        <view class="field-prefix">🏷️</view>
+        <input class="input-text" placeholder="请输入工号（选填）" placeholder-class="placeholder" value="{{employeeId}}" bindinput="onEmployeeIdInput" />
+      </view>
+    </view>
+
+    <view class="field">
+      <view class="field-label">密码</view>
+      <view class="field-input">
+        <view class="field-prefix">🔒</view>
+        <input class="input-text" placeholder="请输入密码" placeholder-class="placeholder" password="{{!showPassword}}" value="{{password}}" bindinput="onPasswordInput" />
+        <view class="field-suffix" bindtap="toggleShowPassword">{{showPassword ? '🙈' : '👁'}}</view>
+      </view>
+    </view>
+
+    <button class="login-btn" disabled="{{loading || !username || !password}}" bindtap="onRegister">
+      <view wx:if="{{loading}}" class="spinner spinner-light"></view>
+      <text wx:else>注 册</text>
+    </button>
+
+    <view class="register-link">
+      <text class="muted">已有账户？</text>
+      <text class="link" bindtap="goLogin">立即登录</text>
+    </view>
+  </view>
+</view>

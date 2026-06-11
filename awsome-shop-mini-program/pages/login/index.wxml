@@ -1,0 +1,69 @@
+<view class="login-page">
+  <!-- Brand panel -->
+  <view class="brand-panel">
+    <view class="brand-icon">🎁</view>
+    <view class="brand-name">AWSome Shop</view>
+    <view class="brand-subtitle">员工积分兑换平台</view>
+    <view class="brand-desc">用您的积分兑换心仪好物</view>
+    <view class="brand-desc">简单便捷，触手可得</view>
+  </view>
+
+  <!-- Form panel -->
+  <view class="form-panel">
+    <view class="form-title">欢迎回来</view>
+    <view class="form-subtitle">登录您的账户以继续</view>
+
+    <view wx:if="{{errorMsg}}" class="alert-error">{{errorMsg}}</view>
+
+    <view class="field">
+      <view class="field-label">用户名</view>
+      <view class="field-input">
+        <view class="field-prefix">👤</view>
+        <input
+          class="input-text"
+          placeholder="请输入用户名"
+          placeholder-class="placeholder"
+          value="{{username}}"
+          bindinput="onUsernameInput"
+          confirm-type="next"
+        />
+      </view>
+    </view>
+
+    <view class="field">
+      <view class="field-label">密码</view>
+      <view class="field-input">
+        <view class="field-prefix">🔒</view>
+        <input
+          class="input-text"
+          placeholder="请输入密码"
+          placeholder-class="placeholder"
+          password="{{!showPassword}}"
+          value="{{password}}"
+          bindinput="onPasswordInput"
+          confirm-type="done"
+          bindconfirm="onLogin"
+        />
+        <view class="field-suffix" bindtap="toggleShowPassword">
+          {{showPassword ? '🙈' : '👁'}}
+        </view>
+      </view>
+    </view>
+
+    <button
+      class="login-btn"
+      disabled="{{loading || !username || !password}}"
+      bindtap="onLogin"
+    >
+      <view wx:if="{{loading}}" class="spinner spinner-light"></view>
+      <text wx:else>登 录</text>
+    </button>
+
+    <view class="register-link">
+      <text class="muted">还没有账户？</text>
+      <text class="link" bindtap="goRegister">立即注册</text>
+    </view>
+
+    <view class="hint">测试账号：employee / employee123（员工）</view>
+  </view>
+</view>

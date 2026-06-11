@@ -28,9 +28,13 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            // 生产环境: 连接 AWS CloudFront
+            buildConfigField("String", "BASE_URL", "\"https://d2ujuxmg0mw1kh.cloudfront.net/\"")
         }
         debug {
-            buildConfigField("String", "BASE_URL", "\"http://10.0.2.2:8080/api/\"")
+            // 联调 AWS: 使用 CloudFront 域名
+            // 本地开发: 改为 "http://10.0.2.2:8080/"（模拟器）或 "http://192.168.x.x:8080/"（真机）
+            buildConfigField("String", "BASE_URL", "\"https://d2ujuxmg0mw1kh.cloudfront.net/\"")
         }
     }
 

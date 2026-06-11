@@ -161,8 +161,8 @@ data class ProductDto(
     val deliveryMethod: String? = null,
     val serviceGuarantee: String? = null,
     val promotion: String? = null,
-    val colors: String? = null,
-    val specs: String? = null,
+    val colors: kotlinx.serialization.json.JsonElement? = null,
+    val specs: kotlinx.serialization.json.JsonElement? = null,
     val createdAt: String? = null,
     val updatedAt: String? = null,
 )

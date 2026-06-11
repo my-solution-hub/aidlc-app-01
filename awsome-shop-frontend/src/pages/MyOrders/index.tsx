@@ -34,6 +34,13 @@ export default function MyOrders() {
   const [tab, setTab] = useState("");
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+
+  // Debounce the keyword input by 300ms before filtering.
+  useEffect(() => {
+    const id = setTimeout(() => setDebouncedSearch(search), 300);
+    return () => clearTimeout(id);
+  }, [search]);
 
   const fetchData = useCallback(async () => {
     if (!user) return;
@@ -63,14 +70,14 @@ export default function MyOrders() {
 
   // Client-side keyword filter (employee list endpoint has no keyword param).
   const filtered = useMemo(() => {
-    const kw = search.trim().toLowerCase();
+    const kw = debouncedSearch.trim().toLowerCase();
     if (!kw) return records;
     return records.filter(
       (r) =>
         r.orderNo?.toLowerCase().includes(kw) ||
         r.productName?.toLowerCase().includes(kw),
     );
-  }, [records, search]);
+  }, [records, debouncedSearch]);
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 3, p: "24px 32px" }}>

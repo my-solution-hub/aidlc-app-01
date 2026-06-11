@@ -181,7 +181,17 @@
       "thBalance": "Balance",
       "thDescription": "Description",
       "thTime": "Time",
-      "noTransactions": "No transactions found"
+      "noTransactions": "No transactions found",
+      "loadMore": "Load more"
+    }
+  },
+  "points": {
+    "type": {
+      "EARN": "Earned",
+      "REDEEM": "Redeemed",
+      "ADJUST": "Adjustment",
+      "INIT": "Initial Grant",
+      "DISTRIBUTION": "Distribution"
     }
   },
   "admin": {

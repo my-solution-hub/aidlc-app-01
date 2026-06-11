@@ -15,10 +15,14 @@ import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
 import CelebrationIcon from "@mui/icons-material/Celebration";
 import VolunteerActivismIcon from "@mui/icons-material/VolunteerActivism";
 import TollIcon from "@mui/icons-material/Toll";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { getBalance, listTransactions } from "../../services/api/point";
 import { listMyOrders } from "../../services/api/order";
-import type { PointBalanceDTO, PointTransactionDTO, PageResult } from "../../types/api";
+import type { PointBalanceDTO, PointTransactionDTO } from "../../types/api";
 import { useAuthStore } from "../../store/useAuthStore";
+import { pointTypeLabel, pointTypeStyle } from "../../utils/pointType";
+
+const PAGE_SIZE = 10;
 
 const EARN_WAYS = [
   { key: "seniority", icon: WorkHistoryIcon, color: "#2563EB", bg: "#EFF6FF" },
@@ -39,33 +43,61 @@ export default function MyPoints() {
   const user = useAuthStore((s) => s.user);
 
   const [balance, setBalance] = useState<PointBalanceDTO | null>(null);
-  const [data, setData] = useState<PageResult<PointTransactionDTO> | null>(null);
+  const [transactions, setTransactions] = useState<PointTransactionDTO[]>([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
   const [exchangeCount, setExchangeCount] = useState<number>(0);
   const [loading, setLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [filter, setFilter] = useState("all");
 
-  const fetchData = useCallback(async () => {
+  // Initial load: balance, exchange count and the first page of transactions.
+  useEffect(() => {
     if (!user) return;
-    setLoading(true);
-    try {
-      const [b, txns, orders] = await Promise.all([
-        getBalance(user.userId).catch(() => null),
-        listTransactions({ userId: user.userId, page: 1, size: 50 }).catch(() => null),
-        listMyOrders({ userId: user.userId, page: 1, size: 1 }).catch(() => null),
-      ]);
-      if (b) setBalance(b);
-      if (txns) setData(txns);
-      if (orders) setExchangeCount(orders.total ?? 0);
-    } finally {
-      setLoading(false);
-    }
+    let cancelled = false;
+    const userId = user.userId;
+    (async () => {
+      setLoading(true);
+      try {
+        const [b, txns, orders] = await Promise.all([
+          getBalance(userId).catch(() => null),
+          listTransactions({ userId, page: 1, size: PAGE_SIZE }).catch(() => null),
+          listMyOrders({ userId, page: 1, size: 1 }).catch(() => null),
+        ]);
+        if (cancelled) return;
+        if (b) setBalance(b);
+        if (txns) {
+          setTransactions(txns.records ?? []);
+          setTotal(txns.total ?? 0);
+        }
+        if (orders) setExchangeCount(orders.total ?? 0);
+        setPage(1);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [user]);
 
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+  const loadMore = useCallback(async () => {
+    if (!user) return;
+    const next = page + 1;
+    setLoadingMore(true);
+    try {
+      const res = await listTransactions({ userId: user.userId, page: next, size: PAGE_SIZE });
+      setTransactions((prev) => [...prev, ...(res.records ?? [])]);
+      setTotal(res.total ?? 0);
+      setPage(next);
+    } catch {
+      // handled by interceptor
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [user, page]);
 
-  const transactions = data?.records ?? [];
+  const hasMore = transactions.length < total;
   const activeFilter = FILTERS.find((f) => f.key === filter) ?? FILTERS[0];
   const filtered = useMemo(() => transactions.filter(activeFilter.test), [transactions, activeFilter]);
 
@@ -255,13 +287,21 @@ export default function MyPoints() {
         ) : (
           filtered.map((txn) => {
             const positive = txn.amount >= 0;
+            const typeStyle = pointTypeStyle(txn.type);
             return (
               <Box
                 key={txn.id}
                 sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", px: "20px", py: "14px", borderTop: "1px solid #F8FAFC" }}
               >
-                <Box>
-                  <Typography sx={{ fontSize: 14, color: "#1E293B" }}>{txn.description}</Typography>
+                <Box sx={{ minWidth: 0 }}>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    <Typography sx={{ fontSize: 14, color: "#1E293B" }}>{txn.description}</Typography>
+                    <Box sx={{ borderRadius: "10px", bgcolor: typeStyle.bgColor, px: "8px", py: "2px", flexShrink: 0 }}>
+                      <Typography sx={{ fontSize: 11, fontWeight: 600, color: typeStyle.textColor, whiteSpace: "nowrap" }}>
+                        {pointTypeLabel(txn.type, t)}
+                      </Typography>
+                    </Box>
+                  </Box>
                   <Typography sx={{ fontSize: 12, color: "#94A3B8" }}>
                     {(txn.createdAt ?? "").slice(0, 16).replace("T", " ")}
                   </Typography>
@@ -278,6 +318,20 @@ export default function MyPoints() {
               </Box>
             );
           })
+        )}
+
+        {/* Load more */}
+        {!loading && hasMore && (
+          <Box sx={{ display: "flex", justifyContent: "center", py: "14px", borderTop: "1px solid #F8FAFC" }}>
+            <Button
+              onClick={loadMore}
+              disabled={loadingMore}
+              endIcon={loadingMore ? <CircularProgress size={14} /> : <ExpandMoreIcon />}
+              sx={{ textTransform: "none", fontSize: 13, fontWeight: 500, color: "#2563EB" }}
+            >
+              {t("employee.pointsCenter.loadMore")}
+            </Button>
+          </Box>
         )}
       </Box>
     </Box>

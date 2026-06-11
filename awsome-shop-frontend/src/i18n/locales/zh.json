@@ -181,7 +181,17 @@
       "thBalance": "余额",
       "thDescription": "说明",
       "thTime": "时间",
-      "noTransactions": "暂无积分记录"
+      "noTransactions": "暂无积分记录",
+      "loadMore": "查看更多记录"
+    }
+  },
+  "points": {
+    "type": {
+      "EARN": "获得",
+      "REDEEM": "兑换消费",
+      "ADJUST": "管理员调整",
+      "INIT": "初始发放",
+      "DISTRIBUTION": "定期发放"
     }
   },
   "admin": {

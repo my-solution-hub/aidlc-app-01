@@ -1,59 +1,90 @@
 package com.awsome.shop.data.remote
 
 import kotlinx.serialization.Serializable
-import retrofit2.http.Body
-import retrofit2.http.POST
+import retrofit2.http.*
 
 /**
- * Retrofit 接口 —— 对齐 AWSomeShop 真实网关契约。
+ * Retrofit 接口 — 对齐 AWSomeShop RESTful API 规范 v1.2
  *
- * 网关统一前缀（baseUrl 已含 host:8080）：
- *   auth   → /auth/api/v1/...
- *   product→ /product/api/v1/...
- *   point  → /point/api/v1/...
- *   order  → /order/api/v1/...
+ * 网关统一前缀（baseUrl = http://host:8080/）：
+ *   auth    → /auth/api/...
+ *   product → /product/api/...
+ *   point   → /point/api/...
+ *   order   → /order/api/...
  *
- * 所有响应统一为 Result<T> 信封：{ code, message, data }。code == "SUCCESS" 为成功。
- * 全部为 POST + JSON Body（与 Web 前端、后端 Controller 完全一致）。
+ * 响应统一为 Result<T> 信封：{ code, message, data }。code == "SUCCESS" 为成功。
+ * HTTP 方法：GET 查询 / POST 创建+动作 / PUT 更新 / DELETE 删除
  */
 interface ApiService {
 
-    // ---- Auth ----
-    @POST("auth/api/v1/public/auth/login")
+    // ==================== Auth ====================
+
+    @POST("auth/api/auth/login")
     suspend fun login(@Body request: LoginRequest): ApiResult<LoginResponseDto>
 
-    @POST("auth/api/v1/public/auth/logout")
+    @POST("auth/api/auth/register")
+    suspend fun register(@Body request: RegisterRequest): ApiResult<UserDto>
+
+    @POST("auth/api/auth/logout")
     suspend fun logout(): ApiResult<Unit>
 
-    // ---- Product ----
-    @POST("product/api/v1/public/product/list")
-    suspend fun listProducts(@Body request: ListProductRequest): ApiResult<PageResultDto<ProductDto>>
+    @GET("auth/api/users/me")
+    suspend fun getCurrentUser(): ApiResult<UserDto>
 
-    @POST("product/api/v1/public/product/get")
-    suspend fun getProduct(@Body request: IdRequest): ApiResult<ProductDto>
+    // ==================== Product ====================
 
-    @POST("product/api/v1/public/category/list")
-    suspend fun listCategories(@Body request: ListCategoryRequest): ApiResult<List<CategoryDto>>
+    @GET("product/api/products")
+    suspend fun listProducts(
+        @Query("page") page: Int = 1,
+        @Query("size") size: Int = 20,
+        @Query("name") name: String? = null,
+        @Query("category") category: String? = null,
+    ): ApiResult<PageResultDto<ProductDto>>
 
-    // ---- Point ----
-    @POST("point/api/v1/public/point/balance")
-    suspend fun getPointBalance(@Body request: UserIdRequest): ApiResult<PointBalanceDto>
+    @GET("product/api/products/{id}")
+    suspend fun getProduct(@Path("id") id: Long): ApiResult<ProductDto>
 
-    @POST("point/api/v1/public/point/transaction/list")
-    suspend fun listPointTransactions(@Body request: ListPointTransactionRequest): ApiResult<PageResultDto<PointTransactionDto>>
+    @GET("product/api/categories/tree")
+    suspend fun getCategoryTree(): ApiResult<List<CategoryDto>>
 
-    // ---- Order (兑换) ----
-    @POST("order/api/v1/public/order/exchange")
+    // ==================== Points ====================
+
+    @GET("point/api/points/balance")
+    suspend fun getPointBalance(@Query("userId") userId: Long): ApiResult<PointBalanceDto>
+
+    @GET("point/api/points/transactions")
+    suspend fun listPointTransactions(
+        @Query("userId") userId: Long,
+        @Query("page") page: Int = 1,
+        @Query("size") size: Int = 20,
+        @Query("type") type: String? = null,
+    ): ApiResult<PageResultDto<PointTransactionDto>>
+
+    // ==================== Order (兑换) ====================
+
+    @POST("order/api/orders")
     suspend fun createExchange(@Body request: CreateExchangeRequest): ApiResult<ExchangeRecordDto>
 
-    @POST("order/api/v1/public/order/list")
-    suspend fun listExchanges(@Body request: ListMyExchangeRequest): ApiResult<PageResultDto<ExchangeRecordDto>>
+    @GET("order/api/orders")
+    suspend fun listExchanges(
+        @Query("userId") userId: Long,
+        @Query("page") page: Int = 1,
+        @Query("size") size: Int = 20,
+        @Query("status") status: String? = null,
+        @Query("keyword") keyword: String? = null,
+    ): ApiResult<PageResultDto<ExchangeRecordDto>>
 
-    @POST("order/api/v1/public/order/get")
-    suspend fun getExchange(@Body request: IdRequest): ApiResult<ExchangeRecordDto>
+    @GET("order/api/orders/{id}")
+    suspend fun getExchange(@Path("id") id: Long): ApiResult<ExchangeRecordDto>
+
+    @POST("order/api/orders/{id}/confirm-receipt")
+    suspend fun confirmReceipt(
+        @Path("id") id: Long,
+        @Query("userId") userId: Long,
+    ): ApiResult<ExchangeRecordDto>
 }
 
-// ==================== 通用信封 / 请求 ====================
+// ==================== 通用信封 ====================
 
 @Serializable
 data class ApiResult<T>(
@@ -73,16 +104,18 @@ data class PageResultDto<T>(
     val records: List<T> = emptyList(),
 )
 
-@Serializable
-data class IdRequest(val id: Long)
-
-@Serializable
-data class UserIdRequest(val userId: Long)
-
-// ==================== Auth ====================
+// ==================== Auth DTOs ====================
 
 @Serializable
 data class LoginRequest(val username: String, val password: String)
+
+@Serializable
+data class RegisterRequest(
+    val username: String,
+    val password: String,
+    val nickname: String? = null,
+    val employeeId: String? = null,
+)
 
 @Serializable
 data class LoginResponseDto(
@@ -93,15 +126,21 @@ data class LoginResponseDto(
     val role: String,
 )
 
-// ==================== Product ====================
-
 @Serializable
-data class ListProductRequest(
-    val page: Int = 1,
-    val size: Int = 20,
-    val name: String? = null,
-    val category: String? = null,
+data class UserDto(
+    val id: Long = 0,
+    val username: String = "",
+    val nickname: String? = null,
+    val employeeId: String? = null,
+    val department: String? = null,
+    val role: String = "EMPLOYEE",
+    val status: String = "ACTIVE",
+    val lastLoginAt: String? = null,
+    val createdAt: String? = null,
+    val updatedAt: String? = null,
 )
+
+// ==================== Product DTOs ====================
 
 @Serializable
 data class ProductDto(
@@ -113,50 +152,57 @@ data class ProductDto(
     val pointsPrice: Int = 0,
     val marketPrice: Double = 0.0,
     val stock: Int = 0,
+    val soldCount: Int = 0,
+    val status: Int = 1,
     val description: String? = null,
     val imageUrl: String? = null,
+    val images: List<String> = emptyList(),
+    val subtitle: String? = null,
+    val deliveryMethod: String? = null,
+    val serviceGuarantee: String? = null,
+    val promotion: String? = null,
+    val colors: String? = null,
+    val specs: String? = null,
+    val createdAt: String? = null,
+    val updatedAt: String? = null,
 )
-
-@Serializable
-data class ListCategoryRequest(val parentId: Long? = null)
 
 @Serializable
 data class CategoryDto(
     val id: Long,
     val name: String,
     val parentId: Long? = null,
+    val icon: String? = null,
+    val sortOrder: Int = 0,
+    val status: Int = 1,
+    val description: String? = null,
+    val productCount: Int = 0,
     val children: List<CategoryDto> = emptyList(),
 )
 
-// ==================== Point ====================
+// ==================== Points DTOs ====================
 
 @Serializable
 data class PointBalanceDto(
-    val userId: Long,
+    val userId: Long = 0,
     val balance: Int = 0,
     val totalEarned: Int = 0,
     val totalUsed: Int = 0,
 )
 
 @Serializable
-data class ListPointTransactionRequest(
-    val userId: Long,
-    val page: Int = 1,
-    val size: Int = 20,
-    val type: String? = null,
-)
-
-@Serializable
 data class PointTransactionDto(
     val id: Long,
-    val description: String? = null,
+    val userId: Long = 0,
     val type: String,
     val amount: Int = 0,
     val balance: Int = 0,
+    val description: String? = null,
+    val operator: String? = null,
     val createdAt: String? = null,
 )
 
-// ==================== Order (兑换) ====================
+// ==================== Order DTOs ====================
 
 @Serializable
 data class CreateExchangeRequest(
@@ -164,14 +210,8 @@ data class CreateExchangeRequest(
     val quantity: Int = 1,
     val userId: Long,
     val employeeName: String? = null,
-)
-
-@Serializable
-data class ListMyExchangeRequest(
-    val userId: Long,
-    val page: Int = 1,
-    val size: Int = 20,
-    val status: String? = null,
+    val addressId: Long? = null,
+    val idempotencyKey: String? = null,
 )
 
 @Serializable
@@ -186,7 +226,14 @@ data class ExchangeRecordDto(
     val employeeName: String? = null,
     val quantity: Int = 1,
     val pointsCost: Int = 0,
+    val freightPoints: Int = 0,
+    val balanceAfter: Int? = null,
     val status: String = "PENDING_DELIVERY",
+    val carrier: String? = null,
+    val trackingNumber: String? = null,
+    val receiver: String? = null,
+    val receiverPhone: String? = null,
+    val receiverAddress: String? = null,
     val exchangeTime: String? = null,
     val createdAt: String? = null,
     val updatedAt: String? = null,

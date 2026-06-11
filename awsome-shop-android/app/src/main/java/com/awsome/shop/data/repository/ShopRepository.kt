@@ -10,47 +10,47 @@ import com.awsome.shop.data.remote.ApiResult
 import com.awsome.shop.data.remote.ApiService
 import com.awsome.shop.data.remote.CreateExchangeRequest
 import com.awsome.shop.data.remote.ExchangeRecordDto
-import com.awsome.shop.data.remote.IdRequest
-import com.awsome.shop.data.remote.ListMyExchangeRequest
-import com.awsome.shop.data.remote.ListPointTransactionRequest
-import com.awsome.shop.data.remote.ListProductRequest
 import com.awsome.shop.data.remote.PointTransactionDto
 import com.awsome.shop.data.remote.ProductDto
-import com.awsome.shop.data.remote.UserIdRequest
 import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * 商城数据仓库。对接真实网关契约（POST + Result<T> 信封），
- * 并把网络 DTO 映射为 UI 层使用的领域模型，保持 11 个 Compose 页面签名不变。
- *
- * 注：当前登录用户 id 由调用方/会话提供，这里用占位 currentUserId，
- * 实际接入时应从 AuthRepository 的会话中取。
+ * 商城数据仓库 — 对齐 RESTful API v1.2 规范。
+ * GET 请求使用 @Query 参数，POST 请求使用 @Body。
  */
 @Singleton
 class ShopRepository @Inject constructor(
     private val apiService: ApiService,
 ) {
-    // TODO: 接入会话后从 AuthRepository 读取真实登录用户 id
     var currentUserId: Long = 0
 
-    suspend fun getProducts(category: String? = null): Result<List<Product>> = runCatching {
-        val page = apiService.listProducts(ListProductRequest(category = category)).unwrap()
-        page.records.map { it.toDomain() }
+    suspend fun getProducts(
+        page: Int = 1,
+        size: Int = 20,
+        name: String? = null,
+        category: String? = null,
+    ): Result<List<Product>> = runCatching {
+        val result = apiService.listProducts(page = page, size = size, name = name, category = category).unwrap()
+        result.records.map { it.toDomain() }
     }
 
     suspend fun getProductDetail(id: String): Result<Product> = runCatching {
-        apiService.getProduct(IdRequest(id.toLong())).unwrap().toDomain()
+        apiService.getProduct(id.toLong()).unwrap().toDomain()
     }
 
     suspend fun getProfile(): Result<User> = runCatching {
-        // 用户基础信息 + 积分余额组合
-        val balance = apiService.getPointBalance(UserIdRequest(currentUserId)).unwrap()
+        val balance = apiService.getPointBalance(currentUserId).unwrap()
+        // 尝试获取用户详情
+        val userDto = try {
+            apiService.getCurrentUser().unwrap()
+        } catch (_: Exception) { null }
+
         User(
             id = currentUserId.toString(),
-            name = "",
-            employeeId = "",
-            department = "",
+            name = userDto?.nickname ?: userDto?.username ?: "",
+            employeeId = userDto?.employeeId ?: "",
+            department = userDto?.department ?: "",
             title = "",
             availablePoints = balance.balance,
             totalEarned = balance.totalEarned,
@@ -59,34 +59,46 @@ class ShopRepository @Inject constructor(
         )
     }
 
-    suspend fun createOrder(productId: String, addressId: String): Result<Order> = runCatching {
-        // addressId 参数保留以兼容页面签名；当前后端兑换按 userId + productId 处理
+    suspend fun createOrder(productId: String, addressId: String? = null): Result<Order> = runCatching {
         val dto = apiService.createExchange(
             CreateExchangeRequest(
                 productId = productId.toLong(),
                 quantity = 1,
                 userId = currentUserId,
+                addressId = addressId?.toLongOrNull(),
+                idempotencyKey = java.util.UUID.randomUUID().toString(),
             ),
         ).unwrap()
         dto.toDomain()
     }
 
-    suspend fun getOrders(status: String? = null): Result<List<Order>> = runCatching {
-        val page = apiService.listExchanges(
-            ListMyExchangeRequest(userId = currentUserId, status = status),
+    suspend fun getOrders(
+        status: String? = null,
+        keyword: String? = null,
+    ): Result<List<Order>> = runCatching {
+        val result = apiService.listExchanges(
+            userId = currentUserId,
+            status = status,
+            keyword = keyword,
         ).unwrap()
-        page.records.map { it.toDomain() }
+        result.records.map { it.toDomain() }
     }
 
     suspend fun getOrderDetail(id: String): Result<Order> = runCatching {
-        apiService.getExchange(IdRequest(id.toLong())).unwrap().toDomain()
+        apiService.getExchange(id.toLong()).unwrap().toDomain()
+    }
+
+    suspend fun confirmReceipt(orderId: String): Result<Order> = runCatching {
+        apiService.confirmReceipt(id = orderId.toLong(), userId = currentUserId).unwrap().toDomain()
     }
 
     suspend fun getPointsTransactions(type: String? = null): Result<List<PointsTransaction>> = runCatching {
-        val page = apiService.listPointTransactions(
-            ListPointTransactionRequest(userId = currentUserId, type = type),
-        ).unwrap()
-        page.records.map { it.toDomain() }
+        val result = apiService.listPointTransactions(userId = currentUserId, type = type).unwrap()
+        result.records.map { it.toDomain() }
+    }
+
+    suspend fun getCategories(): Result<List<com.awsome.shop.data.remote.CategoryDto>> = runCatching {
+        apiService.getCategoryTree().unwrap()
     }
 }
 
@@ -107,7 +119,7 @@ private fun ProductDto.toDomain(): Product = Product(
     description = description ?: "",
     points = pointsPrice,
     category = category ?: "",
-    imageUrl = imageUrl,
+    imageUrl = imageUrl ?: images.firstOrNull(),
     inStock = stock > 0,
     specs = emptyMap(),
     tags = listOfNotNull(brand),
@@ -120,14 +132,14 @@ private fun ExchangeRecordDto.toDomain(): Order = Order(
     points = pointsCost,
     status = status.toOrderStatus(),
     createdAt = createdAt ?: exchangeTime ?: "",
-    trackingNumber = null,
+    trackingNumber = trackingNumber,
 )
 
 private fun String.toOrderStatus(): OrderStatus = when (uppercase()) {
     "DELIVERING", "SHIPPED" -> OrderStatus.SHIPPED
     "COMPLETED" -> OrderStatus.COMPLETED
     "CANCELLED", "CANCELED" -> OrderStatus.CANCELLED
-    else -> OrderStatus.PENDING  // PENDING_DELIVERY 等映射为待发货
+    else -> OrderStatus.PENDING
 }
 
 private fun PointTransactionDto.toDomain(): PointsTransaction = PointsTransaction(
@@ -140,7 +152,7 @@ private fun PointTransactionDto.toDomain(): PointsTransaction = PointsTransactio
 )
 
 private fun String.toTransactionType(): TransactionType = when (uppercase()) {
-    "REDEMPTION", "EXCHANGE" -> TransactionType.REDEMPTION
+    "REDEEM", "REDEMPTION", "EXCHANGE" -> TransactionType.REDEMPTION
     "PERFORMANCE" -> TransactionType.PERFORMANCE
     "SENIORITY" -> TransactionType.SENIORITY
     "HOLIDAY" -> TransactionType.HOLIDAY

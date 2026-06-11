@@ -50,6 +50,25 @@ class AuthRepository @Inject constructor(
         }
     }
 
+    suspend fun register(
+        username: String,
+        password: String,
+        nickname: String?,
+        employeeId: String?,
+    ): Result<Unit> {
+        return try {
+            val result = apiService.register(
+                com.awsome.shop.data.remote.RegisterRequest(username, password, nickname, employeeId)
+            )
+            if (!result.isSuccess) {
+                return Result.failure(IllegalStateException(result.message ?: "注册失败: ${result.code}"))
+            }
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     suspend fun getToken(): String? {
         var token: String? = null
         dataStore.data.collect { prefs ->

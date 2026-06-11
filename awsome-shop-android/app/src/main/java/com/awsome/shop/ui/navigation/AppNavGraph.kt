@@ -17,6 +17,7 @@ import com.awsome.shop.ui.screens.profile.ProfileScreen
 import com.awsome.shop.ui.screens.redemption.ConfirmRedemptionScreen
 import com.awsome.shop.ui.screens.redemption.DeliveryInfoScreen
 import com.awsome.shop.ui.screens.redemption.RedemptionSuccessScreen
+import com.awsome.shop.ui.screens.register.RegisterScreen
 
 @Composable
 fun AppNavGraph(
@@ -33,6 +34,23 @@ fun AppNavGraph(
                     navController.navigate(Route.Home) {
                         popUpTo(Route.Login) { inclusive = true }
                     }
+                },
+                onNavigateToRegister = {
+                    navController.navigate(Route.Register)
+                },
+                viewModel = hiltViewModel(),
+            )
+        }
+
+        composable<Route.Register> {
+            RegisterScreen(
+                onRegisterSuccess = {
+                    navController.navigate(Route.Login) {
+                        popUpTo(Route.Register) { inclusive = true }
+                    }
+                },
+                onNavigateToLogin = {
+                    navController.popBackStack()
                 },
                 viewModel = hiltViewModel(),
             )

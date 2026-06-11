@@ -44,6 +44,7 @@ import com.awsome.shop.ui.theme.TextWhite
 @Composable
 fun LoginScreen(
     onLoginSuccess: () -> Unit,
+    onNavigateToRegister: () -> Unit = {},
     viewModel: LoginViewModel,
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()

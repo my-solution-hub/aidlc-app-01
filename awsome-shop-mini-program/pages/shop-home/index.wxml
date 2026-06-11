@@ -64,8 +64,8 @@
     >
       <view class="product-image" style="background:{{item.categoryBg}}">
         <image
-          wx:if="{{item.imageUrl}}"
-          src="{{item.imageUrl}}"
+          wx:if="{{item.imageUrlResolved}}"
+          src="{{item.imageUrlResolved}}"
           mode="aspectFill"
           class="product-image-img"
           lazy-load

@@ -71,7 +71,10 @@ function send(method, url, options) {
           resolve(body);
           return;
         }
-        if (body.code === SUCCESS_CODE) {
+        // Services use slightly different envelopes:
+        //   auth/product/point: { code: "SUCCESS", data }
+        //   order:              { code: 0, success: true, data }
+        if (body.code === SUCCESS_CODE || body.code === 0 || body.success === true) {
           resolve(body.data);
           return;
         }

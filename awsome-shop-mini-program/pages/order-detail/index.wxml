@@ -4,52 +4,67 @@
   </view>
 
   <block wx:elif="{{order}}">
-    <view class="header card">
-      <view class="head-row">
-        <view>
-          <view class="title">订单详情</view>
-          <view class="muted small">订单编号: {{order.orderNo}}</view>
+    <!-- Hero status card -->
+    <view class="hero-card" style="background:{{statusGradient}}">
+      <view class="hero-info">
+        <view class="hero-row">
+          <text class="hero-icon">{{statusIcon}}</text>
+          <text class="hero-status">{{statusLabel}}</text>
         </view>
-        <view class="status-chip" style="background:{{statusBg}}; color:{{statusColor}}">
-          {{statusLabel}}
-        </view>
+        <view class="hero-line">订单编号：{{order.orderNo}}</view>
+        <view class="hero-line">下单时间：{{timeFmt}}</view>
+      </view>
+      <view
+        wx:if="{{isDelivering}}"
+        class="hero-action {{confirming ? 'btn-disabled' : ''}}"
+        bindtap="onConfirmReceipt"
+      >
+        <view wx:if="{{confirming}}" class="spinner"></view>
+        <text wx:else>✓ 确认收货</text>
       </view>
     </view>
 
-    <!-- Timeline -->
+    <!-- Progress stepper / cancelled banner -->
     <view class="card section-card">
-      <view class="section-title">订单状态</view>
+      <view class="section-title">订单进度</view>
       <view class="divider"></view>
-      <view wx:if="{{isCancelled}}" class="cancelled-text">订单已取消</view>
-      <view wx:else class="timeline">
+      <view wx:if="{{isCancelled}}" class="cancelled-banner">
+        <text class="cancelled-icon">✕</text>
+        <text>订单已取消</text>
+      </view>
+      <view wx:else class="stepper">
         <view
-          wx:for="{{timeline}}"
+          wx:for="{{steps}}"
           wx:key="key"
-          class="timeline-row"
+          class="stepper-step"
         >
-          <view class="timeline-marker">
-            <view class="timeline-dot" style="background:{{item.dotColor}}"></view>
-            <view wx:if="{{!item.isLast}}" class="timeline-line" style="background:{{item.lineColor}}"></view>
+          <view wx:if="{{!item.isLast}}" class="stepper-connector" style="background:{{item.lineColor}}"></view>
+          <view
+            class="stepper-circle"
+            style="background:{{item.circleBg}}; border-color:{{item.circleColor}}; color:{{item.circleColor}}"
+          >
+            {{item.iconChar}}
           </view>
           <view
-            class="timeline-label"
-            style="color:{{item.textColor}}; font-weight:{{item.fontWeight}}"
+            class="stepper-label"
+            style="color:{{item.labelColor}}; font-weight:{{item.labelWeight}}"
           >
             {{item.label}}
           </view>
+          <view class="stepper-time">{{item.timeFmt}}</view>
         </view>
       </view>
     </view>
 
-    <!-- Product -->
+    <!-- Product info -->
     <view class="card section-card">
       <view class="section-title">商品信息</view>
       <view class="divider"></view>
       <view class="product-row">
         <view class="product-thumb">
           <image
-            wx:if="{{order.productImageUrl}}"
-            src="{{order.productImageUrl}}"
+            wx:if="{{productImageResolved}}"
+            src="{{productImageResolved}}"
             mode="aspectFill"
             class="product-thumb-img"
           />
@@ -57,9 +72,49 @@
         </view>
         <view class="product-info">
           <view class="product-name">{{order.productName}}</view>
+          <view wx:if="{{order.productDesc}}" class="muted product-desc">{{order.productDesc}}</view>
           <view wx:if="{{order.quantity}}" class="muted">x{{order.quantity}}</view>
         </view>
         <view class="product-points">{{pointsCostFmt}} 积分</view>
+      </view>
+    </view>
+
+    <!-- Points detail -->
+    <view class="card section-card">
+      <view class="section-title">积分明细</view>
+      <view class="divider"></view>
+      <view class="info-row">
+        <view class="muted">商品积分</view>
+        <view>{{pointsCostFmt}} 积分</view>
+      </view>
+      <view wx:if="{{freightFmt}}" class="info-row">
+        <view class="muted">运费积分</view>
+        <view>{{freightFmt}} 积分</view>
+      </view>
+      <block wx:if="{{balanceAfterFmt}}">
+        <view class="divider"></view>
+        <view class="info-row">
+          <view class="muted">兑换后余额</view>
+          <view class="balance-after">{{balanceAfterFmt}} 积分</view>
+        </view>
+      </block>
+    </view>
+
+    <!-- Shipping info -->
+    <view wx:if="{{order.receiver || order.receiverPhone || order.receiverAddress}}" class="card section-card">
+      <view class="section-title">收货信息</view>
+      <view class="divider"></view>
+      <view wx:if="{{order.receiver}}" class="info-row">
+        <view class="muted">收货人</view>
+        <view>{{order.receiver}}</view>
+      </view>
+      <view wx:if="{{order.receiverPhone}}" class="info-row">
+        <view class="muted">联系电话</view>
+        <view>{{order.receiverPhone}}</view>
+      </view>
+      <view wx:if="{{order.receiverAddress}}" class="info-row">
+        <view class="muted">收货地址</view>
+        <view class="addr-value">{{order.receiverAddress}}</view>
       </view>
     </view>
 
@@ -79,17 +134,48 @@
         <view class="muted">支付方式</view>
         <view>积分支付</view>
       </view>
+      <view wx:if="{{order.carrier}}" class="info-row">
+        <view class="muted">快递公司</view>
+        <view>{{order.carrier}}</view>
+      </view>
       <view wx:if="{{order.trackingNumber}}" class="info-row">
         <view class="muted">物流单号</view>
         <view>{{order.trackingNumber}}</view>
       </view>
-      <view class="info-row">
-        <view class="muted">收货人</view>
-        <view>{{order.employeeName || '—'}}</view>
+    </view>
+
+    <!-- Status log -->
+    <view wx:if="{{timelineList.length > 0}}" class="card section-card">
+      <view class="section-title">状态记录</view>
+      <view class="divider"></view>
+      <view class="timeline">
+        <view
+          wx:for="{{timelineList}}"
+          wx:key="time"
+          class="timeline-row"
+        >
+          <view class="timeline-marker">
+            <view class="timeline-dot {{item.isLast ? 'timeline-dot-current' : ''}}"></view>
+            <view wx:if="{{!item.isLast}}" class="timeline-line"></view>
+          </view>
+          <view class="timeline-body">
+            <view class="timeline-label">{{item.statusLabel}}</view>
+            <view wx:if="{{item.remark}}" class="muted small">{{item.remark}}</view>
+            <view class="muted small">{{item.timeFmt}}</view>
+          </view>
+        </view>
       </view>
     </view>
 
     <view class="footer">
+      <view
+        wx:if="{{isDelivering}}"
+        class="btn-primary {{confirming ? 'btn-disabled' : ''}}"
+        bindtap="onConfirmReceipt"
+      >
+        <view wx:if="{{confirming}}" class="spinner spinner-light"></view>
+        <text wx:else>✓ 确认收货</text>
+      </view>
       <view class="btn-outline" bindtap="onBack">返回订单列表</view>
     </view>
   </block>

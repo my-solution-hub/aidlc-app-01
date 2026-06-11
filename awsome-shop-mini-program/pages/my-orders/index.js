@@ -1,7 +1,8 @@
-const { listMyOrders } = require('../../services/order');
+const { listMyOrders, confirmReceipt } = require('../../services/order');
 const { getUser } = require('../../utils/auth');
 const { statusStyle, statusLabel } = require('../../utils/orderStatus');
 const { formatNumber, formatDateTime } = require('../../utils/format');
+const { resolveImageUrl } = require('../../utils/image');
 
 const PAGE_SIZE = 10;
 
@@ -18,11 +19,13 @@ function decorate(records) {
     const style = statusStyle(r.status);
     return {
       ...r,
+      productImageResolved: resolveImageUrl(r.productImageUrl),
       statusBg: style.bgColor,
       statusColor: style.textColor,
       statusLabel: statusLabel(r.status),
       pointsCostFmt: formatNumber(r.pointsCost || 0),
       timeFmt: formatDateTime(r.exchangeTime || r.createdAt),
+      canConfirmReceipt: r.status === 'DELIVERING',
     };
   });
 }
@@ -40,6 +43,7 @@ Page({
     total: 0,
     loading: false,
     loadingMore: false,
+    confirmingId: null,
   },
 
   onShow() {
@@ -68,11 +72,12 @@ Page({
         page: 1,
         size: PAGE_SIZE,
         status: this.data.activeStatus || undefined,
+        keyword: this.data.keyword || undefined,
       });
       const records = decorate(res.records);
       this.setData({
         records,
-        displayRecords: this.applyFilter(records),
+        displayRecords: records,
         page: res.current,
         pages: res.pages,
         total: res.total,
@@ -93,11 +98,12 @@ Page({
         page: page + 1,
         size: PAGE_SIZE,
         status: this.data.activeStatus || undefined,
+        keyword: this.data.keyword || undefined,
       });
       const records = this.data.records.concat(decorate(res.records));
       this.setData({
         records,
-        displayRecords: this.applyFilter(records),
+        displayRecords: records,
         page: res.current,
         pages: res.pages,
       });
@@ -115,11 +121,12 @@ Page({
   },
 
   onKeywordInput(e) {
-    const keyword = e.detail.value;
-    this.setData({
-      keyword,
-      displayRecords: this.applyFilter(this.data.records, keyword),
-    });
+    this.setData({ keyword: e.detail.value });
+  },
+
+  onSearch() {
+    this.setData({ page: 1 });
+    this.loadFirst();
   },
 
   onOrderTap(e) {
@@ -127,15 +134,20 @@ Page({
     wx.navigateTo({ url: `/pages/order-detail/index?id=${id}` });
   },
 
-  // Client-side keyword filter — backend list endpoint has no keyword param.
-  applyFilter(records, keywordOverride) {
-    const raw = keywordOverride !== undefined ? keywordOverride : this.data.keyword;
-    const kw = (raw || '').trim().toLowerCase();
-    if (!kw) return records;
-    return records.filter(
-      (r) =>
-        (r.orderNo || '').toLowerCase().includes(kw) ||
-        (r.productName || '').toLowerCase().includes(kw),
-    );
+  async onConfirmReceipt(e) {
+    e.stopPropagation && e.stopPropagation();
+    const id = Number(e.currentTarget.dataset.id);
+    const user = getUser();
+    if (!user || !id) return;
+    this.setData({ confirmingId: id });
+    try {
+      await confirmReceipt(id, user.userId);
+      wx.showToast({ title: '确认收货成功', icon: 'success' });
+      this.loadFirst();
+    } catch (err) {
+      wx.showToast({ title: err.message || '确认收货失败', icon: 'none' });
+    } finally {
+      this.setData({ confirmingId: null });
+    }
   },
 });

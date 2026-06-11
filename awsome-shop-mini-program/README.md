@@ -6,6 +6,11 @@ WeChat Mini Program (微信小程序) client for **AWSome Shop** — a sibling t
 It mirrors the **employee-facing** features of the web frontend:
 积分商城 / 商品详情 / 兑换 / 兑换记录 / 积分中心.
 
+Tracks parity with `awsome-shop-frontend` v1.2: confirm-receipt, address book,
+multi-image gallery, color/quantity selectors, related products, reviews,
+wishlist, hero status card + horizontal progress on order detail, and the
+gateway-prefixed product image URL helper.
+
 ## Tech stack
 
 | Concern        | Choice                                    |
@@ -34,10 +39,12 @@ awsome-shop-mini-program/
 │   └── orderStatus.js      # status & category color mappings (mirrors web utils/orderStatus.ts)
 ├── services/               # API modules — 1:1 with awsome-shop-frontend/src/services/api/
 │   ├── auth.js
-│   ├── product.js
+│   ├── product.js          # incl. getRelatedProducts / listReviews / createReview
 │   ├── category.js
 │   ├── point.js
-│   └── order.js
+│   ├── order.js            # incl. confirmReceipt
+│   ├── wishlist.js         # C6
+│   └── address.js          # C1
 └── pages/
     ├── login/              # Username/password login (mirror frontend Login)
     ├── register/           # Register new account

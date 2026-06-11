@@ -4,6 +4,7 @@ const { getBalance } = require('../../services/point');
 const { getUser } = require('../../utils/auth');
 const { categoryStyle } = require('../../utils/orderStatus');
 const { formatNumber } = require('../../utils/format');
+const { resolveImageUrl } = require('../../utils/image');
 
 const PAGE_SIZE = 20;
 
@@ -12,6 +13,7 @@ function decorate(records) {
     const style = categoryStyle(p.category);
     return {
       ...p,
+      imageUrlResolved: resolveImageUrl(p.imageUrl),
       pointsPriceFmt: formatNumber(p.pointsPrice || 0),
       categoryBg: style.bg,
       categoryColor: style.color,

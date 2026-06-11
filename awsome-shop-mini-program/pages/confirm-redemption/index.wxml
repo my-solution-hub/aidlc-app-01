@@ -13,8 +13,8 @@
     <view class="product-row">
       <view class="product-thumb" style="background:{{categoryBg}}">
         <image
-          wx:if="{{product.imageUrl}}"
-          src="{{product.imageUrl}}"
+          wx:if="{{productImageResolved}}"
+          src="{{productImageResolved}}"
           mode="aspectFill"
           class="product-thumb-img"
         />
@@ -23,6 +23,11 @@
       <view class="product-info">
         <view class="product-name">{{product.name}}</view>
         <view class="muted">{{product.category}}</view>
+        <view wx:if="{{color || quantity > 1}}" class="muted small">
+          <text wx:if="{{color}}">颜色: {{color}}</text>
+          <text wx:if="{{color && quantity > 1}}"> · </text>
+          <text wx:if="{{quantity > 1}}">x{{quantity}}</text>
+        </view>
       </view>
     </view>
 
@@ -30,8 +35,16 @@
 
     <view class="summary">
       <view class="summary-row">
-        <view class="muted">所需积分</view>
+        <view class="muted">单价</view>
         <view class="summary-value cost-value">🪙 {{costFmt}}</view>
+      </view>
+      <view wx:if="{{quantity > 1}}" class="summary-row">
+        <view class="muted">数量</view>
+        <view class="summary-value">x{{quantity}}</view>
+      </view>
+      <view class="summary-row">
+        <view class="muted">合计积分</view>
+        <view class="summary-value cost-value">🪙 {{totalCostFmt}}</view>
       </view>
       <view class="summary-row">
         <view class="muted">当前积分余额</view>
@@ -48,10 +61,58 @@
 
     <view wx:if="{{insufficient}}" class="alert-error">积分不足，无法兑换</view>
 
+    <view class="divider"></view>
+
+    <!-- Shipping address -->
+    <view class="address-section">
+      <view class="address-head">
+        <view class="section-title">收货地址</view>
+        <view class="address-add" bindtap="onShowAddressForm">+ 新增</view>
+      </view>
+
+      <view wx:if="{{addresses.length === 0}}" class="address-empty">
+        <text class="muted">暂无收货地址，点击新增地址</text>
+      </view>
+
+      <view wx:else class="address-list">
+        <view
+          wx:for="{{addresses}}"
+          wx:key="id"
+          class="address-card {{selectedAddressId === item.id ? 'address-card-active' : ''}}"
+          data-id="{{item.id}}"
+          bindtap="onSelectAddress"
+        >
+          <view class="address-line">
+            <text class="address-name">{{item.receiver}}</text>
+            <text class="muted">{{item.phone}}</text>
+            <view wx:if="{{item.isDefault === 1}}" class="default-tag">默认</view>
+          </view>
+          <view class="muted address-detail">{{item.region}} {{item.detail}}</view>
+        </view>
+      </view>
+    </view>
+
+    <!-- Address form (inline) -->
+    <view wx:if="{{showAddressForm}}" class="address-form card">
+      <view class="section-title">新增收货地址</view>
+      <input class="address-input" placeholder="收货人" value="{{addressForm.receiver}}" data-field="receiver" bindinput="onAddressInput" />
+      <input class="address-input" placeholder="联系电话" type="number" value="{{addressForm.phone}}" data-field="phone" bindinput="onAddressInput" />
+      <input class="address-input" placeholder="所在地区（省/市/区）" value="{{addressForm.region}}" data-field="region" bindinput="onAddressInput" />
+      <input class="address-input" placeholder="详细地址" value="{{addressForm.detail}}" data-field="detail" bindinput="onAddressInput" />
+      <input class="address-input" placeholder="邮编（可选）" value="{{addressForm.postalCode}}" data-field="postalCode" bindinput="onAddressInput" />
+      <view class="address-form-actions">
+        <view class="btn-outline" bindtap="onHideAddressForm">取消</view>
+        <view class="btn-primary {{savingAddress ? 'btn-disabled' : ''}}" bindtap="onSaveAddress">
+          <view wx:if="{{savingAddress}}" class="spinner spinner-light"></view>
+          <text wx:else>保存</text>
+        </view>
+      </view>
+    </view>
+
     <view class="actions">
       <view class="btn-outline" bindtap="onCancel">取消</view>
       <view
-        class="btn-primary {{insufficient || unavailable || redeeming ? 'btn-disabled' : ''}}"
+        class="btn-primary {{insufficient || unavailable || redeeming || needAddress ? 'btn-disabled' : ''}}"
         bindtap="onConfirm"
       >
         <view wx:if="{{redeeming}}" class="spinner spinner-light"></view>

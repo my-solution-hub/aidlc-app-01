@@ -12,7 +12,10 @@
       placeholder-class="placeholder"
       value="{{keyword}}"
       bindinput="onKeywordInput"
+      bindconfirm="onSearch"
+      confirm-type="search"
     />
+    <view wx:if="{{keyword}}" class="search-btn" bindtap="onSearch">搜索</view>
   </view>
 
   <scroll-view class="tab-scroll" scroll-x enable-flex>
@@ -58,8 +61,8 @@
       <view class="record-body">
         <view class="record-thumb">
           <image
-            wx:if="{{item.productImageUrl}}"
-            src="{{item.productImageUrl}}"
+            wx:if="{{item.productImageResolved}}"
+            src="{{item.productImageResolved}}"
             mode="aspectFill"
             class="record-thumb-img"
           />
@@ -76,7 +79,18 @@
       <view class="record-foot muted">
         <view>{{item.timeFmt}}</view>
         <view wx:if="{{item.trackingNumber}}">物流: {{item.trackingNumber}}</view>
-        <view class="record-action">查看详情 ›</view>
+        <view class="record-foot-actions">
+          <view
+            wx:if="{{item.canConfirmReceipt}}"
+            class="btn-primary confirm-btn {{confirmingId === item.id ? 'btn-disabled' : ''}}"
+            data-id="{{item.id}}"
+            catchtap="onConfirmReceipt"
+          >
+            <view wx:if="{{confirmingId === item.id}}" class="spinner spinner-light"></view>
+            <text wx:else>确认收货</text>
+          </view>
+          <view class="record-action">查看详情 ›</view>
+        </view>
       </view>
     </view>
   </view>

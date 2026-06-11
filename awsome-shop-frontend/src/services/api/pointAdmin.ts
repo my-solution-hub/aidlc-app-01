@@ -10,7 +10,7 @@ import type {
   PointGrantStatsDTO,
 } from "../../types/api";
 
-const BASE = "/api/admin/points";
+const BASE = "/point/api/admin/points";
 
 /** US-020: paginated employee points list (search by name/employee no). */
 export function listUserPoints(

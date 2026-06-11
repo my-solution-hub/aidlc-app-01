@@ -24,7 +24,7 @@ describe("uploadFile service (BR-PROD-008)", () => {
 
     expect(post).toHaveBeenCalledTimes(1);
     const [url, body, config] = post.mock.calls[0];
-    expect(url).toBe("/api/files/upload");
+    expect(url).toBe("/product/api/files/upload");
     expect(body).toBeInstanceOf(FormData);
     expect((body as FormData).get("file")).toBe(file);
     expect((body as FormData).get("bizType")).toBe("product");

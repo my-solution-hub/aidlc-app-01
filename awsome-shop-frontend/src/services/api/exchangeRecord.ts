@@ -7,7 +7,7 @@ import type {
   UpdateExchangeRecordStatusRequest,
 } from "../../types/api";
 
-const BASE = "/api/admin/orders";
+const BASE = "/order/api/admin/orders";
 
 export function listExchangeRecords(
   data: ListExchangeRecordRequest,

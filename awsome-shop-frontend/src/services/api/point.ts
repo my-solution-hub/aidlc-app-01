@@ -6,7 +6,7 @@ import type {
   ListPointTransactionRequest,
 } from "../../types/api";
 
-const POINT_BASE = "/api/points";
+const POINT_BASE = "/point/api/points";
 
 export function getBalance(userId: number): Promise<PointBalanceDTO> {
   return request.get<PointBalanceDTO>(`${POINT_BASE}/balance`, {

@@ -1,7 +1,7 @@
 import request from "../request";
 import type { UploadResultDTO } from "../../types/api";
 
-const FILE_BASE = "/api/files";
+const FILE_BASE = "/product/api/files";
 
 /**
  * Upload an image file via multipart/form-data.

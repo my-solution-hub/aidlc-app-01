@@ -6,8 +6,8 @@ import type {
   UpdateCategoryRequest,
 } from "../../types/api";
 
-const CATEGORY_BASE = "/api/categories";
-const ADMIN_CATEGORY_BASE = "/api/admin/categories";
+const CATEGORY_BASE = "/product/api/categories";
+const ADMIN_CATEGORY_BASE = "/product/api/admin/categories";
 
 export function listCategories(
   data?: ListCategoryRequest,

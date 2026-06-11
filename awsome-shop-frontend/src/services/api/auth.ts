@@ -7,17 +7,17 @@ import type {
 } from "../../types/api";
 
 export function login(data: LoginRequest): Promise<LoginResponse> {
-  return request.post<LoginResponse>("/api/auth/login", data);
+  return request.post<LoginResponse>("/auth/api/auth/login", data);
 }
 
 export function logout(): Promise<void> {
-  return request.post<void>("/api/auth/logout");
+  return request.post<void>("/auth/api/auth/logout");
 }
 
 export function register(data: RegisterRequest): Promise<UserDTO> {
-  return request.post<UserDTO>("/api/auth/register", data);
+  return request.post<UserDTO>("/auth/api/auth/register", data);
 }
 
 export function getCurrentUser(): Promise<UserDTO> {
-  return request.get<UserDTO>("/api/users/me");
+  return request.get<UserDTO>("/auth/api/users/me");
 }

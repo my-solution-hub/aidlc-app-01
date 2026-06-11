@@ -7,7 +7,7 @@ import type {
   UpdatePointRuleRequest,
 } from "../../types/api";
 
-const POINT_RULE_BASE = "/api/admin/point-rules";
+const POINT_RULE_BASE = "/point/api/admin/point-rules";
 
 export function listPointRules(
   data: ListPointRuleRequest,

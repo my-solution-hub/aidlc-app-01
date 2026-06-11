@@ -28,28 +28,28 @@ beforeEach(() => {
 });
 
 describe("pointAdmin service (matches OpenAPI /api/admin/points/*)", () => {
-  it("listUserPoints -> GET /api/admin/points/users with query params (US-020)", async () => {
+  it("listUserPoints -> GET /point/api/admin/points/users with query params (US-020)", async () => {
     await listUserPoints({ page: 2, size: 20, keyword: "张" });
-    expect(get).toHaveBeenCalledWith("/api/admin/points/users", {
+    expect(get).toHaveBeenCalledWith("/point/api/admin/points/users", {
       params: { page: 2, size: 20, keyword: "张" },
     });
   });
 
-  it("adjustUserPoints -> POST /api/admin/points/adjust with body (US-021)", async () => {
+  it("adjustUserPoints -> POST /point/api/admin/points/adjust with body (US-021)", async () => {
     await adjustUserPoints({ userId: 7, amount: -50, reason: "违规扣减" });
-    expect(post).toHaveBeenCalledWith("/api/admin/points/adjust", {
+    expect(post).toHaveBeenCalledWith("/point/api/admin/points/adjust", {
       userId: 7,
       amount: -50,
       reason: "违规扣减",
     });
   });
 
-  it("getDistributionConfig -> GET /api/admin/points/config (US-022)", async () => {
+  it("getDistributionConfig -> GET /point/api/admin/points/config (US-022)", async () => {
     await getDistributionConfig();
-    expect(get).toHaveBeenCalledWith("/api/admin/points/config");
+    expect(get).toHaveBeenCalledWith("/point/api/admin/points/config");
   });
 
-  it("updateDistributionConfig -> PUT /api/admin/points/config with body (US-022)", async () => {
+  it("updateDistributionConfig -> PUT /point/api/admin/points/config with body (US-022)", async () => {
     await updateDistributionConfig({
       amount: 1000,
       cycle: "MONTHLY",
@@ -57,7 +57,7 @@ describe("pointAdmin service (matches OpenAPI /api/admin/points/*)", () => {
       enabled: true,
       targetRole: "employee",
     });
-    expect(put).toHaveBeenCalledWith("/api/admin/points/config", {
+    expect(put).toHaveBeenCalledWith("/point/api/admin/points/config", {
       amount: 1000,
       cycle: "MONTHLY",
       grantDay: 1,
@@ -68,14 +68,14 @@ describe("pointAdmin service (matches OpenAPI /api/admin/points/*)", () => {
 
   it("getPointGrantStats(month) -> GET stats with month param", async () => {
     await getPointGrantStats("2026-06");
-    expect(get).toHaveBeenCalledWith("/api/admin/points/config/stats", {
+    expect(get).toHaveBeenCalledWith("/point/api/admin/points/config/stats", {
       params: { month: "2026-06" },
     });
   });
 
   it("getPointGrantStats() -> GET stats with no params", async () => {
     await getPointGrantStats();
-    expect(get).toHaveBeenCalledWith("/api/admin/points/config/stats", {
+    expect(get).toHaveBeenCalledWith("/point/api/admin/points/config/stats", {
       params: undefined,
     });
   });

@@ -135,6 +135,8 @@
       "loadFailed": "Failed to load order",
       "notFound": "Order not found",
       "statusTitle": "Order Status",
+      "progressTitle": "Order Progress",
+      "statusLog": "Status Log",
       "cancelled": "Order cancelled",
       "steps": {
         "submitted": "Order Submitted",

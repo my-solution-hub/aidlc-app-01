@@ -119,7 +119,7 @@ private fun ProductDto.toDomain(): Product = Product(
     description = description ?: "",
     points = pointsPrice,
     category = category ?: "",
-    imageUrl = imageUrl ?: images.firstOrNull(),
+    imageUrl = resolveImageUrl(imageUrl ?: images.firstOrNull()),
     inStock = stock > 0,
     specs = emptyMap(),
     tags = listOfNotNull(brand),
@@ -128,12 +128,31 @@ private fun ProductDto.toDomain(): Product = Product(
 private fun ExchangeRecordDto.toDomain(): Order = Order(
     id = id.toString(),
     productName = productName ?: "",
-    productImageUrl = productImageUrl,
+    productImageUrl = resolveImageUrl(productImageUrl),
     points = pointsCost,
     status = status.toOrderStatus(),
     createdAt = createdAt ?: exchangeTime ?: "",
     trackingNumber = trackingNumber,
 )
+
+/**
+ * 解析图片 URL — 与 Web 前端 utils/image.ts 逻辑一致。
+ * 后端返回 /api/files/xxx.jpg → 拼上 CloudFront + /product 前缀
+ */
+private fun resolveImageUrl(url: String?): String? {
+    if (url.isNullOrBlank()) return null
+    // 已经是完整 URL
+    if (url.startsWith("http://") || url.startsWith("https://")) return url
+    // 相对路径: /api/files/xxx.jpg → /product/api/files/xxx.jpg
+    val path = if (url.startsWith("/api/")) {
+        "/product$url"
+    } else if (!url.startsWith("/")) {
+        "/product/api/files/$url"
+    } else {
+        url
+    }
+    return "${com.awsome.shop.BuildConfig.BASE_URL.trimEnd('/')}$path"
+}
 
 private fun String.toOrderStatus(): OrderStatus = when (uppercase()) {
     "DELIVERING", "SHIPPED" -> OrderStatus.SHIPPED

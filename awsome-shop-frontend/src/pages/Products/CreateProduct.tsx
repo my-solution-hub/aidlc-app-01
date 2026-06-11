@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import { useTranslation } from "react-i18next";
 import Box from "@mui/material/Box";
@@ -15,11 +15,13 @@ import IconButton from "@mui/material/IconButton";
 import SaveIcon from "@mui/icons-material/Save";
 import AddIcon from "@mui/icons-material/Add";
 import CloseIcon from "@mui/icons-material/Close";
+import PhotoCameraIcon from "@mui/icons-material/PhotoCamera";
 import {
   createProduct,
   getProduct,
   updateProduct,
 } from "../../services/api/product";
+import { uploadFile } from "../../services/api/file";
 import { listCategories } from "../../services/api/category";
 import { BusinessError } from "../../services/request";
 
@@ -58,9 +60,12 @@ export default function CreateProduct() {
   const [stock, setStock] = useState("");
   const [status, setStatus] = useState(1);
   const [description, setDescription] = useState("");
+  const [imageUrl, setImageUrl] = useState("");
+  const [uploading, setUploading] = useState(false);
   const [specs, setSpecs] = useState<SpecRow[]>([]);
   const [categories, setCategories] = useState<string[]>(FALLBACK_CATEGORIES);
   const [loading, setLoading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   // Load category options dynamically (fall back to defaults on failure).
   useEffect(() => {
@@ -95,6 +100,7 @@ export default function CreateProduct() {
         setStock(p.stock != null ? String(p.stock) : "");
         setStatus(p.status ?? 1);
         setDescription(p.description ?? "");
+        setImageUrl(p.imageUrl ?? "");
         setSpecs(
           (p.specs ?? []).flatMap((row) =>
             Object.entries(row).map(([key, value]) => ({
@@ -127,6 +133,25 @@ export default function CreateProduct() {
     setSpecs(updated);
   };
 
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      const res = await uploadFile(file, "product");
+      setImageUrl(res.url);
+    } catch (err) {
+      const msg =
+        err instanceof BusinessError
+          ? err.message
+          : t("admin.products.uploadFailed");
+      setSnackbar({ open: true, message: msg, severity: "error" });
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
   const handleSubmit = async () => {
     setLoading(true);
     try {
@@ -143,6 +168,7 @@ export default function CreateProduct() {
         marketPrice: marketPrice ? Number(marketPrice) : undefined,
         stock: stock !== "" ? Number(stock) : undefined,
         description: description || undefined,
+        imageUrl: imageUrl || undefined,
         specs: specData.length > 0 ? specData : undefined,
         status: isEdit ? status : 1,
       };
@@ -564,6 +590,102 @@ export default function CreateProduct() {
             />
           </Box>
           <Box sx={{ flex: 1 }} />
+        </Box>
+      </Box>
+
+      {/* Image Card */}
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          gap: "16px",
+          p: "24px",
+          bgcolor: "#fff",
+          borderRadius: "12px",
+          border: "1px solid #F1F5F9",
+        }}
+      >
+        <Typography
+          sx={{ fontSize: 16, fontWeight: 600, color: "#1E293B", fontFamily: "Inter, sans-serif" }}
+        >
+          {t("admin.products.image")}
+        </Typography>
+        <Box sx={{ height: "1px", bgcolor: "#F1F5F9" }} />
+
+        <Box sx={{ display: "flex", alignItems: "center", gap: "20px" }}>
+          {/* Preview */}
+          <Box
+            sx={{
+              width: 120,
+              height: 120,
+              flexShrink: 0,
+              borderRadius: "8px",
+              border: "1px solid #E2E8F0",
+              bgcolor: "#F8FAFC",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              overflow: "hidden",
+            }}
+          >
+            {imageUrl ? (
+              <Box
+                component="img"
+                src={imageUrl}
+                alt="preview"
+                sx={{ width: "100%", height: "100%", objectFit: "cover" }}
+              />
+            ) : (
+              <PhotoCameraIcon sx={{ fontSize: 36, color: "#CBD5E1" }} />
+            )}
+          </Box>
+
+          {/* Controls */}
+          <Box sx={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/gif,image/webp"
+              style={{ display: "none" }}
+              onChange={handleFileChange}
+            />
+            <Box sx={{ display: "flex", alignItems: "center", gap: "12px" }}>
+              <ButtonBase
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  borderRadius: "8px",
+                  border: "1px solid #2563EB",
+                  px: "16px",
+                  py: "8px",
+                  "&:hover": { bgcolor: "#EFF6FF" },
+                }}
+              >
+                {uploading ? (
+                  <CircularProgress size={16} sx={{ color: "#2563EB" }} />
+                ) : (
+                  <PhotoCameraIcon sx={{ fontSize: 18, color: "#2563EB" }} />
+                )}
+                <Typography sx={{ fontSize: 13, fontWeight: 600, color: "#2563EB", fontFamily: "Inter, sans-serif" }}>
+                  {uploading ? t("admin.products.imageUploading") : t("admin.products.imageUpload")}
+                </Typography>
+              </ButtonBase>
+              {imageUrl && (
+                <Typography
+                  onClick={() => setImageUrl("")}
+                  sx={{ fontSize: 13, color: "#DC2626", cursor: "pointer", "&:hover": { textDecoration: "underline" } }}
+                >
+                  {t("admin.products.imageRemove")}
+                </Typography>
+              )}
+            </Box>
+            <Typography sx={{ fontSize: 12, color: "#94A3B8", fontFamily: "Inter, sans-serif" }}>
+              {t("admin.products.imageHint")}
+            </Typography>
+          </Box>
         </Box>
       </Box>
 

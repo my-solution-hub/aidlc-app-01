@@ -500,6 +500,9 @@ function PointRuleDialog({
   const [pointMin, setPointMin] = useState(String(rule?.pointValueMin ?? 0));
   const [pointMax, setPointMax] = useState(String(rule?.pointValueMax ?? 0));
   const [trigger, setTrigger] = useState(rule?.triggerCondition ?? "");
+  const [scope, setScope] = useState(rule?.scope ?? "");
+  const [grantMethod, setGrantMethod] = useState(rule?.grantMethod ?? "");
+  const [icon, setIcon] = useState(rule?.icon ?? "");
 
   const typeLabel = (type: string) =>
     ({
@@ -518,6 +521,9 @@ function PointRuleDialog({
       pointValueMax: Number(pointMax) || 0,
       triggerCondition: trigger.trim() || undefined,
       status: rule?.status ?? 1,
+      scope: scope.trim() || undefined,
+      grantMethod: grantMethod.trim() || undefined,
+      icon: icon.trim() || undefined,
     });
   };
 
@@ -649,6 +655,47 @@ function PointRuleDialog({
             onChange={(e) => setTrigger(e.target.value)}
             sx={fieldSx}
           />
+        </Box>
+        <Box sx={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+          <Typography sx={{ fontSize: 13, fontWeight: 500, color: "#1E293B" }}>
+            {t("admin.pointRules.fieldScope")}
+          </Typography>
+          <TextField
+            fullWidth
+            size="small"
+            placeholder={t("admin.pointRules.fieldScopePlaceholder")}
+            value={scope}
+            onChange={(e) => setScope(e.target.value)}
+            sx={fieldSx}
+          />
+        </Box>
+        <Box sx={{ display: "flex", gap: "12px" }}>
+          <Box sx={{ flex: 1, display: "flex", flexDirection: "column", gap: "6px" }}>
+            <Typography sx={{ fontSize: 13, fontWeight: 500, color: "#1E293B" }}>
+              {t("admin.pointRules.fieldGrantMethod")}
+            </Typography>
+            <TextField
+              fullWidth
+              size="small"
+              placeholder={t("admin.pointRules.fieldGrantMethodPlaceholder")}
+              value={grantMethod}
+              onChange={(e) => setGrantMethod(e.target.value)}
+              sx={fieldSx}
+            />
+          </Box>
+          <Box sx={{ flex: 1, display: "flex", flexDirection: "column", gap: "6px" }}>
+            <Typography sx={{ fontSize: 13, fontWeight: 500, color: "#1E293B" }}>
+              {t("admin.pointRules.fieldIcon")}
+            </Typography>
+            <TextField
+              fullWidth
+              size="small"
+              placeholder={t("admin.pointRules.fieldIconPlaceholder")}
+              value={icon}
+              onChange={(e) => setIcon(e.target.value)}
+              sx={fieldSx}
+            />
+          </Box>
         </Box>
         <Box sx={{ display: "flex", flexDirection: "column", gap: "6px" }}>
           <Typography sx={{ fontSize: 13, fontWeight: 500, color: "#1E293B" }}>

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { useTranslation } from "react-i18next";
 import Box from "@mui/material/Box";
@@ -9,10 +9,12 @@ import CircularProgress from "@mui/material/CircularProgress";
 import SearchIcon from "@mui/icons-material/Search";
 import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
 import Inventory2Icon from "@mui/icons-material/Inventory2";
-import { listMyOrders } from "../../services/api/order";
+import { listMyOrders, confirmReceipt } from "../../services/api/order";
 import type { ExchangeRecordDTO, PageResult } from "../../types/api";
 import { useAuthStore } from "../../store/useAuthStore";
 import { statusStyle, STATUS_I18N } from "../../utils/orderStatus";
+import { AppSnackbar, useSnackbar } from "../../components/AppSnackbar";
+import { BusinessError } from "../../services/request";
 
 const PAGE_SIZE = 5;
 
@@ -28,12 +30,15 @@ export default function MyOrders() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
+  const snackbar = useSnackbar();
 
   const [data, setData] = useState<PageResult<ExchangeRecordDTO> | null>(null);
   const [loading, setLoading] = useState(false);
   const [tab, setTab] = useState("");
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
+  const [keyword, setKeyword] = useState("");
+  const [confirmingId, setConfirmingId] = useState<number | null>(null);
 
   const fetchData = useCallback(async () => {
     if (!user) return;
@@ -44,6 +49,7 @@ export default function MyOrders() {
         page,
         size: PAGE_SIZE,
         status: tab || undefined,
+        keyword: keyword || undefined,
       });
       setData(res);
     } catch {
@@ -51,26 +57,31 @@ export default function MyOrders() {
     } finally {
       setLoading(false);
     }
-  }, [user, page, tab]);
+  }, [user, page, tab, keyword]);
 
   useEffect(() => {
     fetchData();
   }, [fetchData]);
 
+  const handleConfirmReceipt = async (recordId: number) => {
+    if (!user) return;
+    setConfirmingId(recordId);
+    try {
+      await confirmReceipt(recordId, user.userId);
+      snackbar.showSuccess(t("employee.orderDetail.confirmReceiptSuccess"));
+      fetchData();
+    } catch (err) {
+      snackbar.showError(
+        err instanceof BusinessError ? err.message : t("employee.orderDetail.confirmReceiptFailed"),
+      );
+    } finally {
+      setConfirmingId(null);
+    }
+  };
+
   const records = data?.records ?? [];
   const total = data?.total ?? 0;
   const pages = data?.pages ?? 1;
-
-  // Client-side keyword filter (employee list endpoint has no keyword param).
-  const filtered = useMemo(() => {
-    const kw = search.trim().toLowerCase();
-    if (!kw) return records;
-    return records.filter(
-      (r) =>
-        r.orderNo?.toLowerCase().includes(kw) ||
-        r.productName?.toLowerCase().includes(kw),
-    );
-  }, [records, search]);
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 3, p: "24px 32px" }}>
@@ -102,6 +113,12 @@ export default function MyOrders() {
             placeholder={t("employee.orders.searchPlaceholder")}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                setPage(1);
+                setKeyword(search.trim());
+              }
+            }}
             sx={{ flex: 1, fontSize: 13, "& input::placeholder": { color: "#CBD5E1", opacity: 1 } }}
           />
         </Box>
@@ -149,7 +166,7 @@ export default function MyOrders() {
         <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
           <CircularProgress />
         </Box>
-      ) : filtered.length === 0 ? (
+      ) : records.length === 0 ? (
         <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", py: 8, gap: 2 }}>
           <ReceiptLongIcon sx={{ fontSize: 48, color: "#CBD5E1" }} />
           <Typography sx={{ fontSize: 14, color: "#64748B" }}>
@@ -158,7 +175,7 @@ export default function MyOrders() {
         </Box>
       ) : (
         <Box sx={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-          {filtered.map((record) => {
+          {records.map((record) => {
             const style = statusStyle(record.status);
             return (
               <Box
@@ -244,14 +261,31 @@ export default function MyOrders() {
                       ? `${t("employee.orders.tracking")}: ${record.trackingNumber}`
                       : ""}
                   </Typography>
-                  <Button
-                    variant="outlined"
-                    size="small"
-                    onClick={() => navigate(`/orders/${record.id}`)}
-                    sx={{ textTransform: "none", borderRadius: "8px", fontSize: 12, fontWeight: 600 }}
-                  >
-                    {t("employee.orders.viewDetail")}
-                  </Button>
+                  <Box sx={{ display: "flex", gap: "8px" }}>
+                    {record.status === "DELIVERING" && (
+                      <Button
+                        variant="contained"
+                        size="small"
+                        onClick={() => handleConfirmReceipt(record.id)}
+                        disabled={confirmingId === record.id}
+                        sx={{ textTransform: "none", borderRadius: "8px", fontSize: 12, fontWeight: 600 }}
+                      >
+                        {confirmingId === record.id ? (
+                          <CircularProgress size={14} sx={{ color: "#fff" }} />
+                        ) : (
+                          t("employee.orders.confirmReceipt")
+                        )}
+                      </Button>
+                    )}
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      onClick={() => navigate(`/orders/${record.id}`)}
+                      sx={{ textTransform: "none", borderRadius: "8px", fontSize: 12, fontWeight: 600 }}
+                    >
+                      {t("employee.orders.viewDetail")}
+                    </Button>
+                  </Box>
                 </Box>
               </Box>
             );
@@ -288,6 +322,7 @@ export default function MyOrders() {
           </Box>
         </Box>
       )}
+      <AppSnackbar state={snackbar.state} onClose={snackbar.close} />
     </Box>
   );
 }

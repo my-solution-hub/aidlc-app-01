@@ -189,10 +189,11 @@ export default function UserPointsHistory() {
         {/* Table header */}
         <Box sx={{ display: "flex", alignItems: "center", bgcolor: "#F8FAFC", px: "20px", py: "12px" }}>
           <Box sx={{ width: 150 }}><Th t={t} k="historyThTime" /></Box>
-          <Box sx={{ width: 110 }}><Th t={t} k="historyThType" /></Box>
-          <Box sx={{ width: 110 }}><Th t={t} k="historyThAmount" /></Box>
-          <Box sx={{ width: 130 }}><Th t={t} k="historyThBalance" /></Box>
+          <Box sx={{ width: 100 }}><Th t={t} k="historyThType" /></Box>
+          <Box sx={{ width: 100 }}><Th t={t} k="historyThAmount" /></Box>
+          <Box sx={{ width: 120 }}><Th t={t} k="historyThBalance" /></Box>
           <Box sx={{ flex: 1 }}><Th t={t} k="historyThReason" /></Box>
+          <Box sx={{ width: 110 }}><Th t={t} k="historyThOperator" /></Box>
         </Box>
 
         {loading ? (
@@ -212,20 +213,23 @@ export default function UserPointsHistory() {
                 <Box sx={{ width: 150 }}>
                   <Typography sx={{ fontSize: 12, color: "#64748B" }}>{fmt(txn.createdAt)}</Typography>
                 </Box>
-                <Box sx={{ width: 110 }}>
+                <Box sx={{ width: 100 }}>
                   <Typography sx={{ fontSize: 12, color: "#1E293B" }}>{txn.type || "—"}</Typography>
                 </Box>
-                <Box sx={{ width: 110 }}>
+                <Box sx={{ width: 100 }}>
                   <Typography sx={{ fontSize: 13, fontWeight: 700, color: positive ? "#16A34A" : "#DC2626" }}>
                     {positive ? "+" : ""}
                     {txn.amount.toLocaleString()}
                   </Typography>
                 </Box>
-                <Box sx={{ width: 130 }}>
+                <Box sx={{ width: 120 }}>
                   <Typography sx={{ fontSize: 13, color: "#1E293B" }}>{txn.balance?.toLocaleString() ?? "—"}</Typography>
                 </Box>
                 <Box sx={{ flex: 1 }}>
                   <Typography sx={{ fontSize: 13, color: "#64748B" }}>{txn.description || "—"}</Typography>
+                </Box>
+                <Box sx={{ width: 110 }}>
+                  <Typography sx={{ fontSize: 13, color: "#64748B" }}>{txn.operator || "—"}</Typography>
                 </Box>
               </Box>
             );

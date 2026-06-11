@@ -3,8 +3,9 @@
  * All backend APIs return this structure through the gateway.
  */
 export interface Result<T = unknown> {
-  code: string;
+  code: string | number;
   message: string;
+  success?: boolean;
   data: T;
 }
 
@@ -49,9 +50,16 @@ export interface UserDTO {
   role: string;
   status: string;
   employeeId?: string;
+  department?: string;
   lastLoginAt: string;
   createdAt: string;
   updatedAt?: string;
+}
+
+export interface UserStatsDTO {
+  totalUsers: number;
+  activeUsers: number;
+  newThisMonth: number;
 }
 
 export interface ListUserRequest {
@@ -68,12 +76,14 @@ export interface CreateUserRequest {
   nickname: string;
   role: string;
   employeeId?: string;
+  department?: string;
 }
 
 export interface UpdateUserRequest {
   nickname?: string;
   role?: string;
   employeeId?: string;
+  department?: string;
 }
 
 // ---- Product ----
@@ -91,14 +101,22 @@ export interface ProductDTO {
   status: number;
   description: string;
   imageUrl: string;
+  images?: string[];
   subtitle: string;
   deliveryMethod: string;
   serviceGuarantee: string;
   promotion: string;
   colors: string;
   specs: Record<string, string>[];
+  rating?: number;
+  reviewCount?: number;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface ProductStatsDTO {
+  totalProducts: number;
+  onSaleProducts: number;
 }
 
 export interface ListProductRequest {
@@ -119,12 +137,37 @@ export interface CreateProductRequest {
   status?: number;
   description?: string;
   imageUrl?: string;
+  images?: string[];
   subtitle?: string;
   deliveryMethod?: string;
   serviceGuarantee?: string;
   promotion?: string;
   colors?: string;
   specs?: Record<string, string>[];
+}
+
+export interface StockAdjustRequest {
+  changeType: "IN" | "OUT";
+  quantity: number;
+  reason?: string;
+}
+
+// ---- Product Review (C5) ----
+
+export interface ReviewDTO {
+  id: number;
+  productId: number;
+  userId: number;
+  rating: number;
+  content: string;
+  createdAt: string;
+}
+
+export interface CreateReviewRequest {
+  productId: number;
+  userId: number;
+  rating: number;
+  content: string;
 }
 
 // ---- Category ----
@@ -170,6 +213,9 @@ export interface PointRuleDTO {
   pointValueMax: number;
   triggerCondition: string;
   status: number;
+  scope?: string;
+  grantMethod?: string;
+  icon?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -190,6 +236,9 @@ export interface CreatePointRuleRequest {
   pointValueMax: number;
   triggerCondition?: string;
   status?: number;
+  scope?: string;
+  grantMethod?: string;
+  icon?: string;
 }
 
 export interface UpdatePointRuleRequest extends CreatePointRuleRequest {
@@ -211,6 +260,7 @@ export interface PointTransactionDTO {
   amount: number;
   balance: number;
   description: string;
+  operator?: string;
   createdAt: string;
 }
 
@@ -222,6 +272,13 @@ export interface ListPointTransactionRequest {
 }
 
 // ---- Exchange Record ----
+
+/** One entry of an order's status timeline (B3). */
+export interface StatusLogDTO {
+  status: string;
+  remark: string;
+  time: string;
+}
 
 export interface ExchangeRecordDTO {
   id: number;
@@ -238,12 +295,21 @@ export interface ExchangeRecordDTO {
   trackingNumber?: string;
   createdAt: string;
   updatedAt: string;
+  // ---- Extended fields (B2/B4): present on detail responses ----
+  freightPoints?: number;
+  balanceAfter?: number;
+  carrier?: string;
+  receiver?: string;
+  receiverPhone?: string;
+  receiverAddress?: string;
+  timeline?: StatusLogDTO[];
 }
 
 export interface UpdateExchangeRecordStatusRequest {
   id: number;
   status: string;
   trackingNumber?: string;
+  carrier?: string;
 }
 
 // ---- Order (employee) ----
@@ -253,6 +319,32 @@ export interface ExchangeRequest {
   quantity: number;
   userId: number;
   employeeName?: string;
+  addressId?: number;
+}
+
+// ---- Shipping Address (C1) ----
+
+export interface AddressDTO {
+  id: number;
+  userId: number;
+  receiver: string;
+  phone: string;
+  region: string;
+  detail: string;
+  postalCode?: string;
+  isDefault: number;
+  createdAt?: string;
+}
+
+export interface SaveAddressRequest {
+  id?: number;
+  userId: number;
+  receiver: string;
+  phone: string;
+  region: string;
+  detail: string;
+  postalCode?: string;
+  isDefault?: number;
 }
 
 export interface ListOrderRequest {
@@ -260,6 +352,7 @@ export interface ListOrderRequest {
   page?: number;
   size?: number;
   status?: string;
+  keyword?: string;
 }
 
 export interface ExchangeRecordStatsDTO {

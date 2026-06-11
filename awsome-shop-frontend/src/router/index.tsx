@@ -11,6 +11,7 @@ import RedemptionSuccess from "../pages/RedemptionSuccess";
 import OrderDetail from "../pages/OrderDetail";
 import MyOrders from "../pages/MyOrders";
 import MyPoints from "../pages/MyPoints";
+import Addresses from "../pages/Addresses";
 import Dashboard from "../pages/Dashboard";
 import ProductList from "../pages/Products";
 import CreateProduct from "../pages/Products/CreateProduct";
@@ -49,6 +50,7 @@ const router = createBrowserRouter([
       { path: "orders/:id", element: <OrderDetail /> },
       { path: "orders", element: <MyOrders /> },
       { path: "points", element: <MyPoints /> },
+      { path: "addresses", element: <Addresses /> },
     ],
   },
   // Admin routes

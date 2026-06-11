@@ -386,7 +386,24 @@
       "configAmountPlaceholder": "请输入发放积分额度",
       "configGrantDay": "每月发放日",
       "configEnabled": "启用自动发放",
-      "configCycleHint": "发放周期：每月（按发放日自动发放给员工）"
+      "configCycleHint": "发放周期：每月（按发放日自动发放给员工）",
+      "viewHistory": "查看记录",
+      "historyBreadcrumb": "积分变动记录",
+      "historyTitle": "{{name}} 的积分变动记录",
+      "historyChangeCount": "变动次数",
+      "historyTableTitle": "积分变动明细",
+      "historyThTime": "变动时间",
+      "historyThType": "变动类型",
+      "historyThAmount": "变动积分",
+      "historyThBalance": "变动后余额",
+      "historyThReason": "变动原因",
+      "historyNoData": "暂无积分变动记录",
+      "showRangeRecords": "显示 {{start}}-{{end}} 共 {{total}} 条记录",
+      "filter": {
+        "all": "全部",
+        "income": "收入",
+        "expense": "支出"
+      }
     },
     "pointRules": {
       "title": "积分规则管理",

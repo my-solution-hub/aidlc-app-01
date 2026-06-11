@@ -18,6 +18,7 @@ import ProductDetailAdmin from "../pages/Products/ProductDetailAdmin";
 import CategoryList from "../pages/Categories";
 import PointRuleList from "../pages/PointRules";
 import UserPoints from "../pages/UserPoints";
+import UserPointsHistory from "../pages/UserPoints/History";
 import ExchangeRecordList from "../pages/ExchangeRecords";
 import ExchangeDetail from "../pages/ExchangeRecords/ExchangeDetail";
 import Users from "../pages/Users";
@@ -67,6 +68,7 @@ const router = createBrowserRouter([
       { path: "categories", element: <CategoryList /> },
       { path: "points", element: <PointRuleList /> },
       { path: "user-points", element: <UserPoints /> },
+      { path: "user-points/:userId", element: <UserPointsHistory /> },
       { path: "orders", element: <ExchangeRecordList /> },
       { path: "orders/:id", element: <ExchangeDetail /> },
       { path: "users", element: <Users /> },

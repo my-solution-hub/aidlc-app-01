@@ -386,7 +386,24 @@
       "configAmountPlaceholder": "Enter points amount",
       "configGrantDay": "Grant day of month",
       "configEnabled": "Enable auto distribution",
-      "configCycleHint": "Cycle: monthly (auto-granted on the grant day)"
+      "configCycleHint": "Cycle: monthly (auto-granted on the grant day)",
+      "viewHistory": "View history",
+      "historyBreadcrumb": "Points History",
+      "historyTitle": "Points history of {{name}}",
+      "historyChangeCount": "Changes",
+      "historyTableTitle": "Points Change Details",
+      "historyThTime": "Time",
+      "historyThType": "Type",
+      "historyThAmount": "Change",
+      "historyThBalance": "Balance After",
+      "historyThReason": "Reason",
+      "historyNoData": "No points change records",
+      "showRangeRecords": "Showing {{start}}-{{end}} of {{total}} records",
+      "filter": {
+        "all": "All",
+        "income": "Income",
+        "expense": "Expense"
+      }
     },
     "pointRules": {
       "title": "Points Rule Management",

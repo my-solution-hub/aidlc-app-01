@@ -99,7 +99,14 @@
       "reviewSuccess": "评价提交成功",
       "reviewFailed": "评价提交失败",
       "wishlistAdd": "加入心愿单",
-      "wishlistRemove": "移出心愿单"
+      "wishlistRemove": "移出心愿单",
+      "delivery": "配送",
+      "deliveryTip": "公司地址配送",
+      "service": "服务",
+      "color": "颜色",
+      "quantity": "数量",
+      "inStock": "有货",
+      "productSpecs": "产品规格"
     },
     "confirmRedemption": {
       "title": "确认兑换",

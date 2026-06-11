@@ -99,7 +99,14 @@
       "reviewSuccess": "Review submitted",
       "reviewFailed": "Failed to submit review",
       "wishlistAdd": "Add to Wishlist",
-      "wishlistRemove": "Remove from Wishlist"
+      "wishlistRemove": "Remove from Wishlist",
+      "delivery": "Delivery",
+      "deliveryTip": "Company address delivery",
+      "service": "Service",
+      "color": "Color",
+      "quantity": "Quantity",
+      "inStock": "In stock",
+      "productSpecs": "Specifications"
     },
     "confirmRedemption": {
       "title": "Confirm Redemption",

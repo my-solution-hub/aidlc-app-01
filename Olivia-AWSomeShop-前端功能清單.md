@@ -6,6 +6,7 @@
 >
 > - 來源：`awsome-shop-frontend/src/`；四個後端服務 controller；gateway 路由
 > - 更新：**2026-06-10**，已納入 ① 設計稿對齊 PR #5（員工/管理端缺頁 + 彈窗）② 後端 `d60274e 補齊積分管理缺口` ③ `API接口文档.md v1.1`。
+> - 更新：**2026-06-11**，對賬後端 MVP（`965abd1` 10 項缺口已完成、62 測試通過）：刷新 D 節狀態——D-1～D-7 設計稿依賴**仍待後端補充開發**（詳見 D 節狀態橫幅）。
 > - 後端依賴統一見本檔 **D 節**（原 `後端API缺口與規格.md` 已於 `2ebf9dd` 移除，需求併入此處，不再另開檔案）。
 
 ---
@@ -88,6 +89,18 @@
 
 > 契約風格沿用現行 REST（見 `API接口文档.md`）：`/api/...`(PUBLIC/AUTHENTICATED)、`/api/admin/...`(ADMIN)、統一 `Result<T>`。
 > 前端對缺口的處理：缺欄位顯示 `—`、缺端點對應按鈕隱藏/禁用，**不造假資料**；後端補齊後前端接線即可。
+
+> 🟥 **狀態（2026-06-11 對賬，⚠️ 需後端補充開發）**：後端已完成自身逆向分析的 MVP 缺口（`965abd1 實現全部 10 項剩餘缺口`，見 `aidlc-docs/inception/reverse-engineering/功能缺口復查報告-v2.md`），P0 全修復。但**以下 D-1～D-7 為設計稿（`.pen`）驅動的需求，不在後端該輪範圍**；經 OpenAPI 契約（`api-docs/awsomeshop-openapi.yaml`）+ 控制器原始碼逐項核對，**仍未實現**。前端目前對這些做降級處理（顯示 `—`／隱藏按鈕），不阻塞。**請後端按下列 REST 契約補充開發**，完成後前端接線即可。
+>
+> | 編號 | 缺口 | 建議優先級 | 核對結果 |
+> |---|---|---|---|
+> | D-1 | 用戶部門欄位 + 用戶統計 | P1 | ❌ 無 `department` / `users/stats` |
+> | D-2 | 員工確認收貨 | P1 | ❌ 無 `confirm-receipt`（僅管理員可改狀態） |
+> | D-3 | 收貨地址簿 + 下單帶地址 | P1 | ❌ 無 `/api/addresses`，`POST /api/orders` 無 `addressId` |
+> | D-4 | 兌換記錄 DTO 擴展欄位 | P2 | ❌ `ExchangeRecordDTO` 無 shippingPoints/balanceAfter/statusHistory 等 |
+> | D-5 | 積分規則 DTO 擴展欄位 | P2 | ❌ `PointRuleDTO` 無 applicableScope/grantMethod/icon |
+> | D-6 | 員工訂單關鍵字搜尋 | P2 | ⚠️ `/api/orders` 未見 `keyword` 參數（管理端 `/api/admin/orders` 有篩選） |
+> | D-7 | 商品多圖 `images[]` | P2 | ❌ `ProductDTO` 僅 `imageUrl` 單圖 |
 
 ### D-1 用戶「部門」欄位 + 用戶統計（adm-03）
 - `UserDTO` 增加 `department`（string，可空）；`POST/PUT /api/admin/users`、`POST /api/auth/register` 支援寫入。

@@ -17,8 +17,8 @@ import GroupIcon from "@mui/icons-material/Group";
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import TollIcon from "@mui/icons-material/Toll";
 import AdminPageHeader from "../../components/AdminPageHeader";
-import { listProducts } from "../../services/api/product";
-import { listUsers } from "../../services/api/user";
+import { listProducts, getProductStats } from "../../services/api/product";
+import { listUsers, getUserStats } from "../../services/api/user";
 import {
   listExchangeRecords,
   getExchangeRecordStats,
@@ -53,14 +53,25 @@ export default function Dashboard() {
   useEffect(() => {
     (async () => {
       try {
-        const [products, users, stats, orders] = await Promise.all([
-          listProducts({ page: 1, size: 1 }),
-          listUsers({ page: 1, size: 1 }),
+        const [productStats, userStats, stats, orders] = await Promise.all([
+          getProductStats().catch(() => null),
+          getUserStats().catch(() => null),
           getExchangeRecordStats(),
           listExchangeRecords({ page: 1, size: 5 }),
         ]);
-        setTotalProducts(products.total ?? 0);
-        setTotalUsers(users.total ?? 0);
+        // Fall back to list totals if the dedicated stats endpoints are unavailable.
+        if (productStats) {
+          setTotalProducts(productStats.totalProducts ?? 0);
+        } else {
+          const p = await listProducts({ page: 1, size: 1 }).catch(() => null);
+          setTotalProducts(p?.total ?? 0);
+        }
+        if (userStats) {
+          setTotalUsers(userStats.totalUsers ?? 0);
+        } else {
+          const u = await listUsers({ page: 1, size: 1 }).catch(() => null);
+          setTotalUsers(u?.total ?? 0);
+        }
         setTotalRedemptions(stats.totalCount ?? 0);
         setPointsConsumed(stats.totalPointsConsumed ?? 0);
         setRecentOrders(orders.records ?? []);

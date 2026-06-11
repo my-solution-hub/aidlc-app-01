@@ -4,12 +4,25 @@ import type {
   UserDTO,
   ListUserRequest,
   CreateUserRequest,
+  UserStatsDTO,
 } from "../../types/api";
 
 const ADMIN_USER_BASE = "/auth/api/admin/users";
 
 export function listUsers(data: ListUserRequest): Promise<PageResult<UserDTO>> {
   return request.get<PageResult<UserDTO>>(ADMIN_USER_BASE, { params: data });
+}
+
+/** A3: user statistics for the management dashboard cards. */
+export function getUserStats(): Promise<UserStatsDTO> {
+  return request.get<UserStatsDTO>(`${ADMIN_USER_BASE}/stats`);
+}
+
+/** D2: server-side CSV export of users (returns a Blob). */
+export function exportUsers(): Promise<Blob> {
+  return request.get<Blob>(`${ADMIN_USER_BASE}/export`, {
+    responseType: "blob",
+  });
 }
 
 export function createUser(data: CreateUserRequest): Promise<UserDTO> {

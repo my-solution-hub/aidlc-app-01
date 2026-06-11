@@ -60,7 +60,7 @@ export default function CreateProduct() {
   const [stock, setStock] = useState("");
   const [status, setStatus] = useState(1);
   const [description, setDescription] = useState("");
-  const [imageUrl, setImageUrl] = useState("");
+  const [images, setImages] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
   const [specs, setSpecs] = useState<SpecRow[]>([]);
   const [categories, setCategories] = useState<string[]>(FALLBACK_CATEGORIES);
@@ -100,7 +100,7 @@ export default function CreateProduct() {
         setStock(p.stock != null ? String(p.stock) : "");
         setStatus(p.status ?? 1);
         setDescription(p.description ?? "");
-        setImageUrl(p.imageUrl ?? "");
+        setImages(p.images && p.images.length > 0 ? p.images : p.imageUrl ? [p.imageUrl] : []);
         setSpecs(
           (p.specs ?? []).flatMap((row) =>
             Object.entries(row).map(([key, value]) => ({
@@ -136,10 +136,14 @@ export default function CreateProduct() {
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (images.length >= 10) {
+      setSnackbar({ open: true, message: t("admin.products.imageMax"), severity: "error" });
+      return;
+    }
     setUploading(true);
     try {
       const res = await uploadFile(file, "product");
-      setImageUrl(res.url);
+      setImages((prev) => [...prev, res.url]);
     } catch (err) {
       const msg =
         err instanceof BusinessError
@@ -150,6 +154,10 @@ export default function CreateProduct() {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
     }
+  };
+
+  const removeImage = (idx: number) => {
+    setImages((prev) => prev.filter((_, i) => i !== idx));
   };
 
   const handleSubmit = async () => {
@@ -168,7 +176,8 @@ export default function CreateProduct() {
         marketPrice: marketPrice ? Number(marketPrice) : undefined,
         stock: stock !== "" ? Number(stock) : undefined,
         description: description || undefined,
-        imageUrl: imageUrl || undefined,
+        imageUrl: images[0] || undefined,
+        images: images.length > 0 ? images : undefined,
         specs: specData.length > 0 ? specData : undefined,
         status: isEdit ? status : 1,
       };
@@ -612,81 +621,76 @@ export default function CreateProduct() {
         </Typography>
         <Box sx={{ height: "1px", bgcolor: "#F1F5F9" }} />
 
-        <Box sx={{ display: "flex", alignItems: "center", gap: "20px" }}>
-          {/* Preview */}
-          <Box
-            sx={{
-              width: 120,
-              height: 120,
-              flexShrink: 0,
-              borderRadius: "8px",
-              border: "1px solid #E2E8F0",
-              bgcolor: "#F8FAFC",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              overflow: "hidden",
-            }}
-          >
-            {imageUrl ? (
-              <Box
-                component="img"
-                src={imageUrl}
-                alt="preview"
-                sx={{ width: "100%", height: "100%", objectFit: "cover" }}
-              />
-            ) : (
-              <PhotoCameraIcon sx={{ fontSize: 36, color: "#CBD5E1" }} />
-            )}
-          </Box>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/jpeg,image/png,image/gif,image/webp"
+          style={{ display: "none" }}
+          onChange={handleFileChange}
+        />
 
-          {/* Controls */}
-          <Box sx={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/jpeg,image/png,image/gif,image/webp"
-              style={{ display: "none" }}
-              onChange={handleFileChange}
-            />
-            <Box sx={{ display: "flex", alignItems: "center", gap: "12px" }}>
-              <ButtonBase
-                onClick={() => fileInputRef.current?.click()}
-                disabled={uploading}
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "6px",
-                  borderRadius: "8px",
-                  border: "1px solid #2563EB",
-                  px: "16px",
-                  py: "8px",
-                  "&:hover": { bgcolor: "#EFF6FF" },
-                }}
-              >
-                {uploading ? (
-                  <CircularProgress size={16} sx={{ color: "#2563EB" }} />
-                ) : (
-                  <PhotoCameraIcon sx={{ fontSize: 18, color: "#2563EB" }} />
-                )}
-                <Typography sx={{ fontSize: 13, fontWeight: 600, color: "#2563EB", fontFamily: "Inter, sans-serif" }}>
-                  {uploading ? t("admin.products.imageUploading") : t("admin.products.imageUpload")}
-                </Typography>
-              </ButtonBase>
-              {imageUrl && (
-                <Typography
-                  onClick={() => setImageUrl("")}
-                  sx={{ fontSize: 13, color: "#DC2626", cursor: "pointer", "&:hover": { textDecoration: "underline" } }}
-                >
-                  {t("admin.products.imageRemove")}
-                </Typography>
+        {/* Uploaded image thumbnails (first = main) */}
+        <Box sx={{ display: "flex", gap: "12px", flexWrap: "wrap", alignItems: "flex-start" }}>
+          {images.map((url, idx) => (
+            <Box
+              key={`${url}-${idx}`}
+              sx={{
+                position: "relative",
+                width: 100,
+                height: 100,
+                borderRadius: "8px",
+                overflow: "hidden",
+                border: idx === 0 ? "2px solid #2563EB" : "1px solid #E2E8F0",
+              }}
+            >
+              <Box component="img" src={url} alt={`img-${idx}`} sx={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              {idx === 0 && (
+                <Box sx={{ position: "absolute", top: 0, left: 0, bgcolor: "#2563EB", px: "6px", py: "1px", borderBottomRightRadius: "6px" }}>
+                  <Typography sx={{ fontSize: 10, fontWeight: 600, color: "#fff" }}>{t("admin.products.imageMain")}</Typography>
+                </Box>
               )}
+              <IconButton
+                size="small"
+                onClick={() => removeImage(idx)}
+                sx={{ position: "absolute", top: 2, right: 2, width: 22, height: 22, bgcolor: "rgba(0,0,0,0.5)", "&:hover": { bgcolor: "rgba(0,0,0,0.7)" } }}
+              >
+                <CloseIcon sx={{ fontSize: 14, color: "#fff" }} />
+              </IconButton>
             </Box>
-            <Typography sx={{ fontSize: 12, color: "#94A3B8", fontFamily: "Inter, sans-serif" }}>
-              {t("admin.products.imageHint")}
-            </Typography>
-          </Box>
+          ))}
+
+          {images.length < 10 && (
+            <ButtonBase
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploading}
+              sx={{
+                width: 100,
+                height: 100,
+                borderRadius: "8px",
+                border: "1px dashed #93C5FD",
+                bgcolor: "#F8FAFF",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "4px",
+                "&:hover": { bgcolor: "#EFF6FF" },
+              }}
+            >
+              {uploading ? (
+                <CircularProgress size={20} sx={{ color: "#2563EB" }} />
+              ) : (
+                <PhotoCameraIcon sx={{ fontSize: 24, color: "#2563EB" }} />
+              )}
+              <Typography sx={{ fontSize: 11, color: "#2563EB", fontFamily: "Inter, sans-serif" }}>
+                {t("admin.products.imageUpload")}
+              </Typography>
+            </ButtonBase>
+          )}
         </Box>
+        <Typography sx={{ fontSize: 12, color: "#94A3B8", fontFamily: "Inter, sans-serif" }}>
+          {t("admin.products.imageHint")}
+        </Typography>
       </Box>
 
       {/* Description Card */}

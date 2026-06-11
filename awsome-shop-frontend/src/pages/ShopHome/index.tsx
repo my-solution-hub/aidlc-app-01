@@ -12,6 +12,7 @@ import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import ShoppingBagIcon from "@mui/icons-material/ShoppingBag";
 import Inventory2Icon from "@mui/icons-material/Inventory2";
 import TollIcon from "@mui/icons-material/Toll";
+import Rating from "@mui/material/Rating";
 import { listProducts } from "../../services/api/product";
 import { listCategories } from "../../services/api/category";
 import { getBalance } from "../../services/api/point";
@@ -338,6 +339,14 @@ export default function ShopHome() {
                     <Box
                       sx={{ display: "flex", alignItems: "center", gap: "6px" }}
                     >
+                      {product.rating != null && product.rating > 0 && (
+                        <>
+                          <Rating value={product.rating} precision={0.1} size="small" readOnly sx={{ fontSize: 14 }} />
+                          <Typography sx={{ fontSize: 11, color: "#94A3B8" }}>
+                            {product.rating.toFixed(1)}
+                          </Typography>
+                        </>
+                      )}
                       <Typography sx={{ fontSize: 11, color: "#CBD5E1" }}>
                         {t("employee.sold")} {product.soldCount ?? 0}{" "}
                         {t("employee.soldUnit")}

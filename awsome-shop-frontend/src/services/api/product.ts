@@ -4,6 +4,10 @@ import type {
   ProductDTO,
   ListProductRequest,
   CreateProductRequest,
+  ProductStatsDTO,
+  StockAdjustRequest,
+  ReviewDTO,
+  CreateReviewRequest,
 } from "../../types/api";
 
 const PRODUCT_BASE = "/product/api/products";
@@ -41,4 +45,37 @@ export function updateProductStatus(
   return request.patch<ProductDTO>(`${ADMIN_PRODUCT_BASE}/${id}/status`, {
     status,
   });
+}
+
+/** D1: product statistics for the dashboard. */
+export function getProductStats(): Promise<ProductStatsDTO> {
+  return request.get<ProductStatsDTO>(`${ADMIN_PRODUCT_BASE}/stats`);
+}
+
+/** B6: stock adjustment with IN/OUT log (returns updated product). */
+export function adjustStock(
+  id: number,
+  data: StockAdjustRequest,
+): Promise<ProductDTO> {
+  return request.post<ProductDTO>(`${ADMIN_PRODUCT_BASE}/${id}/stock`, undefined, {
+    params: data,
+  });
+}
+
+/** D3: related products in the same category (max 6, excludes current). */
+export function getRelatedProducts(id: number): Promise<ProductDTO[]> {
+  return request.get<ProductDTO[]>(`${PRODUCT_BASE}/${id}/related`);
+}
+
+/** C5: list reviews for a product. */
+export function listReviews(id: number): Promise<ReviewDTO[]> {
+  return request.get<ReviewDTO[]>(`${PRODUCT_BASE}/${id}/reviews`);
+}
+
+/** C5: submit a review for a product (requires login). */
+export function createReview(
+  id: number,
+  data: CreateReviewRequest,
+): Promise<ReviewDTO> {
+  return request.post<ReviewDTO>(`${PRODUCT_BASE}/${id}/reviews`, data);
 }

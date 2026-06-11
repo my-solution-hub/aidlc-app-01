@@ -25,3 +25,15 @@ export function listMyOrders(
 export function getMyOrder(id: number): Promise<ExchangeRecordDTO> {
   return request.get<ExchangeRecordDTO>(`${ORDER_BASE}/${id}`);
 }
+
+/** US-016 / C3: employee confirms receipt of a delivered order. */
+export function confirmReceipt(
+  id: number,
+  userId: number,
+): Promise<ExchangeRecordDTO> {
+  return request.post<ExchangeRecordDTO>(
+    `${ORDER_BASE}/${id}/confirm-receipt`,
+    undefined,
+    { params: { userId } },
+  );
+}

@@ -11,6 +11,7 @@ import RedemptionSuccess from "../pages/RedemptionSuccess";
 import OrderDetail from "../pages/OrderDetail";
 import MyOrders from "../pages/MyOrders";
 import MyPoints from "../pages/MyPoints";
+import Addresses from "../pages/Addresses";
 import Dashboard from "../pages/Dashboard";
 import ProductList from "../pages/Products";
 import CreateProduct from "../pages/Products/CreateProduct";
@@ -18,6 +19,7 @@ import ProductDetailAdmin from "../pages/Products/ProductDetailAdmin";
 import CategoryList from "../pages/Categories";
 import PointRuleList from "../pages/PointRules";
 import UserPoints from "../pages/UserPoints";
+import UserPointsHistory from "../pages/UserPoints/History";
 import ExchangeRecordList from "../pages/ExchangeRecords";
 import ExchangeDetail from "../pages/ExchangeRecords/ExchangeDetail";
 import Users from "../pages/Users";
@@ -48,6 +50,7 @@ const router = createBrowserRouter([
       { path: "orders/:id", element: <OrderDetail /> },
       { path: "orders", element: <MyOrders /> },
       { path: "points", element: <MyPoints /> },
+      { path: "addresses", element: <Addresses /> },
     ],
   },
   // Admin routes
@@ -67,6 +70,7 @@ const router = createBrowserRouter([
       { path: "categories", element: <CategoryList /> },
       { path: "points", element: <PointRuleList /> },
       { path: "user-points", element: <UserPoints /> },
+      { path: "user-points/:userId", element: <UserPointsHistory /> },
       { path: "orders", element: <ExchangeRecordList /> },
       { path: "orders/:id", element: <ExchangeDetail /> },
       { path: "users", element: <Users /> },

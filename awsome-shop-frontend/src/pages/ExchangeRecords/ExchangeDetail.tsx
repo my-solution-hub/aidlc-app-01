@@ -72,11 +72,11 @@ export default function ExchangeDetail() {
     fetchData();
   }, [fetchData]);
 
-  const doUpdate = async (status: string, trackingNumber?: string) => {
+  const doUpdate = async (status: string, trackingNumber?: string, carrier?: string) => {
     if (!record) return;
     setActionLoading(true);
     try {
-      const updated = await updateExchangeRecordStatus({ id: record.id, status, trackingNumber });
+      const updated = await updateExchangeRecordStatus({ id: record.id, status, trackingNumber, carrier });
       setRecord(updated);
       setDialogOpen(false);
       snackbar.showSuccess(t("admin.exchangeRecords.statusUpdateSuccess"));
@@ -183,8 +183,14 @@ export default function ExchangeDetail() {
           {/* Points detail */}
           <Card title={t("admin.exchangeRecords.pointsDetail")}>
             <Row label={t("admin.exchangeRecords.productPoints")} value={(record.pointsCost ?? 0).toLocaleString()} />
+            {record.freightPoints != null && (
+              <Row label={t("admin.exchangeRecords.freightPoints")} value={record.freightPoints.toLocaleString()} />
+            )}
             <Box sx={{ height: "1px", bgcolor: "#F1F5F9" }} />
             <Row label={t("admin.exchangeRecords.totalConsumed")} value={`${(record.pointsCost ?? 0).toLocaleString()} ${t("admin.exchangeRecords.fieldPoints")}`} valueColor="#2563EB" bold />
+            {record.balanceAfter != null && (
+              <Row label={t("admin.exchangeRecords.balanceAfter")} value={`${record.balanceAfter.toLocaleString()} ${t("admin.exchangeRecords.fieldPoints")}`} valueColor="#16A34A" />
+            )}
           </Card>
 
           {/* Employee */}
@@ -193,6 +199,32 @@ export default function ExchangeDetail() {
               <Row label={t("admin.exchangeRecords.employeeName")} value={record.employeeName || "—"} />
             </Box>
           </Card>
+
+          {/* Status timeline (B3) */}
+          {record.timeline && record.timeline.length > 0 && (
+            <Card title={t("admin.exchangeRecords.statusLog")}>
+              <Box sx={{ display: "flex", flexDirection: "column", gap: "18px" }}>
+                {record.timeline.map((log, idx) => {
+                  const last = idx === record.timeline!.length - 1;
+                  return (
+                    <Box key={idx} sx={{ display: "flex", gap: "12px" }}>
+                      <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+                        <Box sx={{ width: 12, height: 12, borderRadius: "50%", bgcolor: last ? "#2563EB" : "#16A34A" }} />
+                        {!last && <Box sx={{ width: "2px", flex: 1, minHeight: 20, bgcolor: "#16A34A" }} />}
+                      </Box>
+                      <Box>
+                        <Typography sx={{ fontSize: 13, fontWeight: 600, color: "#1E293B" }}>
+                          {STATUS_I18N[log.status] ? t(STATUS_I18N[log.status]) : log.status}
+                        </Typography>
+                        {log.remark && <Typography sx={{ fontSize: 12, color: "#64748B", mt: "2px" }}>{log.remark}</Typography>}
+                        <Typography sx={{ fontSize: 12, color: "#94A3B8", mt: "2px" }}>{fmt(log.time)}</Typography>
+                      </Box>
+                    </Box>
+                  );
+                })}
+              </Box>
+            </Card>
+          )}
         </Box>
 
         <Box sx={{ display: "flex", flexDirection: "column", gap: "20px" }}>
@@ -200,8 +232,18 @@ export default function ExchangeDetail() {
           <Card title={t("admin.exchangeRecords.orderInfo")}>
             <Row label={t("admin.exchangeRecords.fieldOrderNo")} value={record.orderNo} />
             <Row label={t("admin.exchangeRecords.orderTime")} value={fmt(record.exchangeTime || record.createdAt)} />
+            {record.carrier && <Row label={t("admin.exchangeRecords.fieldCarrier")} value={record.carrier} />}
             {record.trackingNumber && <Row label={t("admin.exchangeRecords.fieldTracking")} value={record.trackingNumber} />}
           </Card>
+
+          {/* Shipping info (C2) */}
+          {(record.receiver || record.receiverPhone || record.receiverAddress) && (
+            <Card title={t("admin.exchangeRecords.shippingInfo")}>
+              {record.receiver && <Row label={t("admin.exchangeRecords.shipReceiver")} value={record.receiver} />}
+              {record.receiverPhone && <Row label={t("admin.exchangeRecords.shipPhone")} value={record.receiverPhone} />}
+              {record.receiverAddress && <Row label={t("admin.exchangeRecords.shipAddress")} value={record.receiverAddress} />}
+            </Card>
+          )}
         </Box>
       </Box>
 
@@ -215,11 +257,12 @@ export default function ExchangeDetail() {
 }
 
 // ---- dlg-09 修改发货状态 ----
-function ShippingDialog({ record, loading, onConfirm, onClose }: { record: ExchangeRecordDTO; loading?: boolean; onConfirm: (status: string, tracking?: string) => void; onClose: () => void }) {
+function ShippingDialog({ record, loading, onConfirm, onClose }: { record: ExchangeRecordDTO; loading?: boolean; onConfirm: (status: string, tracking?: string, carrier?: string) => void; onClose: () => void }) {
   const { t } = useTranslation();
   const options = nextStatuses(record.status);
   const [status, setStatus] = useState<string>(options[0] ?? record.status);
   const [tracking, setTracking] = useState(record.trackingNumber ?? "");
+  const [carrier, setCarrier] = useState(record.carrier ?? "");
 
   const fieldSx = { "& .MuiOutlinedInput-root": { borderRadius: "8px", fontSize: 14, "& fieldset": { borderColor: "#E2E8F0" } } };
   const needTracking = status === "DELIVERING";
@@ -244,6 +287,12 @@ function ShippingDialog({ record, loading, onConfirm, onClose }: { record: Excha
         </Box>
         {needTracking && (
           <Box sx={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+            <Typography sx={{ fontSize: 13, fontWeight: 500, color: "#1E293B" }}>{t("admin.exchangeRecords.fieldCarrier")}</Typography>
+            <TextField fullWidth size="small" placeholder={t("admin.exchangeRecords.carrierPlaceholder")} value={carrier} onChange={(e) => setCarrier(e.target.value)} sx={fieldSx} />
+          </Box>
+        )}
+        {needTracking && (
+          <Box sx={{ display: "flex", flexDirection: "column", gap: "6px" }}>
             <Typography sx={{ fontSize: 13, fontWeight: 500, color: "#1E293B" }}>{t("admin.exchangeRecords.fieldTracking")}</Typography>
             <TextField fullWidth size="small" placeholder={t("admin.exchangeRecords.trackingPlaceholder")} value={tracking} onChange={(e) => setTracking(e.target.value)} sx={fieldSx} />
           </Box>
@@ -253,7 +302,7 @@ function ShippingDialog({ record, loading, onConfirm, onClose }: { record: Excha
         <Button onClick={onClose} disabled={loading} sx={{ textTransform: "none", color: "#64748B", border: "1px solid #E2E8F0", borderRadius: "8px", px: "20px" }}>
           {t("common.cancel")}
         </Button>
-        <Button onClick={() => onConfirm(status, tracking.trim() || undefined)} disabled={loading} variant="contained" sx={{ textTransform: "none", borderRadius: "8px", px: "20px" }}>
+        <Button onClick={() => onConfirm(status, tracking.trim() || undefined, carrier.trim() || undefined)} disabled={loading} variant="contained" sx={{ textTransform: "none", borderRadius: "8px", px: "20px" }}>
           {t("admin.exchangeRecords.confirmModify")}
         </Button>
       </DialogActions>

@@ -54,14 +54,21 @@ instance.interceptors.response.use(
       return response.data;
     }
 
-    // Business success — unwrap and return data directly
-    if (result.code === SUCCESS_CODE) {
+    // Business success — unwrap and return data directly.
+    // Services use slightly different envelopes:
+    //   auth/product/point: { code: "SUCCESS", data }
+    //   order:              { code: 0, success: true, data }
+    if (
+      result.code === SUCCESS_CODE ||
+      result.code === 0 ||
+      result.success === true
+    ) {
       return result.data;
     }
 
     // Business error
     return Promise.reject(
-      new BusinessError(result.code, result.message || "请求失败"),
+      new BusinessError(String(result.code), result.message || "请求失败"),
     );
   },
   (error) => {

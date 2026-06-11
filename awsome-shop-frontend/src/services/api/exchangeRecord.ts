@@ -23,6 +23,11 @@ export function getExchangeRecord(id: number): Promise<ExchangeRecordDTO> {
   return request.get<ExchangeRecordDTO>(`${BASE}/${id}`);
 }
 
+/** D2: server-side CSV export of exchange records (returns a Blob). */
+export function exportExchangeRecords(): Promise<Blob> {
+  return request.get<Blob>(`${BASE}/export`, { responseType: "blob" });
+}
+
 export function updateExchangeRecordStatus(
   data: UpdateExchangeRecordStatusRequest,
 ): Promise<ExchangeRecordDTO> {

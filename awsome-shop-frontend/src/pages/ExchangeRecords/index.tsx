@@ -25,6 +25,7 @@ import AdminPageHeader from "../../components/AdminPageHeader";
 import {
   listExchangeRecords,
   getExchangeRecordStats,
+  exportExchangeRecords,
 } from "../../services/api/exchangeRecord";
 import type {
   ExchangeRecordDTO,
@@ -135,42 +136,19 @@ export default function ExchangeRecordList() {
   const end = start + records.length - 1;
 
   // Open detail dialog by fetching the full record
-  // Client-side CSV export of the current page's records
-  const handleExport = () => {
-    if (records.length === 0) {
+  // Server-side CSV export of all exchange records (full dataset).
+  const handleExport = async () => {
+    try {
+      const blob = await exportExchangeRecords();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `exchange-records-${new Date().toISOString().slice(0, 10)}.csv`;
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch {
       snackbar.showError(t("admin.exchangeRecords.exportNoData"));
-      return;
     }
-    const headers = [
-      t("admin.exchangeRecords.thOrderNo"),
-      t("admin.exchangeRecords.thProduct"),
-      t("admin.exchangeRecords.thEmployee"),
-      t("admin.exchangeRecords.thPoints"),
-      t("admin.exchangeRecords.thTime"),
-      t("admin.exchangeRecords.thStatus"),
-    ];
-    const escapeCsv = (val: string) =>
-      `"${String(val ?? "").replace(/"/g, '""')}"`;
-    const rows = records.map((r) =>
-      [
-        r.orderNo,
-        r.productName,
-        r.employeeName,
-        r.pointsCost,
-        r.exchangeTime,
-        r.status,
-      ]
-        .map((v) => escapeCsv(String(v ?? "")))
-        .join(","),
-    );
-    const csv = [headers.map(escapeCsv).join(","), ...rows].join("\n");
-    const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `exchange-records-${new Date().toISOString().slice(0, 10)}.csv`;
-    link.click();
-    URL.revokeObjectURL(url);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {

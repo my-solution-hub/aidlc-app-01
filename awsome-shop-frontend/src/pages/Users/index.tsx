@@ -26,8 +26,10 @@ import {
   createUser,
   updateUser,
   updateUserStatus,
+  getUserStats,
+  exportUsers,
 } from "../../services/api/user";
-import type { UserDTO, PageResult, CreateUserRequest } from "../../types/api";
+import type { UserDTO, PageResult, CreateUserRequest, UserStatsDTO } from "../../types/api";
 import AdminPageHeader from "../../components/AdminPageHeader";
 import { AppSnackbar, useSnackbar } from "../../components/AppSnackbar";
 import { BusinessError } from "../../services/request";
@@ -68,6 +70,7 @@ export default function Users() {
   const [roleFilter, setRoleFilter] = useState("");
   const [dialog, setDialog] = useState<{ mode: "create" } | { mode: "edit"; user: UserDTO } | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
+  const [stats, setStats] = useState<UserStatsDTO | null>(null);
 
   const fetchData = useCallback(() => {
     setLoading(true);
@@ -85,6 +88,12 @@ export default function Users() {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  useEffect(() => {
+    getUserStats()
+      .then(setStats)
+      .catch(() => {});
+  }, []);
 
   const users = data?.records ?? [];
   const total = data?.total ?? 0;
@@ -110,6 +119,7 @@ export default function Users() {
           nickname: form.nickname,
           role: form.role,
           employeeId: form.employeeId,
+          department: form.department,
         });
         snackbar.showSuccess(t("admin.users.updateSuccess"));
       } else {
@@ -125,18 +135,18 @@ export default function Users() {
     }
   };
 
-  const handleExport = () => {
-    if (users.length === 0) return;
-    const headers = ["ID", t("admin.users.thUsername"), t("admin.users.thNickname"), "工号", t("admin.users.thRole"), t("admin.users.thStatus")];
-    const esc = (v: unknown) => `"${String(v ?? "").replace(/"/g, '""')}"`;
-    const rows = users.map((u) => [u.id, u.username, u.nickname, u.employeeId ?? "", u.role, u.status].map(esc).join(","));
-    const csv = ["\uFEFF" + headers.map(esc).join(","), ...rows].join("\n");
-    const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8;" }));
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `users-${new Date().toISOString().slice(0, 10)}.csv`;
-    link.click();
-    URL.revokeObjectURL(url);
+  const handleExport = async () => {
+    try {
+      const blob = await exportUsers();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `users-${new Date().toISOString().slice(0, 10)}.csv`;
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      snackbar.showError(err instanceof BusinessError ? err.message : t("common.operationFailed"));
+    }
   };
 
   return (
@@ -159,9 +169,9 @@ export default function Users() {
 
       {/* Stat cards */}
       <Box sx={{ display: "flex", gap: "16px" }}>
-        <StatCard label={t("admin.users.statTotal")} value={String(total)} />
-        <StatCard label={t("admin.users.statActive")} value="—" hint={t("admin.users.statNeedBackend")} valueColor="#2563EB" />
-        <StatCard label={t("admin.users.statNew")} value="—" hint={t("admin.users.statNeedBackend")} valueColor="#16A34A" />
+        <StatCard label={t("admin.users.statTotal")} value={(stats?.totalUsers ?? total).toLocaleString()} />
+        <StatCard label={t("admin.users.statActive")} value={stats ? stats.activeUsers.toLocaleString() : "—"} valueColor="#2563EB" />
+        <StatCard label={t("admin.users.statNew")} value={stats ? stats.newThisMonth.toLocaleString() : "—"} valueColor="#16A34A" />
       </Box>
 
       {/* Toolbar */}
@@ -224,7 +234,7 @@ export default function Users() {
                     </Typography>
                   </Box>
                 </Box>
-                <Box sx={{ width: 110 }}><Typography sx={{ fontSize: 13, color: "#94A3B8" }}>—</Typography></Box>
+                <Box sx={{ width: 110 }}><Typography sx={{ fontSize: 13, color: user.department ? "#1E293B" : "#94A3B8" }}>{user.department || "—"}</Typography></Box>
                 <Box sx={{ width: 90 }}><Typography sx={{ fontSize: 13, color: "#94A3B8" }}>—</Typography></Box>
                 <Box sx={{ width: 80 }}><Typography sx={{ fontSize: 13, color: "#94A3B8" }}>—</Typography></Box>
                 <Box sx={{ width: 80 }}><RoleChip role={user.role} t={t} /></Box>
@@ -306,6 +316,7 @@ function UserDialog({
   const [password, setPassword] = useState("");
   const [nickname, setNickname] = useState(user?.nickname ?? "");
   const [employeeId, setEmployeeId] = useState(user?.employeeId ?? "");
+  const [department, setDepartment] = useState(user?.department ?? "");
   const [role, setRole] = useState((user?.role ?? "EMPLOYEE").toUpperCase());
 
   const fieldSx = { "& .MuiOutlinedInput-root": { borderRadius: "8px", fontSize: 14, "& fieldset": { borderColor: "#E2E8F0" } } };
@@ -342,6 +353,10 @@ function UserDialog({
           <TextField fullWidth size="small" placeholder={t("admin.users.fieldEmployeeIdPlaceholder")} value={employeeId} onChange={(e) => setEmployeeId(e.target.value)} sx={fieldSx} />,
         )}
         {field(
+          t("admin.users.fieldDepartment"),
+          <TextField fullWidth size="small" placeholder={t("admin.users.fieldDepartmentPlaceholder")} value={department} onChange={(e) => setDepartment(e.target.value)} sx={fieldSx} />,
+        )}
+        {field(
           t("admin.users.fieldRole"),
           <Select value={role} onChange={(e) => setRole(e.target.value)} size="small" sx={{ height: 40, borderRadius: "8px", fontSize: 14, "& .MuiOutlinedInput-notchedOutline": { borderColor: "#E2E8F0" } }}>
             <MenuItem value="EMPLOYEE">{t("admin.users.roleEmployee")}</MenuItem>
@@ -358,7 +373,7 @@ function UserDialog({
           disabled={loading || !canSubmit}
           onClick={() =>
             onSubmit(
-              { username: username.trim(), password, nickname: nickname.trim(), role, employeeId: employeeId.trim() || undefined },
+              { username: username.trim(), password, nickname: nickname.trim(), role, employeeId: employeeId.trim() || undefined, department: department.trim() || undefined },
               editing ? user?.id : undefined,
             )
           }

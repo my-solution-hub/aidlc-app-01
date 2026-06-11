@@ -7,9 +7,12 @@ import Button from "@mui/material/Button";
 import CircularProgress from "@mui/material/CircularProgress";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import Inventory2Icon from "@mui/icons-material/Inventory2";
-import { getMyOrder } from "../../services/api/order";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import { getMyOrder, confirmReceipt } from "../../services/api/order";
 import type { ExchangeRecordDTO } from "../../types/api";
+import { useAuthStore } from "../../store/useAuthStore";
 import { AppSnackbar, useSnackbar } from "../../components/AppSnackbar";
+import { BusinessError } from "../../services/request";
 import { statusStyle, STATUS_I18N } from "../../utils/orderStatus";
 
 /** Timeline step order (cancel handled separately). */
@@ -57,9 +60,11 @@ export default function OrderDetail() {
   const snackbar = useSnackbar();
   const { showError } = snackbar;
   const { id } = useParams<{ id: string }>();
+  const user = useAuthStore((s) => s.user);
 
   const [order, setOrder] = useState<ExchangeRecordDTO | null>(null);
   const [loading, setLoading] = useState(true);
+  const [confirming, setConfirming] = useState(false);
 
   const fetchData = useCallback(async () => {
     if (!id) return;
@@ -76,6 +81,22 @@ export default function OrderDetail() {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  const handleConfirmReceipt = async () => {
+    if (!order || !user) return;
+    setConfirming(true);
+    try {
+      const updated = await confirmReceipt(order.id, user.userId);
+      setOrder(updated);
+      snackbar.showSuccess(t("employee.orderDetail.confirmReceiptSuccess"));
+    } catch (err) {
+      snackbar.showError(
+        err instanceof BusinessError ? err.message : t("employee.orderDetail.confirmReceiptFailed"),
+      );
+    } finally {
+      setConfirming(false);
+    }
+  };
 
   const fmt = (s?: string) => (s ? s.slice(0, 19).replace("T", " ") : "—");
 
@@ -110,23 +131,71 @@ export default function OrderDetail() {
                 {t("employee.orderDetail.orderNo")}: {order.orderNo}
               </Typography>
             </Box>
-            <Box
-              sx={{
-                borderRadius: "12px",
-                bgcolor: statusStyle(order.status).bgColor,
-                px: "12px",
-                py: "5px",
-              }}
-            >
-              <Typography sx={{ fontSize: 12, fontWeight: 600, color: statusStyle(order.status).textColor }}>
-                {STATUS_I18N[order.status] ? t(STATUS_I18N[order.status]) : order.status}
-              </Typography>
+            <Box sx={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "10px" }}>
+              <Box
+                sx={{
+                  borderRadius: "12px",
+                  bgcolor: statusStyle(order.status).bgColor,
+                  px: "12px",
+                  py: "5px",
+                }}
+              >
+                <Typography sx={{ fontSize: 12, fontWeight: 600, color: statusStyle(order.status).textColor }}>
+                  {STATUS_I18N[order.status] ? t(STATUS_I18N[order.status]) : order.status}
+                </Typography>
+              </Box>
+              {order.status === "DELIVERING" && (
+                <Button
+                  variant="contained"
+                  size="small"
+                  startIcon={<CheckCircleIcon sx={{ fontSize: 16 }} />}
+                  onClick={handleConfirmReceipt}
+                  disabled={confirming}
+                  sx={{ textTransform: "none", borderRadius: "8px", fontWeight: 600 }}
+                >
+                  {confirming ? (
+                    <CircularProgress size={16} sx={{ color: "#fff" }} />
+                  ) : (
+                    t("employee.orderDetail.confirmReceipt")
+                  )}
+                </Button>
+              )}
             </Box>
           </Box>
 
           {/* Timeline */}
           <Section title={t("employee.orderDetail.statusTitle")}>
-            {order.status === "CANCELLED" ? (
+            {order.timeline && order.timeline.length > 0 ? (
+              <Box sx={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+                {order.timeline.map((log, idx) => {
+                  const last = idx === order.timeline!.length - 1;
+                  return (
+                    <Box key={idx} sx={{ display: "flex", gap: "12px" }}>
+                      <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+                        <Box
+                          sx={{
+                            width: 14,
+                            height: 14,
+                            borderRadius: "50%",
+                            bgcolor: last ? "#2563EB" : "#16A34A",
+                          }}
+                        />
+                        {!last && <Box sx={{ width: "2px", flex: 1, minHeight: 24, bgcolor: "#16A34A" }} />}
+                      </Box>
+                      <Box sx={{ pb: "4px" }}>
+                        <Typography sx={{ fontSize: 14, fontWeight: 600, color: "#1E293B" }}>
+                          {STATUS_I18N[log.status] ? t(STATUS_I18N[log.status]) : log.status}
+                        </Typography>
+                        {log.remark && (
+                          <Typography sx={{ fontSize: 12, color: "#64748B", mt: "2px" }}>{log.remark}</Typography>
+                        )}
+                        <Typography sx={{ fontSize: 12, color: "#94A3B8", mt: "2px" }}>{fmt(log.time)}</Typography>
+                      </Box>
+                    </Box>
+                  );
+                })}
+              </Box>
+            ) : order.status === "CANCELLED" ? (
               <Typography sx={{ fontSize: 14, color: "#991B1B" }}>
                 {t("employee.orderDetail.cancelled")}
               </Typography>
@@ -207,15 +276,48 @@ export default function OrderDetail() {
             </Box>
           </Section>
 
+          {/* Points detail (B2) */}
+          <Section title={t("employee.orderDetail.pointsDetail")}>
+            <Row
+              label={t("employee.orderDetail.productPoints")}
+              value={`${(order.pointsCost ?? 0).toLocaleString()} ${t("employee.points")}`}
+            />
+            {order.freightPoints != null && (
+              <Row
+                label={t("employee.orderDetail.freightPoints")}
+                value={`${order.freightPoints.toLocaleString()} ${t("employee.points")}`}
+              />
+            )}
+            {order.balanceAfter != null && (
+              <Row
+                label={t("employee.orderDetail.balanceAfter")}
+                value={`${order.balanceAfter.toLocaleString()} ${t("employee.points")}`}
+                valueColor="#16A34A"
+              />
+            )}
+          </Section>
+
+          {/* Shipping info (C2/B2) */}
+          {(order.receiver || order.receiverPhone || order.receiverAddress) && (
+            <Section title={t("employee.orderDetail.shippingInfo")}>
+              {order.receiver && <Row label={t("employee.orderDetail.shipReceiver")} value={order.receiver} />}
+              {order.receiverPhone && <Row label={t("employee.orderDetail.shipPhone")} value={order.receiverPhone} />}
+              {order.receiverAddress && <Row label={t("employee.orderDetail.shipAddress")} value={order.receiverAddress} />}
+            </Section>
+          )}
+
           {/* Order info */}
           <Section title={t("employee.orderDetail.orderInfo")}>
             <Row label={t("employee.orderDetail.orderNo")} value={order.orderNo} />
             <Row label={t("employee.orderDetail.orderTime")} value={fmt(order.exchangeTime || order.createdAt)} />
             <Row label={t("employee.orderDetail.payMethod")} value={t("employee.orderDetail.payByPoints")} />
+            {order.carrier && (
+              <Row label={t("employee.orderDetail.carrier")} value={order.carrier} />
+            )}
             {order.trackingNumber && (
               <Row label={t("employee.orderDetail.tracking")} value={order.trackingNumber} />
             )}
-            <Row label={t("employee.orderDetail.recipient")} value={order.employeeName || "—"} />
+            <Row label={t("employee.orderDetail.recipient")} value={order.receiver || order.employeeName || "—"} />
           </Section>
         </Box>
       )}

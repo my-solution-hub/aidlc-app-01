@@ -27,9 +27,10 @@ import {
   updateProduct,
   updateProductStatus,
   deleteProduct,
+  adjustStock,
 } from "../../services/api/product";
 import { uploadFile } from "../../services/api/file";
-import type { ProductDTO } from "../../types/api";
+import type { ProductDTO, StockAdjustRequest } from "../../types/api";
 import { AppSnackbar, useSnackbar } from "../../components/AppSnackbar";
 import { BusinessError } from "../../services/request";
 
@@ -130,11 +131,11 @@ export default function ProductDetailAdmin() {
     }
   };
 
-  const handleAdjustStock = async (newStock: number) => {
+  const handleAdjustStock = async (data: StockAdjustRequest) => {
     if (!product) return;
     setActionLoading(true);
     try {
-      await updateProduct(buildPayload(product, { stock: newStock }));
+      await adjustStock(product.id, data);
       snackbar.showSuccess(t("admin.products.stockSuccess"));
       setDialog(null);
       fetchData();
@@ -284,12 +285,25 @@ export default function ProductDetailAdmin() {
               overflow: "hidden",
             }}
           >
-            {product.imageUrl ? (
-              <Box component="img" src={product.imageUrl} alt={product.name} sx={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            {(product.images?.[0] ?? product.imageUrl) ? (
+              <Box component="img" src={product.images?.[0] ?? product.imageUrl} alt={product.name} sx={{ width: "100%", height: "100%", objectFit: "cover" }} />
             ) : (
               <Inventory2Icon sx={{ fontSize: 72, color: "#93C5FD" }} />
             )}
           </Box>
+          {product.images && product.images.length > 1 && (
+            <Box sx={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+              {product.images.map((img, i) => (
+                <Box
+                  key={i}
+                  component="img"
+                  src={img}
+                  alt={`${product.name}-${i}`}
+                  sx={{ width: 48, height: 48, borderRadius: "6px", objectFit: "cover", border: "1px solid #E2E8F0" }}
+                />
+              ))}
+            </Box>
+          )}
         </Box>
 
         {/* Basic info */}
@@ -393,7 +407,7 @@ function OffShelfDialog({ product, loading, onConfirm, onClose }: { product: Pro
 }
 
 // ---- dlg-02 调整库存 ----
-function StockDialog({ product, loading, onConfirm, onClose }: { product: ProductDTO; loading?: boolean; onConfirm: (newStock: number) => void; onClose: () => void }) {
+function StockDialog({ product, loading, onConfirm, onClose }: { product: ProductDTO; loading?: boolean; onConfirm: (data: StockAdjustRequest) => void; onClose: () => void }) {
   const { t } = useTranslation();
   const [type, setType] = useState<"in" | "out">("in");
   const [qty, setQty] = useState("");
@@ -438,7 +452,7 @@ function StockDialog({ product, loading, onConfirm, onClose }: { product: Produc
         <Button onClick={onClose} disabled={loading} sx={{ textTransform: "none", color: "#64748B", border: "1px solid #E2E8F0", borderRadius: "8px", px: "20px" }}>
           {t("common.cancel")}
         </Button>
-        <Button onClick={() => onConfirm(after)} disabled={loading || invalid} variant="contained" sx={{ textTransform: "none", borderRadius: "8px", px: "20px" }}>
+        <Button onClick={() => onConfirm({ changeType: type === "in" ? "IN" : "OUT", quantity: amount, reason: reason.trim() || undefined })} disabled={loading || invalid} variant="contained" sx={{ textTransform: "none", borderRadius: "8px", px: "20px" }}>
           {t("admin.products.detail.confirmAdjust")}
         </Button>
       </DialogActions>

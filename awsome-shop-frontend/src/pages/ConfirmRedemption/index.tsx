@@ -8,13 +8,17 @@ import CircularProgress from "@mui/material/CircularProgress";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import Inventory2Icon from "@mui/icons-material/Inventory2";
 import TollIcon from "@mui/icons-material/Toll";
+import AddIcon from "@mui/icons-material/Add";
+import LocationOnIcon from "@mui/icons-material/LocationOn";
 import { getProduct } from "../../services/api/product";
 import { getBalance } from "../../services/api/point";
 import { redeemProduct } from "../../services/api/order";
-import type { ProductDTO } from "../../types/api";
+import { listAddresses } from "../../services/api/address";
+import type { ProductDTO, AddressDTO } from "../../types/api";
 import { useAuthStore } from "../../store/useAuthStore";
 import { AppSnackbar, useSnackbar } from "../../components/AppSnackbar";
 import { BusinessError } from "../../services/request";
+import { AddressDialog } from "../Addresses";
 
 const CATEGORY_STYLES: Record<string, { bg: string; color: string }> = {
   数码电子: { bg: "#DBEAFE", color: "#2563EB" },
@@ -76,6 +80,24 @@ export default function ConfirmRedemption() {
   const [balance, setBalance] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [redeeming, setRedeeming] = useState(false);
+  const [addresses, setAddresses] = useState<AddressDTO[]>([]);
+  const [selectedAddressId, setSelectedAddressId] = useState<number | null>(null);
+  const [addressDialogOpen, setAddressDialogOpen] = useState(false);
+
+  const loadAddresses = useCallback(async () => {
+    if (!user) return;
+    try {
+      const list = await listAddresses(user.userId);
+      setAddresses(list);
+      setSelectedAddressId((prev) => {
+        if (prev && list.some((a) => a.id === prev)) return prev;
+        const def = list.find((a) => a.isDefault === 1) ?? list[0];
+        return def ? def.id : null;
+      });
+    } catch {
+      // address book is best-effort; redemption can still proceed if backend allows
+    }
+  }, [user]);
 
   const fetchData = useCallback(async () => {
     if (!productId || !user) return;
@@ -87,12 +109,13 @@ export default function ConfirmRedemption() {
       ]);
       setProduct(p);
       setBalance(b.balance);
+      await loadAddresses();
     } catch {
       showError(t("employee.confirmRedemption.loadFailed"));
     } finally {
       setLoading(false);
     }
-  }, [productId, user, showError, t]);
+  }, [productId, user, showError, t, loadAddresses]);
 
   useEffect(() => {
     fetchData();
@@ -104,6 +127,7 @@ export default function ConfirmRedemption() {
   const insufficient = remaining < 0;
   const unavailable =
     !product || product.status !== 1 || product.stock <= 0;
+  const needAddress = addresses.length > 0 && selectedAddressId == null;
 
   const handleConfirm = async () => {
     if (!product || !user || insufficient) return;
@@ -114,6 +138,7 @@ export default function ConfirmRedemption() {
         quantity: 1,
         userId: user.userId,
         employeeName: user.displayName,
+        addressId: selectedAddressId ?? undefined,
       });
       navigate("/orders/success", {
         replace: true,
@@ -271,6 +296,91 @@ export default function ConfirmRedemption() {
             </Typography>
           )}
 
+          <Box sx={{ height: "1px", bgcolor: "#F1F5F9" }} />
+
+          {/* Shipping address (C1/C2) */}
+          <Box sx={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <Typography sx={{ fontSize: 14, fontWeight: 600, color: "#1E293B" }}>
+                {t("employee.confirmRedemption.shippingTitle")}
+              </Typography>
+              <Box sx={{ display: "flex", gap: "4px" }}>
+                <Button
+                  size="small"
+                  onClick={() => navigate("/addresses")}
+                  sx={{ textTransform: "none", fontSize: 12, color: "#64748B", minWidth: "auto" }}
+                >
+                  {t("employee.address.title")}
+                </Button>
+                <Button
+                  size="small"
+                  startIcon={<AddIcon sx={{ fontSize: 16 }} />}
+                  onClick={() => setAddressDialogOpen(true)}
+                  sx={{ textTransform: "none", fontSize: 12, color: "#2563EB", minWidth: "auto" }}
+                >
+                  {t("employee.address.add")}
+                </Button>
+              </Box>
+            </Box>
+
+            {addresses.length === 0 ? (
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  bgcolor: "#F8FAFC",
+                  borderRadius: "8px",
+                  p: "14px 16px",
+                }}
+              >
+                <LocationOnIcon sx={{ fontSize: 18, color: "#CBD5E1" }} />
+                <Typography sx={{ fontSize: 13, color: "#64748B" }}>
+                  {t("employee.confirmRedemption.noAddress")}
+                </Typography>
+              </Box>
+            ) : (
+              <Box sx={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                {addresses.map((addr) => {
+                  const active = selectedAddressId === addr.id;
+                  return (
+                    <Box
+                      key={addr.id}
+                      onClick={() => setSelectedAddressId(addr.id)}
+                      sx={{
+                        cursor: "pointer",
+                        borderRadius: "8px",
+                        border: `1px solid ${active ? "#2563EB" : "#E2E8F0"}`,
+                        bgcolor: active ? "#EFF6FF" : "#fff",
+                        p: "12px 16px",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "4px",
+                      }}
+                    >
+                      <Box sx={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                        <Typography sx={{ fontSize: 14, fontWeight: 600, color: "#1E293B" }}>
+                          {addr.receiver}
+                        </Typography>
+                        <Typography sx={{ fontSize: 13, color: "#64748B" }}>{addr.phone}</Typography>
+                        {addr.isDefault === 1 && (
+                          <Box sx={{ borderRadius: "6px", bgcolor: "#DBEAFE", px: "6px", py: "1px" }}>
+                            <Typography sx={{ fontSize: 10, fontWeight: 600, color: "#2563EB" }}>
+                              {t("employee.address.default")}
+                            </Typography>
+                          </Box>
+                        )}
+                      </Box>
+                      <Typography sx={{ fontSize: 12, color: "#64748B" }}>
+                        {addr.region} {addr.detail}
+                      </Typography>
+                    </Box>
+                  );
+                })}
+              </Box>
+            )}
+          </Box>
+
           {/* Actions */}
           <Box sx={{ display: "flex", gap: "12px", justifyContent: "flex-end" }}>
             <Button
@@ -291,7 +401,7 @@ export default function ConfirmRedemption() {
             <Button
               variant="contained"
               onClick={handleConfirm}
-              disabled={redeeming || insufficient || unavailable}
+              disabled={redeeming || insufficient || unavailable || needAddress}
               sx={{
                 textTransform: "none",
                 borderRadius: "8px",
@@ -309,6 +419,19 @@ export default function ConfirmRedemption() {
             </Button>
           </Box>
         </Box>
+      )}
+
+      {addressDialogOpen && user && (
+        <AddressDialog
+          userId={user.userId}
+          onClose={() => setAddressDialogOpen(false)}
+          onDone={(saved) => {
+            setAddressDialogOpen(false);
+            if (saved) setSelectedAddressId(saved.id);
+            loadAddresses();
+          }}
+          onError={(msg) => snackbar.showError(msg)}
+        />
       )}
 
       <AppSnackbar state={snackbar.state} onClose={snackbar.close} />

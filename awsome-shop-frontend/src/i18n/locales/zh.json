@@ -87,7 +87,19 @@
       "description": "商品描述",
       "soldOut": "已售罄",
       "offShelf": "已下架",
-      "loadFailed": "加载商品失败"
+      "loadFailed": "加载商品失败",
+      "marketPrice": "参考价",
+      "specs": "规格参数",
+      "related": "同类推荐",
+      "reviews": "商品评价",
+      "yourRating": "我的评分",
+      "reviewPlaceholder": "分享你的使用体验…",
+      "submitReview": "提交评价",
+      "noReviews": "暂无评价",
+      "reviewSuccess": "评价提交成功",
+      "reviewFailed": "评价提交失败",
+      "wishlistAdd": "加入心愿单",
+      "wishlistRemove": "移出心愿单"
     },
     "confirmRedemption": {
       "title": "确认兑换",
@@ -99,7 +111,9 @@
       "insufficient": "积分不足，无法兑换",
       "confirm": "确认兑换",
       "cancel": "取消",
-      "loadFailed": "加载兑换信息失败"
+      "loadFailed": "加载兑换信息失败",
+      "shippingTitle": "收货信息",
+      "noAddress": "还没有收货地址，请新增"
     },
     "redemptionSuccess": {
       "title": "兑换成功！",
@@ -134,7 +148,19 @@
       "payMethod": "支付方式",
       "payByPoints": "积分支付",
       "tracking": "物流单号",
-      "recipient": "收货人"
+      "recipient": "收货人",
+      "confirmReceipt": "确认收货",
+      "confirmReceiptSuccess": "已确认收货",
+      "confirmReceiptFailed": "确认收货失败",
+      "pointsDetail": "积分明细",
+      "productPoints": "商品积分价",
+      "freightPoints": "运费积分",
+      "balanceAfter": "兑换后余额",
+      "shippingInfo": "收货信息",
+      "shipReceiver": "收货人",
+      "shipPhone": "联系电话",
+      "shipAddress": "收货地址",
+      "carrier": "快递公司"
     },
     "orders": {
       "title": "我的兑换记录",
@@ -155,7 +181,8 @@
       },
       "viewDetail": "查看详情",
       "tracking": "物流单号",
-      "showRange": "共 {{total}} 条记录，第 {{start}}-{{end}}"
+      "showRange": "共 {{total}} 条记录，第 {{start}}-{{end}}",
+      "confirmReceipt": "确认收货"
     },
     "pointsCenter": {
       "title": "积分中心",
@@ -170,12 +197,32 @@
       },
       "earnWaysTitle": "积分获取途径",
       "earnWays": {
-        "seniority": { "title": "工龄积分", "desc": "每满一年工龄自动发放 1,000 积分", "amount": "+1,000/年" },
-        "performance": { "title": "绩效奖励", "desc": "季度绩效 A 级以上额外奖励积分", "amount": "+500~2,000" },
-        "holiday": { "title": "节日福利", "desc": "春节、中秋等节日发放福利积分", "amount": "+200~800" },
-        "contribution": { "title": "特别贡献", "desc": "重大项目贡献、创新提案等专项奖励", "amount": "+500~5,000" }
+        "seniority": {
+          "title": "工龄积分",
+          "desc": "每满一年工龄自动发放 1,000 积分",
+          "amount": "+1,000/年"
+        },
+        "performance": {
+          "title": "绩效奖励",
+          "desc": "季度绩效 A 级以上额外奖励积分",
+          "amount": "+500~2,000"
+        },
+        "holiday": {
+          "title": "节日福利",
+          "desc": "春节、中秋等节日发放福利积分",
+          "amount": "+200~800"
+        },
+        "contribution": {
+          "title": "特别贡献",
+          "desc": "重大项目贡献、创新提案等专项奖励",
+          "amount": "+500~5,000"
+        }
       },
-      "filter": { "all": "全部", "income": "收入", "expense": "支出" },
+      "filter": {
+        "all": "全部",
+        "income": "收入",
+        "expense": "支出"
+      },
       "balance": "当前余额",
       "totalEarned": "累计获得",
       "totalUsed": "累计使用",
@@ -186,6 +233,30 @@
       "thDescription": "说明",
       "thTime": "时间",
       "noTransactions": "暂无积分记录"
+    },
+    "address": {
+      "title": "收货地址",
+      "subtitle": "管理你的收货地址",
+      "add": "新增地址",
+      "empty": "暂无收货地址",
+      "default": "默认",
+      "edit": "编辑",
+      "delete": "删除",
+      "deleteTitle": "删除地址",
+      "deleteMessage": "确定删除「{{name}}」的收货地址吗？",
+      "addTitle": "新增收货地址",
+      "editTitle": "编辑收货地址",
+      "receiver": "收货人姓名",
+      "receiverPlaceholder": "请输入姓名",
+      "phone": "手机号码",
+      "phonePlaceholder": "请输入手机号码",
+      "region": "所在地区",
+      "regionPlaceholder": "省 / 市 / 区县",
+      "detail": "详细地址",
+      "detailPlaceholder": "街道、门牌号、楼层等",
+      "postalCode": "邮政编码",
+      "postalCodePlaceholder": "选填",
+      "setDefault": "设为默认收货地址"
     }
   },
   "admin": {
@@ -310,7 +381,9 @@
         "uploadTypeError": "仅支持 JPG/PNG/GIF/WEBP 格式",
         "uploadSizeError": "图片不能超过 5MB",
         "uploadFailed": "上传失败"
-      }
+      },
+      "imageMain": "主图",
+      "imageMax": "最多上传 10 张图片"
     },
     "categories": {
       "title": "类目管理",
@@ -386,7 +459,25 @@
       "configAmountPlaceholder": "请输入发放积分额度",
       "configGrantDay": "每月发放日",
       "configEnabled": "启用自动发放",
-      "configCycleHint": "发放周期：每月（按发放日自动发放给员工）"
+      "configCycleHint": "发放周期：每月（按发放日自动发放给员工）",
+      "viewHistory": "查看记录",
+      "historyBreadcrumb": "积分变动记录",
+      "historyTitle": "{{name}} 的积分变动记录",
+      "historyChangeCount": "变动次数",
+      "historyTableTitle": "积分变动明细",
+      "historyThTime": "变动时间",
+      "historyThType": "变动类型",
+      "historyThAmount": "变动积分",
+      "historyThBalance": "变动后余额",
+      "historyThReason": "变动原因",
+      "historyNoData": "暂无积分变动记录",
+      "showRangeRecords": "显示 {{start}}-{{end}} 共 {{total}} 条记录",
+      "filter": {
+        "all": "全部",
+        "income": "收入",
+        "expense": "支出"
+      },
+      "historyThOperator": "操作人"
     },
     "pointRules": {
       "title": "积分规则管理",
@@ -423,7 +514,13 @@
       "typeFixed": "固定发放",
       "typeEvent": "事件触发",
       "typePerformance": "绩效关联",
-      "typeHoliday": "节日触发"
+      "typeHoliday": "节日触发",
+      "fieldScope": "适用范围",
+      "fieldScopePlaceholder": "如：全部员工",
+      "fieldGrantMethod": "发放方式",
+      "fieldGrantMethodPlaceholder": "如：自动发放",
+      "fieldIcon": "规则图标",
+      "fieldIconPlaceholder": "如：calendar_month"
     },
     "exchangeRecords": {
       "title": "兑换记录管理",
@@ -485,7 +582,16 @@
       "targetStatus": "目标状态",
       "shippingTitle": "修改发货状态",
       "confirmModify": "确认修改",
-      "cancelOrderConfirm": "确定取消该订单吗？取消后将退回积分并恢复库存。"
+      "cancelOrderConfirm": "确定取消该订单吗？取消后将退回积分并恢复库存。",
+      "freightPoints": "运费积分",
+      "balanceAfter": "兑换后余额",
+      "statusLog": "状态记录",
+      "fieldCarrier": "快递公司",
+      "carrierPlaceholder": "请输入快递公司",
+      "shippingInfo": "收货信息",
+      "shipReceiver": "收货人",
+      "shipPhone": "联系电话",
+      "shipAddress": "收货地址"
     },
     "users": {
       "title": "用户管理",
@@ -532,7 +638,9 @@
       "fieldRole": "角色",
       "createSuccess": "用户创建成功",
       "createFailed": "用户创建失败",
-      "updateSuccess": "用户更新成功"
+      "updateSuccess": "用户更新成功",
+      "fieldDepartment": "部门",
+      "fieldDepartmentPlaceholder": "请输入部门"
     }
   },
   "menu": {

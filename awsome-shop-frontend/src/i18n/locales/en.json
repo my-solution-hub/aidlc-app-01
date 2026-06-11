@@ -87,7 +87,19 @@
       "description": "Description",
       "soldOut": "Sold Out",
       "offShelf": "Off Shelf",
-      "loadFailed": "Failed to load product"
+      "loadFailed": "Failed to load product",
+      "marketPrice": "Ref. price",
+      "specs": "Specifications",
+      "related": "Related Products",
+      "reviews": "Reviews",
+      "yourRating": "Your rating",
+      "reviewPlaceholder": "Share your experience...",
+      "submitReview": "Submit",
+      "noReviews": "No reviews yet",
+      "reviewSuccess": "Review submitted",
+      "reviewFailed": "Failed to submit review",
+      "wishlistAdd": "Add to Wishlist",
+      "wishlistRemove": "Remove from Wishlist"
     },
     "confirmRedemption": {
       "title": "Confirm Redemption",
@@ -99,7 +111,9 @@
       "insufficient": "Insufficient points",
       "confirm": "Confirm Redemption",
       "cancel": "Cancel",
-      "loadFailed": "Failed to load redemption details"
+      "loadFailed": "Failed to load redemption details",
+      "shippingTitle": "Shipping Info",
+      "noAddress": "No address yet, please add one"
     },
     "redemptionSuccess": {
       "title": "Redemption Successful!",
@@ -134,7 +148,19 @@
       "payMethod": "Payment Method",
       "payByPoints": "Points Payment",
       "tracking": "Tracking No",
-      "recipient": "Recipient"
+      "recipient": "Recipient",
+      "confirmReceipt": "Confirm Receipt",
+      "confirmReceiptSuccess": "Receipt confirmed",
+      "confirmReceiptFailed": "Failed to confirm receipt",
+      "pointsDetail": "Points Detail",
+      "productPoints": "Product Points",
+      "freightPoints": "Freight Points",
+      "balanceAfter": "Balance After",
+      "shippingInfo": "Shipping Info",
+      "shipReceiver": "Receiver",
+      "shipPhone": "Phone",
+      "shipAddress": "Address",
+      "carrier": "Carrier"
     },
     "orders": {
       "title": "My Orders",
@@ -155,7 +181,8 @@
       },
       "viewDetail": "View Detail",
       "tracking": "Tracking No",
-      "showRange": "{{total}} records, {{start}}-{{end}}"
+      "showRange": "{{total}} records, {{start}}-{{end}}",
+      "confirmReceipt": "Confirm Receipt"
     },
     "pointsCenter": {
       "title": "Points Center",
@@ -170,12 +197,32 @@
       },
       "earnWaysTitle": "How to Earn Points",
       "earnWays": {
-        "seniority": { "title": "Seniority Points", "desc": "1,000 points auto-granted per year of service", "amount": "+1,000/yr" },
-        "performance": { "title": "Performance Bonus", "desc": "Extra points for quarterly grade A or above", "amount": "+500~2,000" },
-        "holiday": { "title": "Holiday Benefits", "desc": "Benefit points on Spring Festival, Mid-Autumn, etc.", "amount": "+200~800" },
-        "contribution": { "title": "Special Contribution", "desc": "Awards for major project / innovation proposals", "amount": "+500~5,000" }
+        "seniority": {
+          "title": "Seniority Points",
+          "desc": "1,000 points auto-granted per year of service",
+          "amount": "+1,000/yr"
+        },
+        "performance": {
+          "title": "Performance Bonus",
+          "desc": "Extra points for quarterly grade A or above",
+          "amount": "+500~2,000"
+        },
+        "holiday": {
+          "title": "Holiday Benefits",
+          "desc": "Benefit points on Spring Festival, Mid-Autumn, etc.",
+          "amount": "+200~800"
+        },
+        "contribution": {
+          "title": "Special Contribution",
+          "desc": "Awards for major project / innovation proposals",
+          "amount": "+500~5,000"
+        }
       },
-      "filter": { "all": "All", "income": "Income", "expense": "Expense" },
+      "filter": {
+        "all": "All",
+        "income": "Income",
+        "expense": "Expense"
+      },
       "balance": "Current Balance",
       "totalEarned": "Total Earned",
       "totalUsed": "Total Used",
@@ -186,6 +233,30 @@
       "thDescription": "Description",
       "thTime": "Time",
       "noTransactions": "No transactions found"
+    },
+    "address": {
+      "title": "Shipping Addresses",
+      "subtitle": "Manage your shipping addresses",
+      "add": "Add Address",
+      "empty": "No saved addresses",
+      "default": "Default",
+      "edit": "Edit",
+      "delete": "Delete",
+      "deleteTitle": "Delete Address",
+      "deleteMessage": "Delete the address for \"{{name}}\"?",
+      "addTitle": "Add Address",
+      "editTitle": "Edit Address",
+      "receiver": "Receiver",
+      "receiverPlaceholder": "Enter name",
+      "phone": "Phone",
+      "phonePlaceholder": "Enter phone number",
+      "region": "Region",
+      "regionPlaceholder": "Province / City / District",
+      "detail": "Detailed Address",
+      "detailPlaceholder": "Street, building, floor, etc.",
+      "postalCode": "Postal Code",
+      "postalCodePlaceholder": "Optional",
+      "setDefault": "Set as default address"
     }
   },
   "admin": {
@@ -310,7 +381,9 @@
         "uploadTypeError": "Only JPG/PNG/GIF/WEBP allowed",
         "uploadSizeError": "Image must be under 5MB",
         "uploadFailed": "Upload failed"
-      }
+      },
+      "imageMain": "Main",
+      "imageMax": "Up to 10 images"
     },
     "categories": {
       "title": "Category Management",
@@ -386,7 +459,25 @@
       "configAmountPlaceholder": "Enter points amount",
       "configGrantDay": "Grant day of month",
       "configEnabled": "Enable auto distribution",
-      "configCycleHint": "Cycle: monthly (auto-granted on the grant day)"
+      "configCycleHint": "Cycle: monthly (auto-granted on the grant day)",
+      "viewHistory": "View history",
+      "historyBreadcrumb": "Points History",
+      "historyTitle": "Points history of {{name}}",
+      "historyChangeCount": "Changes",
+      "historyTableTitle": "Points Change Details",
+      "historyThTime": "Time",
+      "historyThType": "Type",
+      "historyThAmount": "Change",
+      "historyThBalance": "Balance After",
+      "historyThReason": "Reason",
+      "historyNoData": "No points change records",
+      "showRangeRecords": "Showing {{start}}-{{end}} of {{total}} records",
+      "filter": {
+        "all": "All",
+        "income": "Income",
+        "expense": "Expense"
+      },
+      "historyThOperator": "Operator"
     },
     "pointRules": {
       "title": "Points Rule Management",
@@ -423,7 +514,13 @@
       "typeFixed": "Fixed",
       "typeEvent": "Event",
       "typePerformance": "Performance",
-      "typeHoliday": "Holiday"
+      "typeHoliday": "Holiday",
+      "fieldScope": "Scope",
+      "fieldScopePlaceholder": "e.g. All employees",
+      "fieldGrantMethod": "Grant Method",
+      "fieldGrantMethodPlaceholder": "e.g. Automatic",
+      "fieldIcon": "Icon",
+      "fieldIconPlaceholder": "e.g. calendar_month"
     },
     "exchangeRecords": {
       "title": "Exchange Records",
@@ -485,7 +582,16 @@
       "targetStatus": "Target Status",
       "shippingTitle": "Update Shipping Status",
       "confirmModify": "Confirm",
-      "cancelOrderConfirm": "Cancel this order? Points will be refunded and stock restored."
+      "cancelOrderConfirm": "Cancel this order? Points will be refunded and stock restored.",
+      "freightPoints": "Freight Points",
+      "balanceAfter": "Balance After",
+      "statusLog": "Status Log",
+      "fieldCarrier": "Carrier",
+      "carrierPlaceholder": "Enter carrier",
+      "shippingInfo": "Shipping Info",
+      "shipReceiver": "Receiver",
+      "shipPhone": "Phone",
+      "shipAddress": "Address"
     },
     "users": {
       "title": "User Management",
@@ -532,7 +638,9 @@
       "fieldRole": "Role",
       "createSuccess": "User created successfully",
       "createFailed": "Failed to create user",
-      "updateSuccess": "User updated successfully"
+      "updateSuccess": "User updated successfully",
+      "fieldDepartment": "Department",
+      "fieldDepartmentPlaceholder": "Enter department"
     }
   },
   "menu": {

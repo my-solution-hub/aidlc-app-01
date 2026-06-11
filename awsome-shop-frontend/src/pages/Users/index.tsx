@@ -27,6 +27,7 @@ import {
   updateUser,
   updateUserStatus,
 } from "../../services/api/user";
+import { listUserPoints } from "../../services/api/userPoint";
 import type { UserDTO, PageResult, CreateUserRequest } from "../../types/api";
 import AdminPageHeader from "../../components/AdminPageHeader";
 import { AppSnackbar, useSnackbar } from "../../components/AppSnackbar";
@@ -65,22 +66,48 @@ export default function Users() {
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("");
+  const [balanceMap, setBalanceMap] = useState<Record<number, number>>({});
   const [dialog, setDialog] = useState<{ mode: "create" } | { mode: "edit"; user: UserDTO } | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
 
+  // Debounce the search input by 300ms and reset to the first page.
+  useEffect(() => {
+    const id = setTimeout(() => {
+      setDebouncedSearch(search.trim());
+      setPage(1);
+    }, 300);
+    return () => clearTimeout(id);
+  }, [search]);
+
   const fetchData = useCallback(() => {
     setLoading(true);
-    listUsers({
-      page,
-      size: PAGE_SIZE,
-      username: search.trim() || undefined,
-      role: roleFilter || undefined,
-    })
-      .then(setData)
+    Promise.all([
+      listUsers({
+        page,
+        size: PAGE_SIZE,
+        username: debouncedSearch || undefined,
+        role: roleFilter || undefined,
+      }),
+      // Point balances live in the points service; map them in by userId.
+      listUserPoints({ page: 1, size: 100, keyword: debouncedSearch || undefined }).catch(
+        () => null,
+      ),
+    ])
+      .then(([usersRes, pointsRes]) => {
+        setData(usersRes);
+        if (pointsRes) {
+          const map: Record<number, number> = {};
+          (pointsRes.records ?? []).forEach((u) => {
+            map[u.userId] = u.balance;
+          });
+          setBalanceMap(map);
+        }
+      })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [page, search, roleFilter]);
+  }, [page, debouncedSearch, roleFilter]);
 
   useEffect(() => {
     fetchData();
@@ -225,7 +252,15 @@ export default function Users() {
                   </Box>
                 </Box>
                 <Box sx={{ width: 110 }}><Typography sx={{ fontSize: 13, color: "#94A3B8" }}>—</Typography></Box>
-                <Box sx={{ width: 90 }}><Typography sx={{ fontSize: 13, color: "#94A3B8" }}>—</Typography></Box>
+                <Box sx={{ width: 90 }}>
+                  {balanceMap[user.id] != null ? (
+                    <Typography sx={{ fontSize: 13, fontWeight: 600, color: "#1E293B" }}>
+                      {balanceMap[user.id].toLocaleString()}
+                    </Typography>
+                  ) : (
+                    <Typography sx={{ fontSize: 13, color: "#94A3B8" }}>—</Typography>
+                  )}
+                </Box>
                 <Box sx={{ width: 80 }}><Typography sx={{ fontSize: 13, color: "#94A3B8" }}>—</Typography></Box>
                 <Box sx={{ width: 80 }}><RoleChip role={user.role} t={t} /></Box>
                 <Box sx={{ width: 80 }}>

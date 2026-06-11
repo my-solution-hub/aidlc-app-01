@@ -5,6 +5,7 @@ import Typography from "@mui/material/Typography";
 import ButtonBase from "@mui/material/ButtonBase";
 import CircularProgress from "@mui/material/CircularProgress";
 import AddIcon from "@mui/icons-material/Add";
+import SettingsIcon from "@mui/icons-material/Settings";
 import RuleIcon from "@mui/icons-material/Rule";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import TollIcon from "@mui/icons-material/Toll";
@@ -23,16 +24,25 @@ import DialogActions from "@mui/material/DialogActions";
 import TextField from "@mui/material/TextField";
 import Select from "@mui/material/Select";
 import MenuItem from "@mui/material/MenuItem";
+import Switch from "@mui/material/Switch";
 import {
   listPointRules,
   createPointRule,
   updatePointRule,
   updatePointRuleStatus,
 } from "../../services/api/pointRule";
+import {
+  getDistributionConfig,
+  updateDistributionConfig,
+  getPointGrantStats,
+} from "../../services/api/userPoint";
 import type {
   PointRuleDTO,
   PageResult,
   CreatePointRuleRequest,
+  DistributionConfigDTO,
+  PointGrantStatsDTO,
+  UpdateDistributionConfigRequest,
 } from "../../types/api";
 import AdminPageHeader from "../../components/AdminPageHeader";
 import { AppSnackbar, useSnackbar } from "../../components/AppSnackbar";
@@ -105,6 +115,11 @@ export default function PointRuleList() {
   const [dialog, setDialog] = useState<RuleDialogMode>(null);
   const [actionLoading, setActionLoading] = useState(false);
 
+  // Grant statistics (powers the "本月发放" / "覆盖员工" stat cards)
+  const [stats, setStats] = useState<PointGrantStatsDTO | null>(null);
+  // Distribution config dialog
+  const [configOpen, setConfigOpen] = useState(false);
+
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
@@ -120,6 +135,20 @@ export default function PointRuleList() {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  const fetchStats = useCallback(async () => {
+    const month = new Date().toISOString().slice(0, 7); // YYYY-MM
+    try {
+      const res = await getPointGrantStats(month);
+      setStats(res);
+    } catch {
+      // optional data — silently ignore
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchStats();
+  }, [fetchStats]);
 
   const handleToggleStatus = async (rule: PointRuleDTO) => {
     try {
@@ -172,31 +201,59 @@ export default function PointRuleList() {
         title={t("admin.pointRules.title")}
         subtitle={t("admin.pointRules.subtitle")}
         actions={
-          <ButtonBase
-            onClick={() => setDialog({ type: "create" })}
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              gap: "6px",
-              bgcolor: "#2563EB",
-              color: "#fff",
-              borderRadius: "8px",
-              px: "20px",
-              py: "10px",
-              "&:hover": { bgcolor: "#1D4ED8" },
-            }}
-          >
-            <AddIcon sx={{ fontSize: 18 }} />
-            <Typography
+          <Box sx={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <ButtonBase
+              onClick={() => setConfigOpen(true)}
               sx={{
-                fontSize: 14,
-                fontWeight: 600,
-                fontFamily: "Inter, sans-serif",
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+                border: "1px solid #E2E8F0",
+                bgcolor: "#fff",
+                borderRadius: "8px",
+                px: "16px",
+                py: "10px",
+                "&:hover": { bgcolor: "#F8FAFC" },
               }}
             >
-              {t("admin.pointRules.addRule")}
-            </Typography>
-          </ButtonBase>
+              <SettingsIcon sx={{ fontSize: 18, color: "#64748B" }} />
+              <Typography
+                sx={{
+                  fontSize: 14,
+                  fontWeight: 600,
+                  color: "#64748B",
+                  fontFamily: "Inter, sans-serif",
+                }}
+              >
+                {t("admin.pointRules.distributionConfig")}
+              </Typography>
+            </ButtonBase>
+            <ButtonBase
+              onClick={() => setDialog({ type: "create" })}
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+                bgcolor: "#2563EB",
+                color: "#fff",
+                borderRadius: "8px",
+                px: "20px",
+                py: "10px",
+                "&:hover": { bgcolor: "#1D4ED8" },
+              }}
+            >
+              <AddIcon sx={{ fontSize: 18 }} />
+              <Typography
+                sx={{
+                  fontSize: 14,
+                  fontWeight: 600,
+                  fontFamily: "Inter, sans-serif",
+                }}
+              >
+                {t("admin.pointRules.addRule")}
+              </Typography>
+            </ButtonBase>
+          </Box>
         }
       />
 
@@ -219,13 +276,13 @@ export default function PointRuleList() {
           icon={<TollIcon sx={{ fontSize: 18, color: "#F59E0B" }} />}
           iconBg="#FFF7ED"
           label={t("admin.pointRules.statMonthly")}
-          value="—"
+          value={stats ? (stats.grantedTotal ?? 0).toLocaleString() : "—"}
         />
         <StatCard
           icon={<GroupIcon sx={{ fontSize: 18, color: "#8B5CF6" }} />}
           iconBg="#F5F3FF"
           label={t("admin.pointRules.statEmployees")}
-          value="—"
+          value={stats ? String(stats.coveredEmployees ?? 0) : "—"}
         />
       </Box>
 
@@ -468,6 +525,18 @@ export default function PointRuleList() {
           loading={actionLoading}
           onSubmit={handleDialogSubmit}
           onClose={() => setDialog(null)}
+        />
+      )}
+
+      {configOpen && (
+        <DistributionConfigDialog
+          onClose={() => setConfigOpen(false)}
+          onSaved={() => {
+            snackbar.showSuccess(t("common.saveSuccess"));
+            setConfigOpen(false);
+            fetchStats();
+          }}
+          onError={(msg) => snackbar.showError(msg)}
         />
       )}
 
@@ -985,5 +1054,247 @@ function RuleRow({
         </ButtonBase>
       </Box>
     </Box>
+  );
+}
+
+// ---- Distribution config dialog (adm-07: 发放配置) ----
+
+const CYCLE_OPTIONS = ["MONTHLY", "WEEKLY", "QUARTERLY"];
+const TARGET_ROLE_OPTIONS = ["ALL", "EMPLOYEE", "ADMIN"];
+
+function DistributionConfigDialog({
+  onClose,
+  onSaved,
+  onError,
+}: {
+  onClose: () => void;
+  onSaved: () => void;
+  onError: (message: string) => void;
+}) {
+  const { t } = useTranslation();
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [enabled, setEnabled] = useState(true);
+  const [amount, setAmount] = useState("");
+  const [cycle, setCycle] = useState("MONTHLY");
+  const [grantDay, setGrantDay] = useState("1");
+  const [targetRole, setTargetRole] = useState("ALL");
+
+  useEffect(() => {
+    let active = true;
+    getDistributionConfig()
+      .then((cfg: DistributionConfigDTO) => {
+        if (!active) return;
+        setEnabled(cfg.enabled ?? true);
+        setAmount(String(cfg.amount ?? 0));
+        setCycle(cfg.cycle || "MONTHLY");
+        setGrantDay(String(cfg.grantDay ?? 1));
+        setTargetRole(cfg.targetRole || "ALL");
+      })
+      .catch(() => {
+        // Keep sensible defaults if config doesn't exist yet.
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const numericAmount = Number(amount) || 0;
+  const canSave = numericAmount > 0 && !saving;
+
+  const handleSave = async () => {
+    if (!canSave) return;
+    setSaving(true);
+    try {
+      const body: UpdateDistributionConfigRequest = {
+        amount: numericAmount,
+        cycle,
+        grantDay: Number(grantDay) || 1,
+        enabled,
+        targetRole,
+      };
+      await updateDistributionConfig(body);
+      onSaved();
+    } catch (err) {
+      onError(err instanceof BusinessError ? err.message : t("common.saveFailed"));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const fieldSx = {
+    "& .MuiOutlinedInput-root": {
+      borderRadius: "8px",
+      fontFamily: "Inter, sans-serif",
+      fontSize: 14,
+      "& fieldset": { borderColor: "#E2E8F0" },
+    },
+  };
+  const selectSx = {
+    height: 40,
+    borderRadius: "8px",
+    fontSize: 14,
+    "& .MuiOutlinedInput-notchedOutline": { borderColor: "#E2E8F0" },
+  };
+
+  return (
+    <Dialog
+      open
+      onClose={onClose}
+      slotProps={{ paper: { sx: { borderRadius: "12px", width: 460 } } }}
+    >
+      <DialogTitle
+        sx={{
+          fontSize: 18,
+          fontWeight: 700,
+          color: "#1E293B",
+          fontFamily: "Inter, sans-serif",
+        }}
+      >
+        {t("admin.pointRules.configTitle")}
+        <Typography sx={{ fontSize: 13, fontWeight: 400, color: "#64748B", mt: "2px" }}>
+          {t("admin.pointRules.configSubtitle")}
+        </Typography>
+      </DialogTitle>
+      <DialogContent
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          gap: "16px",
+          pt: "8px !important",
+        }}
+      >
+        {loading ? (
+          <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
+            <CircularProgress size={28} />
+          </Box>
+        ) : (
+          <>
+            {/* Enabled toggle */}
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                bgcolor: "#F8FAFC",
+                borderRadius: "8px",
+                p: "12px 16px",
+              }}
+            >
+              <Typography sx={{ fontSize: 14, fontWeight: 500, color: "#1E293B" }}>
+                {t("admin.pointRules.configEnabled")}
+              </Typography>
+              <Switch
+                checked={enabled}
+                onChange={(e) => setEnabled(e.target.checked)}
+              />
+            </Box>
+
+            {/* Amount */}
+            <Box sx={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+              <Typography sx={{ fontSize: 13, fontWeight: 500, color: "#1E293B" }}>
+                {t("admin.pointRules.configAmount")}
+              </Typography>
+              <TextField
+                fullWidth
+                size="small"
+                type="number"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                sx={fieldSx}
+              />
+            </Box>
+
+            {/* Cycle + grant day */}
+            <Box sx={{ display: "flex", gap: "12px" }}>
+              <Box sx={{ flex: 1, display: "flex", flexDirection: "column", gap: "6px" }}>
+                <Typography sx={{ fontSize: 13, fontWeight: 500, color: "#1E293B" }}>
+                  {t("admin.pointRules.configCycle")}
+                </Typography>
+                <Select
+                  value={cycle}
+                  onChange={(e) => setCycle(e.target.value)}
+                  size="small"
+                  sx={selectSx}
+                >
+                  {CYCLE_OPTIONS.map((c) => (
+                    <MenuItem key={c} value={c}>
+                      {t(`admin.pointRules.cycle${c.charAt(0)}${c.slice(1).toLowerCase()}`)}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </Box>
+              <Box sx={{ flex: 1, display: "flex", flexDirection: "column", gap: "6px" }}>
+                <Typography sx={{ fontSize: 13, fontWeight: 500, color: "#1E293B" }}>
+                  {t("admin.pointRules.configGrantDay")}
+                </Typography>
+                <TextField
+                  fullWidth
+                  size="small"
+                  type="number"
+                  value={grantDay}
+                  onChange={(e) => setGrantDay(e.target.value)}
+                  sx={fieldSx}
+                />
+              </Box>
+            </Box>
+
+            {/* Target role */}
+            <Box sx={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+              <Typography sx={{ fontSize: 13, fontWeight: 500, color: "#1E293B" }}>
+                {t("admin.pointRules.configTargetRole")}
+              </Typography>
+              <Select
+                value={targetRole}
+                onChange={(e) => setTargetRole(e.target.value)}
+                size="small"
+                sx={selectSx}
+              >
+                {TARGET_ROLE_OPTIONS.map((r) => (
+                  <MenuItem key={r} value={r}>
+                    {t(`admin.pointRules.role${r.charAt(0)}${r.slice(1).toLowerCase()}`)}
+                  </MenuItem>
+                ))}
+              </Select>
+            </Box>
+          </>
+        )}
+      </DialogContent>
+      <DialogActions sx={{ p: "16px 24px" }}>
+        <ButtonBase
+          onClick={onClose}
+          disabled={saving}
+          sx={{
+            borderRadius: "8px",
+            border: "1px solid #E2E8F0",
+            px: "20px",
+            py: "8px",
+            "&:hover": { bgcolor: "#F8FAFC" },
+          }}
+        >
+          <Typography sx={{ fontSize: 13, fontWeight: 500, color: "#1E293B" }}>
+            {t("common.cancel")}
+          </Typography>
+        </ButtonBase>
+        <ButtonBase
+          onClick={handleSave}
+          disabled={loading || !canSave}
+          sx={{
+            borderRadius: "8px",
+            bgcolor: !loading && canSave ? "#2563EB" : "#93C5FD",
+            px: "20px",
+            py: "8px",
+            "&:hover": { bgcolor: !loading && canSave ? "#1D4ED8" : "#93C5FD" },
+          }}
+        >
+          <Typography sx={{ fontSize: 13, fontWeight: 600, color: "#fff" }}>
+            {t("common.save")}
+          </Typography>
+        </ButtonBase>
+      </DialogActions>
+    </Dialog>
   );
 }

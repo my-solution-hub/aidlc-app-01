@@ -219,6 +219,59 @@ export interface ListPointTransactionRequest {
   type?: string;
 }
 
+// ---- Admin Points Management ----
+
+/** A user row with aggregated point figures (admin points management). */
+export interface UserPointDTO {
+  userId: number;
+  username: string;
+  nickname: string;
+  employeeNo: string;
+  balance: number;
+  totalEarned: number;
+  totalUsed: number;
+  updatedAt: string;
+}
+
+export interface ListUserPointRequest {
+  page?: number;
+  size?: number;
+  keyword?: string;
+}
+
+/** Manual point adjustment: amount > 0 adds, amount < 0 deducts. */
+export interface AdjustPointsRequest {
+  userId: number;
+  amount: number;
+  reason: string;
+}
+
+/** Scheduled point distribution configuration. */
+export interface DistributionConfigDTO {
+  amount: number;
+  cycle: string;
+  grantDay: number;
+  enabled: boolean;
+  targetRole: string;
+  updatedAt: string;
+}
+
+export interface UpdateDistributionConfigRequest {
+  amount: number;
+  cycle?: string;
+  grantDay?: number;
+  enabled?: boolean;
+  targetRole?: string;
+}
+
+/** Monthly point grant statistics. */
+export interface PointGrantStatsDTO {
+  month: string;
+  grantedTotal: number;
+  coveredEmployees: number;
+  lastGrantedAt: string;
+}
+
 // ---- Exchange Record ----
 
 export interface ExchangeRecordDTO {

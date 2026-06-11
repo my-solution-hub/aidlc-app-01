@@ -20,6 +20,7 @@ import PointRuleList from "../pages/PointRules";
 import ExchangeRecordList from "../pages/ExchangeRecords";
 import ExchangeDetail from "../pages/ExchangeRecords/ExchangeDetail";
 import Users from "../pages/Users";
+import UserPoints from "../pages/UserPoints";
 import AuthGuard from "./AuthGuard";
 
 const router = createBrowserRouter([
@@ -65,6 +66,7 @@ const router = createBrowserRouter([
       { path: "products/:id", element: <ProductDetailAdmin /> },
       { path: "categories", element: <CategoryList /> },
       { path: "points", element: <PointRuleList /> },
+      { path: "user-points", element: <UserPoints /> },
       { path: "orders", element: <ExchangeRecordList /> },
       { path: "orders/:id", element: <ExchangeDetail /> },
       { path: "users", element: <Users /> },

@@ -57,8 +57,10 @@ export class CdnStack extends cdk.Stack {
       },
 
       // API behavior: forward to ALB
-      additionalBehaviors: {
-        '/api/*': {
+      // API behaviors: 4 path patterns share the same ALB origin. Frontend
+      // axios uses /<svc>/api/... and gateway routes by the service prefix.
+      additionalBehaviors: (() => {
+        const albBehavior: cloudfront.BehaviorOptions = {
           origin: new origins.LoadBalancerV2Origin(alb, {
             protocolPolicy: cloudfront.OriginProtocolPolicy.HTTP_ONLY,
           }),
@@ -66,8 +68,14 @@ export class CdnStack extends cdk.Stack {
           cachePolicy: cloudfront.CachePolicy.CACHING_DISABLED,
           originRequestPolicy: cloudfront.OriginRequestPolicy.ALL_VIEWER,
           allowedMethods: cloudfront.AllowedMethods.ALLOW_ALL,
-        },
-      },
+        };
+        return {
+          '/auth/api/*': albBehavior,
+          '/order/api/*': albBehavior,
+          '/product/api/*': albBehavior,
+          '/point/api/*': albBehavior,
+        };
+      })(),
 
       // SPA: custom error response for 403/404 → index.html
       errorResponses: [

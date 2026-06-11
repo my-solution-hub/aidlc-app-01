@@ -84,17 +84,20 @@ describe('CdnStack', () => {
     });
   });
 
-  test('CloudFront has /api/* cache behavior (no caching)', () => {
-    template.hasResourceProperties('AWS::CloudFront::Distribution', {
-      DistributionConfig: {
-        CacheBehaviors: Match.arrayWith([
-          Match.objectLike({
-            PathPattern: '/api/*',
-            CachePolicyId: '4135ea2d-6df8-44a3-9df3-4b5a84be39ad', // CACHING_DISABLED policy ID
-          }),
-        ]),
-      },
-    });
+  test('CloudFront has per-service /<svc>/api/* cache behaviors (no caching)', () => {
+    const svcPaths = ['/auth/api/*', '/order/api/*', '/product/api/*', '/point/api/*'];
+    for (const path of svcPaths) {
+      template.hasResourceProperties('AWS::CloudFront::Distribution', {
+        DistributionConfig: {
+          CacheBehaviors: Match.arrayWith([
+            Match.objectLike({
+              PathPattern: path,
+              CachePolicyId: '4135ea2d-6df8-44a3-9df3-4b5a84be39ad', // CACHING_DISABLED
+            }),
+          ]),
+        },
+      });
+    }
   });
 
   // Origin Access Control

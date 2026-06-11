@@ -12,6 +12,7 @@ import TollIcon from "@mui/icons-material/Toll";
 import { getProduct } from "../../services/api/product";
 import type { ProductDTO } from "../../types/api";
 import { AppSnackbar, useSnackbar } from "../../components/AppSnackbar";
+import LazyImage from "../../components/LazyImage";
 
 const CATEGORY_STYLES: Record<string, { bg: string; color: string }> = {
   数码电子: { bg: "#DBEAFE", color: "#2563EB" },
@@ -120,22 +121,14 @@ export default function ProductDetail() {
               flexShrink: 0,
               borderRadius: "12px",
               bgcolor: style.bg,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
               overflow: "hidden",
             }}
           >
-            {product.imageUrl ? (
-              <Box
-                component="img"
-                src={product.imageUrl}
-                alt={product.name}
-                sx={{ width: "100%", height: "100%", objectFit: "cover" }}
-              />
-            ) : (
-              <Inventory2Icon sx={{ fontSize: 96, color: style.color }} />
-            )}
+            <LazyImage
+              src={product.imageUrl}
+              alt={product.name}
+              fallback={<Inventory2Icon sx={{ fontSize: 96, color: style.color }} />}
+            />
           </Box>
 
           {/* Info area */}

@@ -184,6 +184,23 @@
       "noTransactions": "暂无积分记录"
     }
   },
+  "shop": {
+    "recommendedTitle": "热门推荐",
+    "recommendedSubtitle": "本月热销，积分兑换更划算",
+    "viewMore": "查看更多",
+    "hotBadge": "热销",
+    "searchPlaceholder": "搜索商品名称...",
+    "resultCount": "共 {{total}} 件商品",
+    "sortLabel": "排序",
+    "sort": {
+      "default": "综合排序",
+      "newest": "最新上架",
+      "soldDesc": "销量优先",
+      "priceAsc": "积分从低到高",
+      "priceDesc": "积分从高到低"
+    },
+    "loadFailed": "加载商品失败"
+  },
   "admin": {
     "title": "管理",
     "welcome": "欢迎",

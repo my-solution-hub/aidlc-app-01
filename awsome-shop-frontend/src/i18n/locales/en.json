@@ -184,6 +184,23 @@
       "noTransactions": "No transactions found"
     }
   },
+  "shop": {
+    "recommendedTitle": "Popular Picks",
+    "recommendedSubtitle": "This month's bestsellers, great value with points",
+    "viewMore": "View more",
+    "hotBadge": "Hot",
+    "searchPlaceholder": "Search products...",
+    "resultCount": "{{total}} products",
+    "sortLabel": "Sort",
+    "sort": {
+      "default": "Recommended",
+      "newest": "Newest",
+      "soldDesc": "Best selling",
+      "priceAsc": "Points: low to high",
+      "priceDesc": "Points: high to low"
+    },
+    "loadFailed": "Failed to load products"
+  },
   "admin": {
     "title": "Admin",
     "welcome": "Welcome",

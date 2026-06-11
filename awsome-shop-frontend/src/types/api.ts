@@ -104,6 +104,10 @@ export interface ListProductRequest {
   size?: number;
   name?: string;
   category?: string;
+  /** Sort field: "soldCount" | "pointsPrice" | "createdAt" */
+  sortBy?: string;
+  /** Sort direction */
+  sortOrder?: "ASC" | "DESC";
 }
 
 export interface CreateProductRequest {

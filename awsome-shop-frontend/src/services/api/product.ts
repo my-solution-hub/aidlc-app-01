@@ -15,6 +15,14 @@ export function listProducts(
   return request.get<PageResult<ProductDTO>>(PRODUCT_BASE, { params: data });
 }
 
+/**
+ * Recommended (hot) products for the shop home page.
+ * Backend returns a plain array (TOP products by soldCount), not a page.
+ */
+export function getRecommended(): Promise<ProductDTO[]> {
+  return request.get<ProductDTO[]>(`${PRODUCT_BASE}/recommended`);
+}
+
 export function getProduct(id: number): Promise<ProductDTO> {
   return request.get<ProductDTO>(`${PRODUCT_BASE}/${id}`);
 }

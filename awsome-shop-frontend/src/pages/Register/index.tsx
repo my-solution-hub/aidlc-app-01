@@ -30,6 +30,10 @@ const fieldInputSx = {
   '& input::placeholder': { color: '#CBD5E1', opacity: 1 },
 };
 
+const USERNAME_MIN = 3;
+const USERNAME_MAX = 20;
+const PASSWORD_MIN = 6;
+
 export default function Register() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
@@ -49,8 +53,42 @@ export default function Register() {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
+  const [usernameError, setUsernameError] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+
+  const validateUsername = (value: string): string => {
+    if (!value) return t('register.errorUsernameRequired');
+    if (value.length < USERNAME_MIN || value.length > USERNAME_MAX) {
+      return t('register.errorUsernameLength', { min: USERNAME_MIN, max: USERNAME_MAX });
+    }
+    return '';
+  };
+
+  const validatePassword = (value: string): string => {
+    if (!value) return t('register.errorPasswordRequired');
+    if (value.length < PASSWORD_MIN) {
+      return t('register.errorPasswordTooShort', { min: PASSWORD_MIN });
+    }
+    return '';
+  };
+
+  const handleUsernameChange = (value: string) => {
+    setUsername(value);
+    if (usernameError) setUsernameError(validateUsername(value));
+  };
+
+  const handlePasswordChange = (value: string) => {
+    setPassword(value);
+    if (passwordError) setPasswordError(validatePassword(value));
+  };
 
   const handleRegister = async () => {
+    const uErr = validateUsername(username);
+    const pErr = validatePassword(password);
+    setUsernameError(uErr);
+    setPasswordError(pErr);
+    if (uErr || pErr) return;
+
     setErrorMsg('');
     setLoading(true);
     try {
@@ -137,7 +175,10 @@ export default function Register() {
                   size="small"
                   placeholder={t('register.usernamePlaceholder')}
                   value={username}
-                  onChange={(e) => setUsername(e.target.value)}
+                  error={Boolean(usernameError)}
+                  helperText={usernameError || ' '}
+                  onChange={(e) => handleUsernameChange(e.target.value)}
+                  onBlur={() => setUsernameError(validateUsername(username))}
                   slotProps={{
                     input: {
                       startAdornment: (
@@ -186,7 +227,10 @@ export default function Register() {
                   type={showPassword ? 'text' : 'password'}
                   placeholder={t('register.passwordPlaceholder')}
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  error={Boolean(passwordError)}
+                  helperText={passwordError || ' '}
+                  onChange={(e) => handlePasswordChange(e.target.value)}
+                  onBlur={() => setPasswordError(validatePassword(password))}
                   slotProps={{
                     input: {
                       startAdornment: (

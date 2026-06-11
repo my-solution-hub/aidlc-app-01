@@ -54,7 +54,11 @@
     "registerSuccess": "Registered successfully, please sign in",
     "registerFailed": "Registration failed",
     "hasAccount": "Already have an account?",
-    "login": "Sign In"
+    "login": "Sign In",
+    "errorUsernameRequired": "Please enter a username",
+    "errorUsernameLength": "Username must be {{min}}-{{max}} characters",
+    "errorPasswordRequired": "Please enter a password",
+    "errorPasswordTooShort": "Password must be at least {{min}} characters"
   },
   "employee": {
     "nav": {
@@ -495,6 +499,27 @@
     "themeDark": "Dark",
     "roleEmployee": "Employee",
     "roleAdmin": "Admin"
+  },
+  "auth": {
+    "changePassword": {
+      "menuItem": "Change Password",
+      "title": "Change Password",
+      "oldPassword": "Current Password",
+      "oldPasswordPlaceholder": "Enter your current password",
+      "newPassword": "New Password",
+      "newPasswordPlaceholder": "Enter a new password (at least 6 characters)",
+      "confirmPassword": "Confirm New Password",
+      "confirmPasswordPlaceholder": "Re-enter your new password",
+      "cancel": "Cancel",
+      "submit": "Update Password",
+      "success": "Password changed successfully",
+      "failed": "Failed to change password",
+      "errorOldRequired": "Please enter your current password",
+      "errorNewRequired": "Please enter a new password",
+      "errorNewTooShort": "New password must be at least 6 characters",
+      "errorSameAsOld": "New password must differ from the current one",
+      "errorConfirmMismatch": "The passwords do not match"
+    }
   },
   "notFound": {
     "title": "404",

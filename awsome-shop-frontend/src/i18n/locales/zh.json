@@ -54,7 +54,11 @@
     "registerSuccess": "注册成功，请登录",
     "registerFailed": "注册失败",
     "hasAccount": "已有账户？",
-    "login": "立即登录"
+    "login": "立即登录",
+    "errorUsernameRequired": "请输入用户名",
+    "errorUsernameLength": "用户名长度需为 {{min}}-{{max}} 位",
+    "errorPasswordRequired": "请输入密码",
+    "errorPasswordTooShort": "密码至少 {{min}} 位"
   },
   "employee": {
     "nav": {
@@ -495,6 +499,27 @@
     "themeDark": "深色",
     "roleEmployee": "员工",
     "roleAdmin": "管理员"
+  },
+  "auth": {
+    "changePassword": {
+      "menuItem": "修改密码",
+      "title": "修改密码",
+      "oldPassword": "当前密码",
+      "oldPasswordPlaceholder": "请输入当前密码",
+      "newPassword": "新密码",
+      "newPasswordPlaceholder": "请输入新密码（至少 6 位）",
+      "confirmPassword": "确认新密码",
+      "confirmPasswordPlaceholder": "请再次输入新密码",
+      "cancel": "取消",
+      "submit": "确认修改",
+      "success": "密码修改成功",
+      "failed": "密码修改失败",
+      "errorOldRequired": "请输入当前密码",
+      "errorNewRequired": "请输入新密码",
+      "errorNewTooShort": "新密码至少 6 位",
+      "errorSameAsOld": "新密码不能与当前密码相同",
+      "errorConfirmMismatch": "两次输入的密码不一致"
+    }
   },
   "notFound": {
     "title": "404",

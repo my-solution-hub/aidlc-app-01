@@ -108,7 +108,8 @@
       "inStock": "有货",
       "productSpecs": "产品规格",
       "serviceTitle": "服务与配送",
-      "guarantee": "服务保障"
+      "guarantee": "服务保障",
+      "pointsPriceLabel": "积分价"
     },
     "confirmRedemption": {
       "title": "确认兑换",

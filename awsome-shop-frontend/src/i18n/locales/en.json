@@ -108,7 +108,8 @@
       "inStock": "In stock",
       "productSpecs": "Specifications",
       "serviceTitle": "Service & Delivery",
-      "guarantee": "Guarantee"
+      "guarantee": "Guarantee",
+      "pointsPriceLabel": "Points Price"
     },
     "confirmRedemption": {
       "title": "Confirm Redemption",

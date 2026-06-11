@@ -242,20 +242,20 @@ export default function ProductDetail() {
               boxSizing: "border-box",
             }}
           >
-            {/* Image gallery */}
+            {/* Image gallery + specs (left column) */}
             <Box
               sx={{
-                width: 360,
+                width: 420,
                 flexShrink: 0,
                 display: "flex",
                 flexDirection: "column",
-                gap: "12px",
+                gap: "16px",
               }}
             >
               <Box
                 sx={{
-                  width: 360,
-                  height: 360,
+                  width: 420,
+                  height: 420,
                   borderRadius: "12px",
                   bgcolor: style.bg,
                   display: "flex",
@@ -294,6 +294,58 @@ export default function ProductDetail() {
                       }}
                     />
                   ))}
+                </Box>
+              )}
+
+              {/* 产品规格(左栏,图片下方,对齐设计稿) */}
+              {product.specs && product.specs.length > 0 && (
+                <Box
+                  sx={{
+                    bgcolor: "#fff",
+                    border: "1px solid #F1F5F9",
+                    borderRadius: "12px",
+                    p: "16px",
+                    display: "flex",
+                    flexDirection: "column",
+                  }}
+                >
+                  <Typography
+                    sx={{
+                      fontSize: 14,
+                      fontWeight: 600,
+                      color: "#1E293B",
+                      mb: "8px",
+                    }}
+                  >
+                    {t("employee.productDetail.productSpecs")}
+                  </Typography>
+                  {product.specs.flatMap((row) =>
+                    Object.entries(row).map(([k, v]) => (
+                      <Box
+                        key={k}
+                        sx={{
+                          display: "flex",
+                          gap: "16px",
+                          py: "8px",
+                          borderBottom: "1px solid #F8FAFC",
+                        }}
+                      >
+                        <Typography
+                          sx={{
+                            fontSize: 13,
+                            color: "#94A3B8",
+                            width: 96,
+                            flexShrink: 0,
+                          }}
+                        >
+                          {k}
+                        </Typography>
+                        <Typography sx={{ fontSize: 13, color: "#1E293B" }}>
+                          {String(v)}
+                        </Typography>
+                      </Box>
+                    )),
+                  )}
                 </Box>
               )}
             </Box>
@@ -353,50 +405,89 @@ export default function ProductDetail() {
                 </Typography>
               </Box>
 
-              {/* Points price + market price */}
+              {/* 价格卡(黄色渐变,对齐设计稿) */}
               <Box
-                sx={{ display: "flex", alignItems: "flex-end", gap: "10px" }}
+                sx={{
+                  background:
+                    "linear-gradient(90deg, #FEF9EC 0%, #FFF7E0 100%)",
+                  borderRadius: "12px",
+                  p: "16px 20px",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "10px",
+                }}
               >
-                <Box sx={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                  <TollIcon sx={{ fontSize: 28, color: "#D97706" }} />
-                  <Typography
-                    sx={{ fontSize: 32, fontWeight: 700, color: "#D97706" }}
-                  >
-                    {product.pointsPrice.toLocaleString()}
-                  </Typography>
-                  <Typography
-                    sx={{ fontSize: 14, color: "#64748B", mb: "6px" }}
-                  >
-                    {t("employee.points")}
-                  </Typography>
-                </Box>
-                {product.marketPrice != null && product.marketPrice > 0 && (
-                  <Typography
-                    sx={{ fontSize: 13, color: "#94A3B8", mb: "8px" }}
-                  >
-                    {t("employee.productDetail.marketPrice")} ¥
-                    {product.marketPrice}
-                  </Typography>
-                )}
-              </Box>
-
-              {product.promotion && (
                 <Box
-                  sx={{
-                    alignSelf: "flex-start",
-                    bgcolor: "#FEF2F2",
-                    borderRadius: "6px",
-                    px: "10px",
-                    py: "4px",
-                  }}
+                  sx={{ display: "flex", alignItems: "flex-end", gap: "10px" }}
                 >
                   <Typography
-                    sx={{ fontSize: 12, fontWeight: 600, color: "#DC2626" }}
+                    sx={{ fontSize: 14, color: "#92400E", mb: "8px" }}
                   >
-                    {product.promotion}
+                    {t("employee.productDetail.pointsPriceLabel")}
                   </Typography>
+                  <Box
+                    sx={{ display: "flex", alignItems: "center", gap: "4px" }}
+                  >
+                    <TollIcon sx={{ fontSize: 28, color: "#D97706" }} />
+                    <Typography
+                      sx={{
+                        fontSize: 36,
+                        fontWeight: 700,
+                        color: "#D97706",
+                        lineHeight: 1,
+                      }}
+                    >
+                      {product.pointsPrice.toLocaleString()}
+                    </Typography>
+                    <Typography
+                      sx={{ fontSize: 14, color: "#92400E", mb: "4px" }}
+                    >
+                      {t("employee.points")}
+                    </Typography>
+                  </Box>
+                  {product.marketPrice != null && product.marketPrice > 0 && (
+                    <Typography
+                      sx={{ fontSize: 13, color: "#B45309", mb: "8px" }}
+                    >
+                      {t("employee.productDetail.marketPrice")} ¥
+                      {product.marketPrice}
+                    </Typography>
+                  )}
                 </Box>
-              )}
+                {product.promotion && (
+                  <Box
+                    sx={{
+                      alignSelf: "flex-start",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "6px",
+                      bgcolor: "#FEF2F2",
+                      borderRadius: "6px",
+                      px: "10px",
+                      py: "4px",
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        bgcolor: "#DC2626",
+                        color: "#fff",
+                        fontSize: 11,
+                        fontWeight: 600,
+                        px: "6px",
+                        py: "1px",
+                        borderRadius: "4px",
+                      }}
+                    >
+                      限时
+                    </Box>
+                    <Typography
+                      sx={{ fontSize: 12, fontWeight: 600, color: "#DC2626" }}
+                    >
+                      {product.promotion}
+                    </Typography>
+                  </Box>
+                )}
+              </Box>
 
               {/* 配送 */}
               {product.deliveryMethod && (

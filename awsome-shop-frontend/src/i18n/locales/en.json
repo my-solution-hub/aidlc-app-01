@@ -123,7 +123,12 @@
       "cancel": "Cancel",
       "loadFailed": "Failed to load redemption details",
       "shippingTitle": "Shipping Info",
-      "noAddress": "No address yet, please add one"
+      "noAddress": "No address yet, please add one",
+      "summaryTitle": "Points Detail",
+      "tipsTitle": "Notes",
+      "tip1": "Points are deducted immediately and cannot be undone.",
+      "tip2": "Items are delivered to your address within 3-5 business days.",
+      "tip3": "Contact the admin if you have any questions."
     },
     "redemptionSuccess": {
       "title": "Redemption Successful!",

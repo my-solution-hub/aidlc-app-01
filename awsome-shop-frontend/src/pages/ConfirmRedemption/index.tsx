@@ -33,6 +33,23 @@ function getCategoryStyle(category: string) {
   return CATEGORY_STYLES[category] || { bg: "#F1F5F9", color: "#64748B" };
 }
 
+function Card({ title, action, children }: { title?: string; action?: React.ReactNode; children: React.ReactNode }) {
+  return (
+    <Box sx={{ bgcolor: "#fff", borderRadius: "16px", border: "1px solid #F1F5F9", p: "24px", display: "flex", flexDirection: "column", gap: "16px" }}>
+      {title && (
+        <>
+          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <Typography sx={{ fontSize: 16, fontWeight: 600, color: "#1E293B" }}>{title}</Typography>
+            {action}
+          </Box>
+          <Box sx={{ height: "1px", bgcolor: "#F1F5F9" }} />
+        </>
+      )}
+      {children}
+    </Box>
+  );
+}
+
 function SummaryRow({
   label,
   value,
@@ -210,101 +227,80 @@ export default function ConfirmRedemption() {
       ) : (
         <Box
           sx={{
-            maxWidth: 560,
+            maxWidth: 600,
+            width: "100%",
             display: "flex",
             flexDirection: "column",
             gap: "20px",
-            bgcolor: "#fff",
-            borderRadius: "12px",
-            border: "1px solid #F1F5F9",
-            p: "24px",
           }}
         >
-          {/* Product summary */}
-          <Box sx={{ display: "flex", gap: "16px" }}>
-            <Box
-              sx={{
-                width: 88,
-                height: 88,
-                flexShrink: 0,
-                borderRadius: "8px",
-                bgcolor: style.bg,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                overflow: "hidden",
-              }}
-            >
-              {product.imageUrl ? (
-                <Box
-                  component="img"
-                  src={resolveImageUrl(product.imageUrl)}
-                  alt={product.name}
-                  sx={{ width: "100%", height: "100%", objectFit: "cover" }}
-                />
-              ) : (
-                <Inventory2Icon sx={{ fontSize: 40, color: style.color }} />
+          {/* Product card */}
+          <Card title={t("employee.confirmRedemption.product")}>
+            <Box sx={{ display: "flex", gap: "16px" }}>
+              <Box
+                sx={{
+                  width: 88,
+                  height: 88,
+                  flexShrink: 0,
+                  borderRadius: "10px",
+                  bgcolor: style.bg,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  overflow: "hidden",
+                }}
+              >
+                {product.imageUrl ? (
+                  <Box
+                    component="img"
+                    src={resolveImageUrl(product.imageUrl)}
+                    alt={product.name}
+                    sx={{ width: "100%", height: "100%", objectFit: "cover" }}
+                  />
+                ) : (
+                  <Inventory2Icon sx={{ fontSize: 40, color: style.color }} />
+                )}
+              </Box>
+              <Box sx={{ display: "flex", flexDirection: "column", gap: "6px", justifyContent: "center" }}>
+                <Typography sx={{ fontSize: 16, fontWeight: 600, color: "#1E293B" }}>
+                  {product.name}
+                </Typography>
+                <Typography sx={{ fontSize: 13, color: "#64748B" }}>{product.category}</Typography>
+              </Box>
+            </Box>
+          </Card>
+
+          {/* Points detail card */}
+          <Card title={t("employee.confirmRedemption.summaryTitle")}>
+            <Box sx={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+              <SummaryRow
+                label={t("employee.confirmRedemption.pointsCost")}
+                value={cost.toLocaleString()}
+                valueColor="#D97706"
+              />
+              <SummaryRow
+                label={t("employee.confirmRedemption.currentBalance")}
+                value={currentBalance.toLocaleString()}
+              />
+              <Box sx={{ height: "1px", bgcolor: "#F1F5F9" }} />
+              <SummaryRow
+                label={t("employee.confirmRedemption.remaining")}
+                value={remaining.toLocaleString()}
+                valueColor={insufficient ? "#DC2626" : "#10B981"}
+                bold
+              />
+              {insufficient && (
+                <Typography sx={{ fontSize: 13, fontWeight: 500, color: "#DC2626" }}>
+                  {t("employee.confirmRedemption.insufficient")}
+                </Typography>
               )}
             </Box>
-            <Box
-              sx={{
-                display: "flex",
-                flexDirection: "column",
-                gap: "6px",
-                justifyContent: "center",
-              }}
-            >
-              <Typography
-                sx={{ fontSize: 16, fontWeight: 600, color: "#1E293B" }}
-              >
-                {product.name}
-              </Typography>
-              <Typography sx={{ fontSize: 13, color: "#64748B" }}>
-                {product.category}
-              </Typography>
-            </Box>
-          </Box>
+          </Card>
 
-          <Box sx={{ height: "1px", bgcolor: "#F1F5F9" }} />
-
-          {/* Cost / balance summary */}
-          <Box
-            sx={{ display: "flex", flexDirection: "column", gap: "12px" }}
-          >
-            <SummaryRow
-              label={t("employee.confirmRedemption.pointsCost")}
-              value={cost.toLocaleString()}
-              valueColor="#D97706"
-            />
-            <SummaryRow
-              label={t("employee.confirmRedemption.currentBalance")}
-              value={currentBalance.toLocaleString()}
-            />
-            <Box sx={{ height: "1px", bgcolor: "#F1F5F9" }} />
-            <SummaryRow
-              label={t("employee.confirmRedemption.remaining")}
-              value={remaining.toLocaleString()}
-              valueColor={insufficient ? "#DC2626" : "#10B981"}
-              bold
-            />
-          </Box>
-
-          {insufficient && (
-            <Typography
-              sx={{ fontSize: 13, fontWeight: 500, color: "#DC2626" }}
-            >
-              {t("employee.confirmRedemption.insufficient")}
-            </Typography>
-          )}
-
-          <Box sx={{ height: "1px", bgcolor: "#F1F5F9" }} />
-
-          {/* Shipping address (C1/C2) */}
-          <Box sx={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <Typography sx={{ fontSize: 14, fontWeight: 600, color: "#1E293B" }}>
-                {t("employee.confirmRedemption.shippingTitle")}
-              </Typography>
+          {/* Shipping address card (C1/C2) */}
+          <Card
+            title={t("employee.confirmRedemption.shippingTitle")}
+            action={
               <Box sx={{ display: "flex", gap: "4px" }}>
                 <Button
                   size="small"
@@ -322,8 +318,8 @@ export default function ConfirmRedemption() {
                   {t("employee.address.add")}
                 </Button>
               </Box>
-            </Box>
-
+            }
+          >
             {addresses.length === 0 ? (
               <Box
                 sx={{
@@ -380,7 +376,21 @@ export default function ConfirmRedemption() {
                 })}
               </Box>
             )}
-          </Box>
+          </Card>
+
+          {/* Tips card */}
+          <Card title={t("employee.confirmRedemption.tipsTitle")}>
+            <Box sx={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+              {["tip1", "tip2", "tip3"].map((k) => (
+                <Box key={k} sx={{ display: "flex", gap: "8px", alignItems: "flex-start" }}>
+                  <Box sx={{ width: 5, height: 5, borderRadius: "50%", bgcolor: "#CBD5E1", mt: "7px", flexShrink: 0 }} />
+                  <Typography sx={{ fontSize: 13, color: "#64748B", lineHeight: 1.6 }}>
+                    {t(`employee.confirmRedemption.${k}`)}
+                  </Typography>
+                </Box>
+              ))}
+            </Box>
+          </Card>
 
           {/* Actions */}
           <Box sx={{ display: "flex", gap: "12px", justifyContent: "flex-end" }}>
@@ -390,9 +400,9 @@ export default function ConfirmRedemption() {
               sx={{
                 textTransform: "none",
                 color: "#64748B",
-                borderRadius: "8px",
+                borderRadius: "10px",
                 px: "24px",
-                py: "8px",
+                py: "10px",
                 border: "1px solid #E2E8F0",
                 "&:hover": { bgcolor: "#F8FAFC" },
               }}
@@ -405,9 +415,9 @@ export default function ConfirmRedemption() {
               disabled={redeeming || insufficient || unavailable || needAddress}
               sx={{
                 textTransform: "none",
-                borderRadius: "8px",
-                px: "24px",
-                py: "8px",
+                borderRadius: "10px",
+                px: "32px",
+                py: "10px",
                 fontWeight: 600,
                 minWidth: 140,
               }}

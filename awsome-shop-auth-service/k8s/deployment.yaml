@@ -15,6 +15,14 @@ spec:
     metadata:
       labels:
         app: auth-service
+      annotations:
+        # CW Application Signals webhook defaults all 4 language agents
+        # to "true". Force-disable the non-Java ones so init containers
+        # for nodejs/python/dotnet are skipped (saves ~5-10s pod start).
+        instrumentation.opentelemetry.io/inject-java: "true"
+        instrumentation.opentelemetry.io/inject-nodejs: "false"
+        instrumentation.opentelemetry.io/inject-python: "false"
+        instrumentation.opentelemetry.io/inject-dotnet: "false"
     spec:
       serviceAccountName: awsome-shop-sa
       containers:

@@ -106,7 +106,9 @@
       "color": "颜色",
       "quantity": "数量",
       "inStock": "有货",
-      "productSpecs": "产品规格"
+      "productSpecs": "产品规格",
+      "serviceTitle": "服务与配送",
+      "guarantee": "服务保障"
     },
     "confirmRedemption": {
       "title": "确认兑换",

@@ -106,7 +106,9 @@
       "color": "Color",
       "quantity": "Quantity",
       "inStock": "In stock",
-      "productSpecs": "Specifications"
+      "productSpecs": "Specifications",
+      "serviceTitle": "Service & Delivery",
+      "guarantee": "Guarantee"
     },
     "confirmRedemption": {
       "title": "Confirm Redemption",

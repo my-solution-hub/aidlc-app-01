@@ -308,4 +308,4 @@
   - 可直接导入 Postman / Apifox / ReDoc，或用 openapi-generator 生成客户端 SDK
 - 统一 Swagger UI（网关，下拉切换 4 服务）：`http://localhost:8088/swagger-ui.html`
 - 各服务 OpenAPI JSON：`GET http://localhost:{8001-8004}/v3/api-docs`，离线快照见 `{auth,product,point,order}-openapi.json`（不含网关前缀）
-- 重新导出方式见 `README.md`
+- 重新导出方式见 `../aidlc-docs/项目说明.md`

@@ -66,6 +66,11 @@ export default function ProductDetail() {
   const [submitting, setSubmitting] = useState(false);
   const [selectedColor, setSelectedColor] = useState<string>("");
   const [quantity, setQuantity] = useState(1);
+  const [zoom, setZoom] = useState<{ show: boolean; x: number; y: number }>({
+    show: false,
+    x: 50,
+    y: 50,
+  });
 
   const colorOptions = (product?.colors ?? "")
     .split(/[,，]/)
@@ -250,10 +255,22 @@ export default function ProductDetail() {
                 display: "flex",
                 flexDirection: "column",
                 gap: "16px",
+                position: "relative",
               }}
             >
               <Box
+                onMouseEnter={() =>
+                  mainImage && setZoom((z) => ({ ...z, show: true }))
+                }
+                onMouseLeave={() => setZoom((z) => ({ ...z, show: false }))}
+                onMouseMove={(e) => {
+                  const r = e.currentTarget.getBoundingClientRect();
+                  const x = ((e.clientX - r.left) / r.width) * 100;
+                  const y = ((e.clientY - r.top) / r.height) * 100;
+                  setZoom({ show: true, x, y });
+                }}
                 sx={{
+                  position: "relative",
                   width: 420,
                   height: 420,
                   borderRadius: "12px",
@@ -262,19 +279,60 @@ export default function ProductDetail() {
                   alignItems: "center",
                   justifyContent: "center",
                   overflow: "hidden",
+                  cursor: mainImage ? "crosshair" : "default",
                 }}
               >
                 {mainImage ? (
-                  <Box
-                    component="img"
-                    src={resolveImageUrl(mainImage)}
-                    alt={product.name}
-                    sx={{ width: "100%", height: "100%", objectFit: "cover" }}
-                  />
+                  <>
+                    <Box
+                      component="img"
+                      src={resolveImageUrl(mainImage)}
+                      alt={product.name}
+                      sx={{ width: "100%", height: "100%", objectFit: "cover" }}
+                    />
+                    {/* 悬停时跟随鼠标的取景框 */}
+                    {zoom.show && (
+                      <Box
+                        sx={{
+                          position: "absolute",
+                          width: 140,
+                          height: 140,
+                          border: "1px solid rgba(37,99,235,0.6)",
+                          bgcolor: "rgba(37,99,235,0.12)",
+                          pointerEvents: "none",
+                          left: `calc(${zoom.x}% - 70px)`,
+                          top: `calc(${zoom.y}% - 70px)`,
+                        }}
+                      />
+                    )}
+                  </>
                 ) : (
                   <Inventory2Icon sx={{ fontSize: 96, color: style.color }} />
                 )}
               </Box>
+
+              {/* 京东式放大镜:悬停时在主图右侧显示放大区域 */}
+              {zoom.show && mainImage && (
+                <Box
+                  sx={{
+                    position: "absolute",
+                    left: "452px",
+                    top: 0,
+                    width: 460,
+                    height: 460,
+                    borderRadius: "12px",
+                    border: "1px solid #E2E8F0",
+                    bgcolor: "#fff",
+                    boxShadow: "0 12px 32px rgba(0,0,0,0.18)",
+                    zIndex: 30,
+                    backgroundImage: `url(${resolveImageUrl(mainImage)})`,
+                    backgroundRepeat: "no-repeat",
+                    backgroundSize: "250%",
+                    backgroundPosition: `${zoom.x}% ${zoom.y}%`,
+                    pointerEvents: "none",
+                  }}
+                />
+              )}
               {gallery.length > 1 && (
                 <Box sx={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
                   {gallery.map((img, i) => (
@@ -593,18 +651,81 @@ export default function ProductDetail() {
 
               {product.description && (
                 <Box
-                  sx={{ display: "flex", flexDirection: "column", gap: "6px" }}
+                  sx={{ display: "flex", flexDirection: "column", gap: "10px" }}
                 >
                   <Typography
-                    sx={{ fontSize: 14, fontWeight: 600, color: "#1E293B" }}
+                    sx={{ fontSize: 16, fontWeight: 700, color: "#1E293B" }}
                   >
                     {t("employee.productDetail.description")}
                   </Typography>
-                  <Typography
-                    sx={{ fontSize: 13, color: "#64748B", lineHeight: 1.7 }}
-                  >
-                    {product.description}
-                  </Typography>
+                  {/* 结构化渲染:按空行分段,【小标题】高亮成蓝色标题块 */}
+                  {product.description
+                    .split(/\n{2,}/)
+                    .map((para) => para.trim())
+                    .filter(Boolean)
+                    .map((para, idx) => {
+                      const m = para.match(/^【(.+?)】([\s\S]*)$/);
+                      if (m) {
+                        return (
+                          <Box
+                            key={idx}
+                            sx={{
+                              display: "flex",
+                              flexDirection: "column",
+                              gap: "6px",
+                            }}
+                          >
+                            <Box
+                              sx={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "8px",
+                              }}
+                            >
+                              <Box
+                                sx={{
+                                  width: "4px",
+                                  height: "14px",
+                                  borderRadius: "2px",
+                                  bgcolor: "#2563EB",
+                                }}
+                              />
+                              <Typography
+                                sx={{
+                                  fontSize: 14,
+                                  fontWeight: 700,
+                                  color: "#1E293B",
+                                }}
+                              >
+                                {m[1]}
+                              </Typography>
+                            </Box>
+                            <Typography
+                              sx={{
+                                fontSize: 13,
+                                color: "#475569",
+                                lineHeight: 1.9,
+                                pl: "12px",
+                              }}
+                            >
+                              {m[2].trim()}
+                            </Typography>
+                          </Box>
+                        );
+                      }
+                      return (
+                        <Typography
+                          key={idx}
+                          sx={{
+                            fontSize: 13,
+                            color: "#475569",
+                            lineHeight: 1.9,
+                          }}
+                        >
+                          {para}
+                        </Typography>
+                      );
+                    })}
                 </Box>
               )}
 
@@ -661,46 +782,44 @@ export default function ProductDetail() {
 
           {/* Spec params card */}
           {product.specs && product.specs.length > 0 && (
-            <Box sx={{ bgcolor: "#fff", borderRadius: "12px", border: "1px solid #F1F5F9", p: "24px", display: "flex", flexDirection: "column", gap: "12px" }}>
-              <Typography sx={{ fontSize: 16, fontWeight: 600, color: "#1E293B" }}>
+            <Box
+              sx={{
+                bgcolor: "#fff",
+                borderRadius: "12px",
+                border: "1px solid #F1F5F9",
+                p: "24px",
+                display: "flex",
+                flexDirection: "column",
+                gap: "12px",
+              }}
+            >
+              <Typography
+                sx={{ fontSize: 16, fontWeight: 600, color: "#1E293B" }}
+              >
                 {t("employee.productDetail.specs")}
               </Typography>
               <Box sx={{ height: "1px", bgcolor: "#F1F5F9" }} />
               {product.specs.flatMap((row) =>
                 Object.entries(row).map(([k, v]) => (
-                  <Box key={k} sx={{ display: "flex", gap: "16px", py: "8px", borderBottom: "1px solid #F8FAFC" }}>
-                    <Typography sx={{ fontSize: 13, color: "#94A3B8", width: 140 }}>{k}</Typography>
-                    <Typography sx={{ fontSize: 13, color: "#1E293B" }}>{String(v)}</Typography>
+                  <Box
+                    key={k}
+                    sx={{
+                      display: "flex",
+                      gap: "16px",
+                      py: "8px",
+                      borderBottom: "1px solid #F8FAFC",
+                    }}
+                  >
+                    <Typography
+                      sx={{ fontSize: 13, color: "#94A3B8", width: 140 }}
+                    >
+                      {k}
+                    </Typography>
+                    <Typography sx={{ fontSize: 13, color: "#1E293B" }}>
+                      {String(v)}
+                    </Typography>
                   </Box>
                 )),
-              )}
-            </Box>
-          )}
-
-          {/* Service / delivery card */}
-          {(product.deliveryMethod || product.serviceGuarantee || product.colors) && (
-            <Box sx={{ bgcolor: "#fff", borderRadius: "12px", border: "1px solid #F1F5F9", p: "24px", display: "flex", flexDirection: "column", gap: "12px" }}>
-              <Typography sx={{ fontSize: 16, fontWeight: 600, color: "#1E293B" }}>
-                {t("employee.productDetail.serviceTitle")}
-              </Typography>
-              <Box sx={{ height: "1px", bgcolor: "#F1F5F9" }} />
-              {product.deliveryMethod && (
-                <Box sx={{ display: "flex", gap: "16px", py: "6px" }}>
-                  <Typography sx={{ fontSize: 13, color: "#94A3B8", width: 140 }}>{t("employee.productDetail.delivery")}</Typography>
-                  <Typography sx={{ fontSize: 13, color: "#1E293B" }}>{product.deliveryMethod}</Typography>
-                </Box>
-              )}
-              {product.serviceGuarantee && (
-                <Box sx={{ display: "flex", gap: "16px", py: "6px" }}>
-                  <Typography sx={{ fontSize: 13, color: "#94A3B8", width: 140 }}>{t("employee.productDetail.guarantee")}</Typography>
-                  <Typography sx={{ fontSize: 13, color: "#1E293B" }}>{product.serviceGuarantee}</Typography>
-                </Box>
-              )}
-              {product.colors && (
-                <Box sx={{ display: "flex", gap: "16px", py: "6px" }}>
-                  <Typography sx={{ fontSize: 13, color: "#94A3B8", width: 140 }}>{t("employee.productDetail.colors")}</Typography>
-                  <Typography sx={{ fontSize: 13, color: "#1E293B" }}>{product.colors}</Typography>
-                </Box>
               )}
             </Box>
           )}

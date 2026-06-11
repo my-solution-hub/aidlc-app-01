@@ -135,6 +135,8 @@
       "loadFailed": "加载订单失败",
       "notFound": "订单不存在",
       "statusTitle": "订单状态",
+      "progressTitle": "订单进度",
+      "statusLog": "状态记录",
       "cancelled": "订单已取消",
       "steps": {
         "submitted": "订单提交成功",

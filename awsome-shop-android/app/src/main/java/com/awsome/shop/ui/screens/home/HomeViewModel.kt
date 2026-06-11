@@ -88,7 +88,7 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch {
             shopRepository.ensureUserId(authRepository)
             val category = if (categoryIndex == 0) null else categories[categoryIndex]
-            shopRepository.getProducts(category).fold(
+            shopRepository.getProducts(category = category).fold(
                 onSuccess = { list ->
                     _uiState.value = _uiState.value.copy(isLoading = false, products = list)
                 },

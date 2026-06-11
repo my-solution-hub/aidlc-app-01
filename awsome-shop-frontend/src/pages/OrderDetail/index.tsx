@@ -55,6 +55,7 @@ export default function OrderDetail() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const snackbar = useSnackbar();
+  const { showError } = snackbar;
   const { id } = useParams<{ id: string }>();
 
   const [order, setOrder] = useState<ExchangeRecordDTO | null>(null);
@@ -66,11 +67,11 @@ export default function OrderDetail() {
     try {
       setOrder(await getMyOrder(Number(id)));
     } catch {
-      snackbar.showError(t("employee.orderDetail.loadFailed"));
+      showError(t("employee.orderDetail.loadFailed"));
     } finally {
       setLoading(false);
     }
-  }, [id, snackbar, t]);
+  }, [id, showError, t]);
 
   useEffect(() => {
     fetchData();

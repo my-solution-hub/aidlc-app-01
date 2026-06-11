@@ -6,7 +6,7 @@ import type {
   CreateUserRequest,
 } from "../../types/api";
 
-const ADMIN_USER_BASE = "/api/admin/users";
+const ADMIN_USER_BASE = "/auth/api/admin/users";
 
 export function listUsers(data: ListUserRequest): Promise<PageResult<UserDTO>> {
   return request.get<PageResult<UserDTO>>(ADMIN_USER_BASE, { params: data });

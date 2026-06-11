@@ -38,6 +38,7 @@ export interface RegisterRequest {
   username: string;
   password: string;
   nickname?: string;
+  employeeId?: string;
   role?: string;
 }
 
@@ -50,6 +51,7 @@ export interface UserDTO {
   employeeId?: string;
   lastLoginAt: string;
   createdAt: string;
+  updatedAt?: string;
 }
 
 export interface ListUserRequest {
@@ -281,4 +283,53 @@ export interface ListExchangeRecordRequest {
 export interface UploadResultDTO {
   filename: string;
   url: string;
+}
+
+// ---- Point Admin (employee points management, US-020/021/022) ----
+
+export interface UserPointDTO {
+  userId: number;
+  username: string;
+  nickname: string;
+  employeeNo: string;
+  balance: number;
+  totalEarned: number;
+  totalUsed: number;
+  updatedAt: string;
+}
+
+export interface ListUserPointRequest {
+  page?: number;
+  size?: number;
+  keyword?: string;
+}
+
+export interface AdminAdjustPointRequest {
+  userId: number;
+  amount: number;
+  reason: string;
+}
+
+export interface DistributionConfigDTO {
+  amount: number;
+  cycle: string;
+  grantDay: number;
+  enabled: boolean;
+  targetRole: string;
+  updatedAt: string;
+}
+
+export interface UpdateDistributionConfigRequest {
+  amount: number;
+  cycle?: string;
+  grantDay?: number;
+  enabled?: boolean;
+  targetRole?: string;
+}
+
+export interface PointGrantStatsDTO {
+  month: string;
+  grantedTotal: number;
+  coveredEmployees: number;
+  lastGrantedAt: string;
 }

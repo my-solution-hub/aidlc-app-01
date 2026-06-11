@@ -68,6 +68,7 @@ export default function ConfirmRedemption() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const snackbar = useSnackbar();
+  const { showError } = snackbar;
   const user = useAuthStore((s) => s.user);
   const { productId } = useParams<{ productId: string }>();
 
@@ -87,11 +88,11 @@ export default function ConfirmRedemption() {
       setProduct(p);
       setBalance(b.balance);
     } catch {
-      snackbar.showError(t("employee.confirmRedemption.loadFailed"));
+      showError(t("employee.confirmRedemption.loadFailed"));
     } finally {
       setLoading(false);
     }
-  }, [productId, user, snackbar, t]);
+  }, [productId, user, showError, t]);
 
   useEffect(() => {
     fetchData();

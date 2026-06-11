@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Outlet, useNavigate, useLocation } from "react-router";
 import { useTranslation } from "react-i18next";
 import Box from "@mui/material/Box";
@@ -10,6 +10,7 @@ import RedeemIcon from "@mui/icons-material/Redeem";
 import SearchIcon from "@mui/icons-material/Search";
 import TollIcon from "@mui/icons-material/Toll";
 import { useAuthStore } from "../../store/useAuthStore";
+import { getBalance } from "../../services/api/point";
 import AvatarMenu from "../AvatarMenu";
 
 const NAV_ITEMS = [
@@ -24,6 +25,15 @@ export default function EmployeeLayout() {
   const location = useLocation();
   const user = useAuthStore((s) => s.user);
   const [searchValue, setSearchValue] = useState("");
+  const [points, setPoints] = useState<number | null>(null);
+
+  // Fetch the live points balance (auth store doesn't carry it after login).
+  useEffect(() => {
+    if (!user) return;
+    getBalance(user.userId)
+      .then((b) => setPoints(b.balance))
+      .catch(() => {});
+  }, [user]);
 
   const handleSearch = () => {
     const q = searchValue.trim();
@@ -152,7 +162,7 @@ export default function EmployeeLayout() {
             icon={
               <TollIcon sx={{ fontSize: 18, color: "#D97706 !important" }} />
             }
-            label={`${(user?.points ?? 0).toLocaleString()} ${t("employee.points")}`}
+            label={`${(points ?? user?.points ?? 0).toLocaleString()} ${t("employee.points")}`}
             sx={{
               bgcolor: "#FFFBEB",
               color: "#D97706",

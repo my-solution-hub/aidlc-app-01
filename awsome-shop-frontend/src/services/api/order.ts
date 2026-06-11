@@ -6,7 +6,7 @@ import type {
   ListOrderRequest,
 } from "../../types/api";
 
-const ORDER_BASE = "/api/orders";
+const ORDER_BASE = "/order/api/orders";
 
 export function redeemProduct(
   data: ExchangeRequest,

@@ -31,6 +31,8 @@ function getCategoryStyle(category: string) {
   return CATEGORY_STYLES[category] || { bg: "#F1F5F9", color: "#64748B" };
 }
 
+const PAGE_SIZE = 20;
+
 export default function ShopHome() {
   const { t } = useTranslation();
   const snackbar = useSnackbar();
@@ -43,9 +45,13 @@ export default function ShopHome() {
   const [products, setProducts] = useState<ProductDTO[]>([]);
   const [categories, setCategories] = useState<{ key: string; label: string }[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [page, setPage] = useState(1);
+  const [pages, setPages] = useState(1);
   const [balance, setBalance] = useState<number | null>(null);
 
   const gridRef = useRef<HTMLDivElement>(null);
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
 
   // Load category list (top-level) to drive the filter chips dynamically.
   useEffect(() => {
@@ -61,16 +67,19 @@ export default function ShopHome() {
       });
   }, [t]);
 
-  const fetchProducts = useCallback(async () => {
+  // Load first page; re-runs when category/search changes (infinite scroll, 20/page).
+  const loadFirst = useCallback(async () => {
     setLoading(true);
     try {
       const res = await listProducts({
         page: 1,
-        size: 50,
+        size: PAGE_SIZE,
         category: activeCategory || undefined,
         name: query || undefined,
       });
       setProducts(res.records);
+      setPage(res.current);
+      setPages(res.pages);
     } catch {
       // handled by interceptor
     } finally {
@@ -79,8 +88,44 @@ export default function ShopHome() {
   }, [activeCategory, query]);
 
   useEffect(() => {
-    fetchProducts();
-  }, [fetchProducts]);
+    loadFirst();
+  }, [loadFirst]);
+
+  // Load subsequent pages and append.
+  const loadMore = useCallback(async () => {
+    if (loading || loadingMore || page >= pages) return;
+    const next = page + 1;
+    setLoadingMore(true);
+    try {
+      const res = await listProducts({
+        page: next,
+        size: PAGE_SIZE,
+        category: activeCategory || undefined,
+        name: query || undefined,
+      });
+      setProducts((prev) => [...prev, ...res.records]);
+      setPage(res.current);
+      setPages(res.pages);
+    } catch {
+      // handled by interceptor
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [loading, loadingMore, page, pages, activeCategory, query]);
+
+  // Observe the sentinel near the bottom to trigger loading the next page.
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) loadMore();
+      },
+      { rootMargin: "200px" },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [loadMore]);
 
   // Load points balance for the current employee
   const fetchBalance = useCallback(() => {
@@ -212,6 +257,7 @@ export default function ShopHome() {
             </Typography>
           </Box>
         ) : (
+          <>
           <Box
             sx={{
               display: "grid",
@@ -251,6 +297,7 @@ export default function ShopHome() {
                         component="img"
                         src={product.imageUrl}
                         alt={product.name}
+                        loading="lazy"
                         sx={{
                           width: "100%",
                           height: "100%",
@@ -347,6 +394,13 @@ export default function ShopHome() {
               );
             })}
           </Box>
+          <Box ref={sentinelRef} sx={{ height: "1px" }} />
+          {loadingMore && (
+            <Box sx={{ display: "flex", justifyContent: "center", py: 3 }}>
+              <CircularProgress size={28} />
+            </Box>
+          )}
+          </>
         )}
       </Box>
 

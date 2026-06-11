@@ -14,6 +14,7 @@ import CircularProgress from '@mui/material/CircularProgress';
 import PersonIcon from '@mui/icons-material/Person';
 import LockIcon from '@mui/icons-material/Lock';
 import BadgeIcon from '@mui/icons-material/Badge';
+import AssignmentIndIcon from '@mui/icons-material/AssignmentInd';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import RedeemIcon from '@mui/icons-material/Redeem';
@@ -46,15 +47,30 @@ export default function Register() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [nickname, setNickname] = useState('');
+  const [employeeId, setEmployeeId] = useState('');
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
 
   const handleRegister = async () => {
     setErrorMsg('');
+    const trimmedUsername = username.trim();
+    if (trimmedUsername.length < 3 || trimmedUsername.length > 20) {
+      setErrorMsg(t('register.usernameInvalid'));
+      return;
+    }
+    if (password.length < 6) {
+      setErrorMsg(t('register.passwordInvalid'));
+      return;
+    }
     setLoading(true);
     try {
-      await register({ username, password, nickname: nickname || undefined });
+      await register({
+        username,
+        password,
+        nickname: nickname || undefined,
+        employeeId: employeeId.trim() || undefined,
+      });
       setSuccessMsg(t('register.registerSuccess'));
       setTimeout(() => navigate('/login'), 1200);
     } catch (err) {
@@ -167,6 +183,30 @@ export default function Register() {
                       startAdornment: (
                         <InputAdornment position="start">
                           <BadgeIcon sx={{ fontSize: 20, color: 'text.secondary' }} />
+                        </InputAdornment>
+                      ),
+                      sx: fieldInputSx,
+                    },
+                  }}
+                />
+              </Box>
+
+              {/* Employee ID (工号) */}
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75 }}>
+                <Typography sx={{ fontSize: 14, fontWeight: 500, color: 'text.primary', fontFamily: 'Inter, sans-serif' }}>
+                  {t('register.employeeIdLabel')}
+                </Typography>
+                <TextField
+                  fullWidth
+                  size="small"
+                  placeholder={t('register.employeeIdPlaceholder')}
+                  value={employeeId}
+                  onChange={(e) => setEmployeeId(e.target.value)}
+                  slotProps={{
+                    input: {
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <AssignmentIndIcon sx={{ fontSize: 20, color: 'text.secondary' }} />
                         </InputAdornment>
                       ),
                       sx: fieldInputSx,

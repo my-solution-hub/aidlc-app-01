@@ -6,8 +6,8 @@ import type {
   CreateProductRequest,
 } from "../../types/api";
 
-const PRODUCT_BASE = "/api/products";
-const ADMIN_PRODUCT_BASE = "/api/admin/products";
+const PRODUCT_BASE = "/product/api/products";
+const ADMIN_PRODUCT_BASE = "/product/api/admin/products";
 
 export function listProducts(
   data: ListProductRequest,

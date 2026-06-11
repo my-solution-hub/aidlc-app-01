@@ -33,6 +33,7 @@ import { uploadFile } from "../../services/api/file";
 import type { ProductDTO, StockAdjustRequest } from "../../types/api";
 import { AppSnackbar, useSnackbar } from "../../components/AppSnackbar";
 import { BusinessError } from "../../services/request";
+import { resolveImageUrl } from "../../utils/image";
 
 type DialogKind = "offShelf" | "stock" | "upload" | null;
 
@@ -286,7 +287,7 @@ export default function ProductDetailAdmin() {
             }}
           >
             {(product.images?.[0] ?? product.imageUrl) ? (
-              <Box component="img" src={product.images?.[0] ?? product.imageUrl} alt={product.name} sx={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              <Box component="img" src={resolveImageUrl(product.images?.[0] ?? product.imageUrl)} alt={product.name} sx={{ width: "100%", height: "100%", objectFit: "cover" }} />
             ) : (
               <Inventory2Icon sx={{ fontSize: 72, color: "#93C5FD" }} />
             )}
@@ -297,7 +298,7 @@ export default function ProductDetailAdmin() {
                 <Box
                   key={i}
                   component="img"
-                  src={img}
+                  src={resolveImageUrl(img)}
                   alt={`${product.name}-${i}`}
                   sx={{ width: 48, height: 48, borderRadius: "6px", objectFit: "cover", border: "1px solid #E2E8F0" }}
                 />
@@ -517,7 +518,7 @@ function UploadDialog({ loading, onSave, onClose, onError }: { loading?: boolean
               <CircularProgress size={28} />
             ) : (
               <Box sx={{ width: 120, height: 120, borderRadius: "8px", overflow: "hidden", border: "2px solid #2563EB" }}>
-                <Box component="img" src={url} alt="preview" sx={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                <Box component="img" src={resolveImageUrl(url)} alt="preview" sx={{ width: "100%", height: "100%", objectFit: "cover" }} />
               </Box>
             )}
           </Box>

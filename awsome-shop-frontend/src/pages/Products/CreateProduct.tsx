@@ -24,6 +24,7 @@ import {
 import { uploadFile } from "../../services/api/file";
 import { listCategories } from "../../services/api/category";
 import { BusinessError } from "../../services/request";
+import { resolveImageUrl } from "../../utils/image";
 
 // Shared input style matching Pencil design
 const inputSx = {
@@ -643,7 +644,7 @@ export default function CreateProduct() {
                 border: idx === 0 ? "2px solid #2563EB" : "1px solid #E2E8F0",
               }}
             >
-              <Box component="img" src={url} alt={`img-${idx}`} sx={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              <Box component="img" src={resolveImageUrl(url)} alt={`img-${idx}`} sx={{ width: "100%", height: "100%", objectFit: "cover" }} />
               {idx === 0 && (
                 <Box sx={{ position: "absolute", top: 0, left: 0, bgcolor: "#2563EB", px: "6px", py: "1px", borderBottomRightRadius: "6px" }}>
                   <Typography sx={{ fontSize: 10, fontWeight: 600, color: "#fff" }}>{t("admin.products.imageMain")}</Typography>

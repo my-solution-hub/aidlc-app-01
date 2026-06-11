@@ -15,6 +15,7 @@ import { useAuthStore } from "../../store/useAuthStore";
 import { statusStyle, STATUS_I18N } from "../../utils/orderStatus";
 import { AppSnackbar, useSnackbar } from "../../components/AppSnackbar";
 import { BusinessError } from "../../services/request";
+import { resolveImageUrl } from "../../utils/image";
 
 const PAGE_SIZE = 5;
 
@@ -224,7 +225,7 @@ export default function MyOrders() {
                     }}
                   >
                     {record.productImageUrl ? (
-                      <Box component="img" src={record.productImageUrl} alt={record.productName} sx={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      <Box component="img" src={resolveImageUrl(record.productImageUrl)} alt={record.productName} sx={{ width: "100%", height: "100%", objectFit: "cover" }} />
                     ) : (
                       <Inventory2Icon sx={{ fontSize: 28, color: "#2563EB" }} />
                     )}

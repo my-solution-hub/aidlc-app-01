@@ -19,6 +19,7 @@ import { useAuthStore } from "../../store/useAuthStore";
 import { AppSnackbar, useSnackbar } from "../../components/AppSnackbar";
 import { BusinessError } from "../../services/request";
 import { AddressDialog } from "../Addresses";
+import { resolveImageUrl } from "../../utils/image";
 
 const CATEGORY_STYLES: Record<string, { bg: string; color: string }> = {
   数码电子: { bg: "#DBEAFE", color: "#2563EB" },
@@ -237,7 +238,7 @@ export default function ConfirmRedemption() {
               {product.imageUrl ? (
                 <Box
                   component="img"
-                  src={product.imageUrl}
+                  src={resolveImageUrl(product.imageUrl)}
                   alt={product.name}
                   sx={{ width: "100%", height: "100%", objectFit: "cover" }}
                 />

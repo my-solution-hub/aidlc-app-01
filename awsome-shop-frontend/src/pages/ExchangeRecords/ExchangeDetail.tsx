@@ -24,6 +24,7 @@ import type { ExchangeRecordDTO } from "../../types/api";
 import { AppSnackbar, useSnackbar } from "../../components/AppSnackbar";
 import { BusinessError } from "../../services/request";
 import { statusStyle, STATUS_I18N, nextStatuses } from "../../utils/orderStatus";
+import { resolveImageUrl } from "../../utils/image";
 
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -164,7 +165,7 @@ export default function ExchangeDetail() {
               <Box sx={{ display: "flex", gap: "12px", alignItems: "center" }}>
                 <Box sx={{ width: 56, height: 56, borderRadius: "8px", bgcolor: "#EFF6FF", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
                   {record.productImageUrl ? (
-                    <Box component="img" src={record.productImageUrl} alt={record.productName} sx={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    <Box component="img" src={resolveImageUrl(record.productImageUrl)} alt={record.productName} sx={{ width: "100%", height: "100%", objectFit: "cover" }} />
                   ) : (
                     <Inventory2Icon sx={{ fontSize: 28, color: "#2563EB" }} />
                   )}

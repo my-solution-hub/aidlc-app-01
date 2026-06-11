@@ -96,8 +96,8 @@
 **目标**: 所有 ViewModel init 时自动恢复会话
 
 **执行项**:
-- [ ] 在 `ShopRepository` 的关键方法开头添加 `ensureUserId()` 检查
-- [ ] 或者在 Hilt Module 提供 userId 的 Flow/LiveData，ViewModel 自动订阅
+- [x] 在 `ShopRepository` 的关键方法开头添加 `ensureUserId()` 检查
+- [x] 或者在 Hilt Module 提供 userId 的 Flow/LiveData，ViewModel 自动订阅
 
 ---
 
@@ -107,10 +107,10 @@
 **目标**: 统一错误处理 + 重试机制
 
 **执行项**:
-- [ ] 创建 `ui/components/ErrorRetryView.kt` 可复用组件
-- [ ] 处理 401 → 自动跳转登录
-- [ ] 处理 409 → 显示业务错误（积分不足/库存不足）
-- [ ] 处理网络超时 → 显示重试按钮
+- [x] 创建 `ui/components/ErrorRetryView.kt` 可复用组件
+- [x] 处理 401 → 自动跳转登录
+- [x] 处理 409 → 显示业务错误（积分不足/库存不足）
+- [x] 处理网络超时 → 显示重试按钮
 
 ---
 
@@ -120,9 +120,9 @@
 **目标**: DELIVERING 状态的订单显示确认收货按钮
 
 **执行项**:
-- [ ] `OrderDetailScreen` 添加"确认收货"按钮（仅 DELIVERING 状态可见）
-- [ ] 调用 `POST /api/orders/{id}/confirm-receipt?userId=`
-- [ ] 成功后刷新订单状态为 COMPLETED
+- [x] `OrderDetailScreen` 添加"确认收货"按钮（仅 DELIVERING 状态可见）
+- [x] 调用 `POST /api/orders/{id}/confirm-receipt?userId=`
+- [x] 成功后刷新订单状态为 COMPLETED
 
 ---
 
@@ -134,27 +134,27 @@
 **目标**: 支持按订单号/商品名搜索
 
 **执行项**:
-- [ ] `OrdersScreen` 添加搜索框
-- [ ] `OrdersViewModel` 传入 keyword 参数
-- [ ] 调用 `GET /api/orders?keyword=xxx`
+- [x] `OrdersScreen` 添加搜索框
+- [x] `OrdersViewModel` 传入 keyword 参数
+- [x] 调用 `GET /api/orders?keyword=xxx`
 
 ---
 
 ### Step 9: Logout 确认对话框
 
 **执行项**:
-- [ ] `ProfileScreen` 退出按钮弹出确认 Dialog
-- [ ] 确认后执行 `POST /api/auth/logout` + 清除本地会话
+- [x] `ProfileScreen` 退出按钮弹出确认 Dialog
+- [x] 确认后执行 `POST /api/auth/logout` + 清除本地会话
 
 ---
 
 ### Step 10: DTO 字段更新（对齐 v1.2 新增字段）
 
 **执行项**:
-- [ ] `ProductDto` 添加 `images: List<String>` 字段（多图）
-- [ ] `ExchangeRecordDto` 添加 `freightPoints`/`balanceAfter`/`carrier`/`timeline` 字段
-- [ ] `PointTransactionDto` 添加 `operator` 字段
-- [ ] 更新领域模型映射（toDomain）
+- [x] `ProductDto` 添加 `images: List<String>` 字段（多图）
+- [x] `ExchangeRecordDto` 添加 `freightPoints`/`balanceAfter`/`carrier`/`timeline` 字段
+- [x] `PointTransactionDto` 添加 `operator` 字段
+- [x] 更新领域模型映射（toDomain）
 
 ---
 

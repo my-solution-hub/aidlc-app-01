@@ -15,6 +15,8 @@ data class OrderDetailUiState(
     val isLoading: Boolean = true,
     val order: Order? = null,
     val error: String? = null,
+    val confirmingReceipt: Boolean = false,
+    val confirmSuccess: Boolean = false,
 )
 
 @HiltViewModel
@@ -40,6 +42,28 @@ class OrderDetailViewModel @Inject constructor(
                     _uiState.value = OrderDetailUiState(
                         isLoading = false,
                         error = e.message ?: "加载订单详情失败",
+                    )
+                },
+            )
+        }
+    }
+
+    fun confirmReceipt() {
+        val orderId = loadedId ?: return
+        _uiState.value = _uiState.value.copy(confirmingReceipt = true)
+        viewModelScope.launch {
+            shopRepository.confirmReceipt(orderId).fold(
+                onSuccess = { updatedOrder ->
+                    _uiState.value = _uiState.value.copy(
+                        confirmingReceipt = false,
+                        confirmSuccess = true,
+                        order = updatedOrder,
+                    )
+                },
+                onFailure = { e ->
+                    _uiState.value = _uiState.value.copy(
+                        confirmingReceipt = false,
+                        error = e.message ?: "确认收货失败",
                     )
                 },
             )

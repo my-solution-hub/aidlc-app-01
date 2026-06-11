@@ -84,6 +84,8 @@ fun OrderDetailScreen(
             else -> {
                 OrderDetailContent(
                     order = state.order!!,
+                    isConfirming = state.confirmingReceipt,
+                    onConfirmReceipt = { viewModel.confirmReceipt() },
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(padding)
@@ -96,7 +98,7 @@ fun OrderDetailScreen(
 }
 
 @Composable
-private fun OrderDetailContent(order: Order, modifier: Modifier = Modifier) {
+private fun OrderDetailContent(order: Order, isConfirming: Boolean = false, onConfirmReceipt: () -> Unit = {}, modifier: Modifier = Modifier) {
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(16.dp)) {
         // 状态卡
         Card(
@@ -164,6 +166,22 @@ private fun OrderDetailContent(order: Order, modifier: Modifier = Modifier) {
                 if (order.trackingNumber != null) {
                     HorizontalDivider()
                     InfoRow("物流单号", order.trackingNumber)
+                }
+            }
+        }
+
+        // 确认收货按钮（仅 SHIPPED/DELIVERING 状态显示）
+        if (order.status == com.awsome.shop.data.model.OrderStatus.SHIPPED) {
+            androidx.compose.material3.Button(
+                onClick = onConfirmReceipt,
+                modifier = Modifier.fillMaxWidth().height(50.dp),
+                shape = RoundedCornerShape(12.dp),
+                enabled = !isConfirming,
+            ) {
+                if (isConfirming) {
+                    CircularProgressIndicator(modifier = Modifier.size(24.dp), color = MaterialTheme.colorScheme.onPrimary)
+                } else {
+                    Text("确认收货", fontSize = 16.sp)
                 }
             }
         }

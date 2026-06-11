@@ -17,6 +17,7 @@ data class OrdersUiState(
     val isLoading: Boolean = true,
     val orders: List<Order> = emptyList(),
     val error: String? = null,
+    val keyword: String = "",
 )
 
 @HiltViewModel
@@ -32,16 +33,24 @@ class OrdersViewModel @Inject constructor(
         load()
     }
 
-    fun load() {
+    fun onKeywordChange(value: String) {
+        _uiState.value = _uiState.value.copy(keyword = value)
+    }
+
+    fun search() {
+        load(_uiState.value.keyword.ifBlank { null })
+    }
+
+    fun load(keyword: String? = null) {
         _uiState.value = _uiState.value.copy(isLoading = true, error = null)
         viewModelScope.launch {
             shopRepository.ensureUserId(authRepository)
-            shopRepository.getOrders().fold(
+            shopRepository.getOrders(keyword = keyword).fold(
                 onSuccess = { list ->
-                    _uiState.value = OrdersUiState(isLoading = false, orders = list)
+                    _uiState.value = _uiState.value.copy(isLoading = false, orders = list)
                 },
                 onFailure = { e ->
-                    _uiState.value = OrdersUiState(
+                    _uiState.value = _uiState.value.copy(
                         isLoading = false,
                         error = e.message ?: "加载订单失败",
                     )

@@ -4,6 +4,7 @@ import { NetworkStack } from '../lib/network-stack';
 import { DataStack } from '../lib/data-stack';
 import { EksStack } from '../lib/eks-stack';
 import { CdnStack } from '../lib/cdn-stack';
+import { RumStack } from '../lib/rum-stack';
 
 const app = new cdk.App();
 
@@ -32,9 +33,15 @@ const eksStack = new EksStack(app, 'AwsomeShop-EKS', {
 });
 
 // 4. CloudFront + S3 (frontend) + ALB Origin
-new CdnStack(app, 'AwsomeShop-CDN', {
+const cdnStack = new CdnStack(app, 'AwsomeShop-CDN', {
   env,
   alb: eksStack.alb,
+});
+
+// 5. CloudWatch RUM (frontend monitoring)
+new RumStack(app, 'AwsomeShop-RUM', {
+  env,
+  domain: cdnStack.distribution.distributionDomainName,
 });
 
 app.synth();

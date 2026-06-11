@@ -145,8 +145,15 @@ jobs:
   # (Frontend is served from CloudFront's S3 origin, NOT EKS.)
   # ============================================================
   deploy-frontend:
-    needs: detect-changes
-    if: needs.detect-changes.outputs.frontend == 'true' || github.event.inputs.deploy-all == 'true'
+    # frontend depends on RUM stack outputs created by deploy-cdk. If CDK
+    # didn't run this push, the RUM stack already exists from a prior run
+    # so reading its outputs still works.
+    needs: [detect-changes, deploy-cdk]
+    if: |
+      always() &&
+      needs.detect-changes.result == 'success' &&
+      (needs.deploy-cdk.result == 'success' || needs.deploy-cdk.result == 'skipped') &&
+      (needs.detect-changes.outputs.frontend == 'true' || github.event.inputs.deploy-all == 'true')
     runs-on: ubuntu-latest
     env:
       FRONTEND_BUCKET: awsomeshop-frontend-613477150601
@@ -171,6 +178,22 @@ jobs:
         working-directory: awsome-shop-frontend
         run: npm ci
 
+      - name: Resolve RUM AppMonitor outputs
+        id: rum
+        run: |
+          STACK=AwsomeShop-RUM
+          AM_NAME=$(aws cloudformation describe-stacks --stack-name "$STACK" \
+            --query 'Stacks[0].Outputs[?OutputKey==`AppMonitorName`].OutputValue' --output text)
+          POOL_ID=$(aws cloudformation describe-stacks --stack-name "$STACK" \
+            --query 'Stacks[0].Outputs[?OutputKey==`RumIdentityPoolId`].OutputValue' --output text)
+          ROLE_ARN=$(aws cloudformation describe-stacks --stack-name "$STACK" \
+            --query 'Stacks[0].Outputs[?OutputKey==`RumGuestRoleArn`].OutputValue' --output text)
+          # AppMonitor.Id is a UUID — fetch it via the RUM API (CFN doesn't output it).
+          AM_ID=$(aws rum get-app-monitor --name "$AM_NAME" --query 'AppMonitor.Id' --output text)
+          echo "appmonitor_id=$AM_ID" >> "$GITHUB_OUTPUT"
+          echo "pool_id=$POOL_ID" >> "$GITHUB_OUTPUT"
+          echo "role_arn=$ROLE_ARN" >> "$GITHUB_OUTPUT"
+
       - name: Build (Vite)
         working-directory: awsome-shop-frontend
         env:
@@ -178,6 +201,10 @@ jobs:
           # which forwards /api/* to the ALB. Empty string would fall
           # through `||` to the localhost dev fallback in request.ts.
           VITE_API_BASE_URL: "/"
+          VITE_RUM_APP_MONITOR_ID: ${{ steps.rum.outputs.appmonitor_id }}
+          VITE_RUM_IDENTITY_POOL_ID: ${{ steps.rum.outputs.pool_id }}
+          VITE_RUM_GUEST_ROLE_ARN: ${{ steps.rum.outputs.role_arn }}
+          VITE_RUM_REGION: ${{ env.AWS_REGION }}
         run: npm run build
 
       - name: Sync to S3

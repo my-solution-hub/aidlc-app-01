@@ -19,6 +19,7 @@ import type { ProductDTO, ReviewDTO } from "../../types/api";
 import { useAuthStore } from "../../store/useAuthStore";
 import { AppSnackbar, useSnackbar } from "../../components/AppSnackbar";
 import { BusinessError } from "../../services/request";
+import { resolveImageUrl } from "../../utils/image";
 
 const CATEGORY_STYLES: Record<string, { bg: string; color: string }> = {
   数码电子: { bg: "#DBEAFE", color: "#2563EB" },
@@ -175,7 +176,7 @@ export default function ProductDetail() {
                 }}
               >
                 {mainImage ? (
-                  <Box component="img" src={mainImage} alt={product.name} sx={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  <Box component="img" src={resolveImageUrl(mainImage)} alt={product.name} sx={{ width: "100%", height: "100%", objectFit: "cover" }} />
                 ) : (
                   <Inventory2Icon sx={{ fontSize: 96, color: style.color }} />
                 )}
@@ -187,7 +188,7 @@ export default function ProductDetail() {
                       key={i}
                       onClick={() => setActiveImage(i)}
                       component="img"
-                      src={img}
+                      src={resolveImageUrl(img)}
                       alt={`${product.name}-${i}`}
                       sx={{
                         width: 56,
@@ -327,7 +328,7 @@ export default function ProductDetail() {
                     >
                       <Box sx={{ height: 100, bgcolor: rs.bg, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
                         {p.imageUrl ? (
-                          <Box component="img" src={p.imageUrl} alt={p.name} sx={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                          <Box component="img" src={resolveImageUrl(p.imageUrl)} alt={p.name} sx={{ width: "100%", height: "100%", objectFit: "cover" }} />
                         ) : (
                           <Inventory2Icon sx={{ fontSize: 36, color: rs.color }} />
                         )}

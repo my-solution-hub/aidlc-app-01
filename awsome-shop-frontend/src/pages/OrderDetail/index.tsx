@@ -14,6 +14,7 @@ import { useAuthStore } from "../../store/useAuthStore";
 import { AppSnackbar, useSnackbar } from "../../components/AppSnackbar";
 import { BusinessError } from "../../services/request";
 import { statusStyle, STATUS_I18N } from "../../utils/orderStatus";
+import { resolveImageUrl } from "../../utils/image";
 
 /** Timeline step order (cancel handled separately). */
 const TIMELINE: { key: string; statuses: string[] }[] = [
@@ -258,7 +259,7 @@ export default function OrderDetail() {
                   }}
                 >
                   {order.productImageUrl ? (
-                    <Box component="img" src={order.productImageUrl} alt={order.productName} sx={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    <Box component="img" src={resolveImageUrl(order.productImageUrl)} alt={order.productName} sx={{ width: "100%", height: "100%", objectFit: "cover" }} />
                   ) : (
                     <Inventory2Icon sx={{ fontSize: 28, color: "#2563EB" }} />
                   )}

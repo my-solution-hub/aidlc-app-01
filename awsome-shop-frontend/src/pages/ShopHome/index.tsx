@@ -19,6 +19,7 @@ import { getBalance } from "../../services/api/point";
 import type { ProductDTO } from "../../types/api";
 import { useAuthStore } from "../../store/useAuthStore";
 import { AppSnackbar, useSnackbar } from "../../components/AppSnackbar";
+import { resolveImageUrl } from "../../utils/image";
 
 const CATEGORY_STYLES: Record<string, { bg: string; color: string }> = {
   数码电子: { bg: "#DBEAFE", color: "#2563EB" },
@@ -296,7 +297,7 @@ export default function ShopHome() {
                     {product.imageUrl ? (
                       <Box
                         component="img"
-                        src={product.imageUrl}
+                        src={resolveImageUrl(product.imageUrl)}
                         alt={product.name}
                         loading="lazy"
                         sx={{

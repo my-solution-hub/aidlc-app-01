@@ -17,6 +17,7 @@ import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import Inventory2Icon from "@mui/icons-material/Inventory2";
 import { listProducts, deleteProduct } from "../../services/api/product";
 import type { ProductDTO } from "../../types/api";
+import { resolveImageUrl } from "../../utils/image";
 import AdminPageHeader from "../../components/AdminPageHeader";
 import ConfirmDialog from "../../components/ConfirmDialog";
 import { AppSnackbar, useSnackbar } from "../../components/AppSnackbar";
@@ -450,7 +451,7 @@ function ProductCard({
           <Box
             component="img"
             ref={imgRef}
-            src={product.imageUrl}
+            src={resolveImageUrl(product.imageUrl)}
             alt={product.name}
             onError={() => setImgFailed(true)}
             sx={{ width: "100%", height: "100%", objectFit: "cover" }}

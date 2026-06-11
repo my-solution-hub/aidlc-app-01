@@ -24,9 +24,13 @@ public interface ProductApplicationService {
 
     ProductDTO get(Long id);
 
+    com.awsome.shop.product.application.api.dto.product.ProductStatsDTO stats();
+
     /** 扣减库存（兑换，被 order 调用） */
     ProductDTO deductStock(Long productId, int quantity);
 
     /** 回补库存（Saga 补偿，被 order 调用） */
     ProductDTO restoreStock(Long productId, int quantity);
+
+    ProductDTO adminAdjustStock(Long productId, String changeType, int quantity, String reason);
 }

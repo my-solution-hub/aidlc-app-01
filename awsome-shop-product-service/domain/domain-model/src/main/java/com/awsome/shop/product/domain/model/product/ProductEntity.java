@@ -37,6 +37,8 @@ public class ProductEntity {
 
     private String imageUrl;
 
+    private java.util.List<String> images;
+
     private String subtitle;
 
     private String deliveryMethod;
@@ -57,7 +59,7 @@ public class ProductEntity {
                            Integer pointsPrice, BigDecimal marketPrice, Integer stock,
                            Integer status, String description, String imageUrl,
                            String subtitle, String deliveryMethod, String serviceGuarantee,
-                           String promotion, String colors, List<Map<String, String>> specs) {
+                           String promotion, String colors, List<Map<String, String>> specs, List<String> images) {
         this.name = name;
         this.sku = sku;
         this.category = category;
@@ -74,5 +76,6 @@ public class ProductEntity {
         this.promotion = promotion;
         this.colors = colors;
         this.specs = specs;
+        this.images = images;
     }
 }

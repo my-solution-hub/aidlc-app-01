@@ -40,6 +40,9 @@ public class PointRuleApplicationServiceImpl implements PointRuleApplicationServ
         entity.setPointValueMin(request.getPointValueMin());
         entity.setPointValueMax(request.getPointValueMax());
         entity.setTriggerCondition(request.getTriggerCondition());
+        entity.setScope(request.getScope());
+        entity.setGrantMethod(request.getGrantMethod());
+        entity.setIcon(request.getIcon());
         entity.setStatus(request.getStatus());
         return toDTO(pointRuleDomainService.create(entity));
     }
@@ -54,6 +57,9 @@ public class PointRuleApplicationServiceImpl implements PointRuleApplicationServ
         entity.setPointValueMin(request.getPointValueMin());
         entity.setPointValueMax(request.getPointValueMax());
         entity.setTriggerCondition(request.getTriggerCondition());
+        entity.setScope(request.getScope());
+        entity.setGrantMethod(request.getGrantMethod());
+        entity.setIcon(request.getIcon());
         entity.setStatus(request.getStatus());
         return toDTO(pointRuleDomainService.update(entity));
     }
@@ -72,6 +78,9 @@ public class PointRuleApplicationServiceImpl implements PointRuleApplicationServ
         dto.setPointValueMin(entity.getPointValueMin());
         dto.setPointValueMax(entity.getPointValueMax());
         dto.setTriggerCondition(entity.getTriggerCondition());
+        dto.setScope(entity.getScope());
+        dto.setGrantMethod(entity.getGrantMethod());
+        dto.setIcon(entity.getIcon());
         dto.setStatus(entity.getStatus());
         dto.setCreatedAt(entity.getCreatedAt());
         dto.setUpdatedAt(entity.getUpdatedAt());

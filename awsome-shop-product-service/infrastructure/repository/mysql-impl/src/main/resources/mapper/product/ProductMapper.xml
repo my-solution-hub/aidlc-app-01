@@ -7,12 +7,14 @@
         <id column="id" property="id"/>
         <result column="specs" property="specs"
                 typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
+        <result column="images" property="images"
+                typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
     </resultMap>
 
     <!-- 分页查询 -->
     <select id="selectPage" resultMap="productResultMap">
         SELECT id, name, sku, category, brand, points_price, market_price, stock, sold_count,
-               status, description, image_url, subtitle, delivery_method, service_guarantee,
+               status, description, image_url, images, subtitle, delivery_method, service_guarantee,
                promotion, colors, specs, created_at, updated_at, created_by, updated_by, deleted, version
         FROM product
         WHERE deleted = 0
@@ -28,7 +30,7 @@
     <!-- 按主键查询并加悲观锁（库存并发控制 BR-PROD-007） -->
     <select id="selectByIdForUpdate" resultMap="productResultMap">
         SELECT id, name, sku, category, brand, points_price, market_price, stock, sold_count,
-               status, description, image_url, subtitle, delivery_method, service_guarantee,
+               status, description, image_url, images, subtitle, delivery_method, service_guarantee,
                promotion, colors, specs, created_at, updated_at, created_by, updated_by, deleted, version
         FROM product
         WHERE id = #{id} AND deleted = 0

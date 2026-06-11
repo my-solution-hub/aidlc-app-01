@@ -25,6 +25,8 @@ public class PointTransactionPO {
 
     private String description;
 
+    private String operator;
+
     @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createdAt;
 }

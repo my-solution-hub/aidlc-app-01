@@ -70,6 +70,15 @@ public class UserRepositoryImpl implements UserRepository {
         return pageResult;
     }
 
+    @Override
+    public long[] countStats() {
+        return new long[]{
+                userMapper.countTotal(),
+                userMapper.countActive(),
+                userMapper.countNewThisMonth()
+        };
+    }
+
     private UserEntity toEntity(UserPO po) {
         UserEntity entity = new UserEntity();
         entity.setId(po.getId());
@@ -77,6 +86,7 @@ public class UserRepositoryImpl implements UserRepository {
         entity.setPasswordHash(po.getPasswordHash());
         entity.setNickname(po.getNickname());
         entity.setEmployeeId(po.getEmployeeId());
+        entity.setDepartment(po.getDepartment());
         entity.setRole(po.getRole());
         entity.setStatus(po.getStatus());
         entity.setFailedLoginAttempts(po.getFailedLoginAttempts());
@@ -94,6 +104,7 @@ public class UserRepositoryImpl implements UserRepository {
         po.setPasswordHash(entity.getPasswordHash());
         po.setNickname(entity.getNickname());
         po.setEmployeeId(entity.getEmployeeId());
+        po.setDepartment(entity.getDepartment());
         po.setRole(entity.getRole());
         po.setStatus(entity.getStatus());
         po.setFailedLoginAttempts(entity.getFailedLoginAttempts());

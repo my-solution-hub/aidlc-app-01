@@ -41,6 +41,33 @@ public class UserController {
         return Result.success(userApplicationService.list(request));
     }
 
+    @Operation(summary = "导出用户数据 CSV")
+    @GetMapping("/export")
+    public org.springframework.http.ResponseEntity<String> export() {
+        ListUserRequest req = new ListUserRequest();
+        req.setPage(1);
+        req.setSize(10000);
+        StringBuilder sb = new StringBuilder("﻿用户ID,用户名,昵称,工号,部门,角色,状态\n");
+        for (UserDTO u : userApplicationService.list(req).getRecords()) {
+            sb.append(u.getId()).append(',').append(nz(u.getUsername())).append(',')
+              .append(nz(u.getNickname())).append(',').append(nz(u.getEmployeeId())).append(',')
+              .append(nz(u.getDepartment())).append(',').append(nz(u.getRole())).append(',')
+              .append(nz(u.getStatus())).append('\n');
+        }
+        return org.springframework.http.ResponseEntity.ok()
+                .header("Content-Disposition", "attachment; filename=users.csv")
+                .header("Content-Type", "text/csv; charset=UTF-8")
+                .body(sb.toString());
+    }
+
+    private static String nz(Object o) { return o == null ? "" : o.toString().replace(",", " "); }
+
+    @Operation(summary = "用户统计（总数/活跃/本月新增）")
+    @GetMapping("/stats")
+    public Result<com.awsome.shop.auth.application.api.dto.user.UserStatsDTO> stats() {
+        return Result.success(userApplicationService.stats());
+    }
+
     @Operation(summary = "查询用户详情")
     @GetMapping("/{id}")
     public Result<UserDTO> get(@PathVariable("id") Long id) {

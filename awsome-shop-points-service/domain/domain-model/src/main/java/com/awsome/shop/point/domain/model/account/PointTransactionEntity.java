@@ -25,5 +25,7 @@ public class PointTransactionEntity {
 
     private String description;
 
+    private String operator;
+
     private LocalDateTime createdAt;
 }

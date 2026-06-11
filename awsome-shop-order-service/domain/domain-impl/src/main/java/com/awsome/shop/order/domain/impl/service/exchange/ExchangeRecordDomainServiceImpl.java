@@ -6,6 +6,8 @@ import com.awsome.shop.order.common.enums.SampleErrorCode;
 import com.awsome.shop.order.common.exception.BusinessException;
 import com.awsome.shop.order.domain.model.exchange.ExchangeRecordEntity;
 import com.awsome.shop.order.domain.model.exchange.ExchangeRecordStatsEntity;
+import com.awsome.shop.order.domain.model.exchange.ExchangeStatusLogEntity;
+import java.util.List;
 import com.awsome.shop.order.domain.service.exchange.ExchangeRecordDomainService;
 import com.awsome.shop.order.repository.exchange.ExchangeRecordRepository;
 import lombok.RequiredArgsConstructor;
@@ -55,8 +57,8 @@ public class ExchangeRecordDomainServiceImpl implements ExchangeRecordDomainServ
     }
 
     @Override
-    public PageResult<ExchangeRecordEntity> pageByUser(int page, int size, Long userId, String status) {
-        return exchangeRecordRepository.pageByUser(page, size, userId, status);
+    public PageResult<ExchangeRecordEntity> pageByUser(int page, int size, Long userId, String status, String keyword) {
+        return exchangeRecordRepository.pageByUser(page, size, userId, status, keyword);
     }
 
     @Override
@@ -75,7 +77,7 @@ public class ExchangeRecordDomainServiceImpl implements ExchangeRecordDomainServ
     }
 
     @Override
-    public ExchangeRecordEntity updateStatus(Long id, String status, String trackingNumber) {
+    public ExchangeRecordEntity updateStatus(Long id, String status, String trackingNumber, String carrier) {
         if (!ALLOWED_STATUSES.contains(status)) {
             throw new BusinessException(OrderErrorCode.INVALID_EXCHANGE_STATUS, status);
         }
@@ -89,11 +91,24 @@ public class ExchangeRecordDomainServiceImpl implements ExchangeRecordDomainServ
                         current + " → " + status);
             }
         }
-        exchangeRecordRepository.updateStatus(id, status, trackingNumber);
+        exchangeRecordRepository.updateStatus(id, status, trackingNumber, carrier);
         entity.setStatus(status);
         if (trackingNumber != null) {
             entity.setTrackingNumber(trackingNumber);
         }
+        if (carrier != null) {
+            entity.setCarrier(carrier);
+        }
         return entity;
+    }
+
+    @Override
+    public void addStatusLog(Long exchangeId, String status, String remark) {
+        exchangeRecordRepository.addStatusLog(exchangeId, status, remark);
+    }
+
+    @Override
+    public List<ExchangeStatusLogEntity> listStatusLog(Long exchangeId) {
+        return exchangeRecordRepository.listStatusLog(exchangeId);
     }
 }

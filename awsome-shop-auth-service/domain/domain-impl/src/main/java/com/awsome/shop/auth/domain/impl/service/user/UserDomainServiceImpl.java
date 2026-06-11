@@ -60,7 +60,7 @@ public class UserDomainServiceImpl implements UserDomainService {
     }
 
     @Override
-    public UserEntity update(Long userId, String nickname, String role, String employeeId) {
+    public UserEntity update(Long userId, String nickname, String role, String employeeId, String department) {
         UserEntity user = userRepository.findById(userId);
         if (user == null) {
             throw new BusinessException(AuthErrorCode.USER_NOT_FOUND);
@@ -80,6 +80,9 @@ public class UserDomainServiceImpl implements UserDomainService {
             }
             user.setEmployeeId(employeeId);
         }
+        if (department != null) {
+            user.setDepartment(department.isBlank() ? null : department);
+        }
 
         userRepository.update(user);
         return user;
@@ -95,5 +98,10 @@ public class UserDomainServiceImpl implements UserDomainService {
         user.setStatus(status);
         userRepository.update(user);
         return user;
+    }
+
+    @Override
+    public long[] countStats() {
+        return userRepository.countStats();
     }
 }

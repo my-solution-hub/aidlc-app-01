@@ -32,6 +32,7 @@ public class ExchangeRequest {
      * 兑换员工姓名（由网关注入）
      */
     private String employeeName;
+    private Long addressId;
 
     /**
      * 幂等键 (ORD-5) — 前端生成的 UUID，防止重复提交

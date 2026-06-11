@@ -28,4 +28,9 @@ public class ListMyExchangeRequest {
      * 状态过滤（可选）
      */
     private String status;
+
+    /**
+     * 关键词模糊查询（订单编号/商品名称，可选）
+     */
+    private String keyword;
 }

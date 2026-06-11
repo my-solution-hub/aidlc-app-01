@@ -3,7 +3,9 @@ package com.awsome.shop.product.repository.mysql.impl.product;
 import com.awsome.shop.product.common.dto.PageResult;
 import com.awsome.shop.product.domain.model.product.ProductEntity;
 import com.awsome.shop.product.repository.mysql.mapper.product.ProductMapper;
+import com.awsome.shop.product.repository.mysql.mapper.product.StockLogMapper;
 import com.awsome.shop.product.repository.mysql.po.product.ProductPO;
+import com.awsome.shop.product.repository.mysql.po.product.StockLogPO;
 import com.awsome.shop.product.repository.product.ProductRepository;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -11,6 +13,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -24,6 +27,7 @@ import java.util.stream.Collectors;
 public class ProductRepositoryImpl implements ProductRepository {
 
     private final ProductMapper productMapper;
+    private final StockLogMapper stockLogMapper;
 
     @Override
     public ProductEntity getById(Long id) {
@@ -110,6 +114,7 @@ public class ProductRepositoryImpl implements ProductRepository {
         entity.setPromotion(po.getPromotion());
         entity.setColors(po.getColors());
         entity.setSpecs(po.getSpecs());
+        entity.setImages(po.getImages());
         entity.setCreatedAt(po.getCreatedAt());
         entity.setUpdatedAt(po.getUpdatedAt());
         return entity;
@@ -135,6 +140,25 @@ public class ProductRepositoryImpl implements ProductRepository {
         po.setPromotion(entity.getPromotion());
         po.setColors(entity.getColors());
         po.setSpecs(entity.getSpecs());
+        po.setImages(entity.getImages());
         return po;
+    }
+
+    @Override
+    public long[] countStats() {
+        return new long[]{productMapper.countTotal(), productMapper.countOnSale()};
+    }
+
+    @Override
+    public void addStockLog(Long productId, String changeType, int quantity, int beforeStock, int afterStock, String reason) {
+        StockLogPO po = new StockLogPO();
+        po.setProductId(productId);
+        po.setChangeType(changeType);
+        po.setQuantity(quantity);
+        po.setBeforeStock(beforeStock);
+        po.setAfterStock(afterStock);
+        po.setReason(reason);
+        po.setCreatedAt(LocalDateTime.now());
+        stockLogMapper.insert(po);
     }
 }

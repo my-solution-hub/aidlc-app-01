@@ -31,13 +31,13 @@ public interface ProductDomainService {
                          Integer pointsPrice, BigDecimal marketPrice, Integer stock,
                          Integer status, String description, String imageUrl,
                          String subtitle, String deliveryMethod, String serviceGuarantee,
-                         String promotion, String colors, List<Map<String, String>> specs);
+                         String promotion, String colors, List<Map<String, String>> specs, List<String> images);
 
     ProductEntity update(Long id, String name, String sku, String category, String brand,
                          Integer pointsPrice, BigDecimal marketPrice, Integer stock,
                          Integer status, String description, String imageUrl,
                          String subtitle, String deliveryMethod, String serviceGuarantee,
-                         String promotion, String colors, List<Map<String, String>> specs);
+                         String promotion, String colors, List<Map<String, String>> specs, List<String> images);
 
     void deleteById(Long id);
 
@@ -50,4 +50,9 @@ public interface ProductDomainService {
      * @return Map，key 为分类名称，value 为商品数量
      */
     Map<String, Long> countGroupByCategory();
+
+    long[] countStats();
+
+    /** 管理员调整库存(IN入库/OUT出库)并记录日志 */
+    ProductEntity adminAdjustStock(Long productId, String changeType, int quantity, String reason);
 }

@@ -67,13 +67,14 @@ public class ExchangeRemoteClient {
     /**
      * 扣减积分。
      */
-    public void deductPoints(Long userId, int amount) {
-        post(pointBaseUrl + "/api/internal/points/adjust",
+    public Integer deductPoints(Long userId, int amount) {
+        JsonNode data = post(pointBaseUrl + "/api/internal/points/adjust",
                 Map.of("userId", userId,
                         "amount", amount,
                         "direction", "DEDUCT",
                         "type", "REDEEM",
                         "description", "兑换商品"), "扣减积分");
+        return data != null && data.has("balance") ? data.get("balance").asInt() : null;
     }
 
     /**

@@ -37,6 +37,8 @@ public class ProductDTO {
 
     private String imageUrl;
 
+    private java.util.List<String> images;
+
     private String subtitle;
 
     private String deliveryMethod;

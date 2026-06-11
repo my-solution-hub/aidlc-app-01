@@ -6,7 +6,8 @@
     <!-- 分页查询 -->
     <select id="selectPage" resultType="com.awsome.shop.point.repository.mysql.po.pointrule.PointRulePO">
         SELECT id, name, description, rule_type, point_value_min, point_value_max,
-               trigger_condition, status, created_at, updated_at, created_by, updated_by, deleted, version
+               trigger_condition, scope, grant_method, icon, status,
+               created_at, updated_at, created_by, updated_by, deleted, version
         FROM point_rule
         WHERE deleted = 0
         <if test="name != null and name != ''">

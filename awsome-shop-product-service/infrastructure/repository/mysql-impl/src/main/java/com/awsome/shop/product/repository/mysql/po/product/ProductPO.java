@@ -41,6 +41,9 @@ public class ProductPO {
 
     private String imageUrl;
 
+    @TableField(typeHandler = JacksonTypeHandler.class)
+    private List<String> images;
+
     private String subtitle;
 
     private String deliveryMethod;

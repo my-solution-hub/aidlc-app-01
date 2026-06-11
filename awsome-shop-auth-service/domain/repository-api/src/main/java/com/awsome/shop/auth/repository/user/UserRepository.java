@@ -19,4 +19,7 @@ public interface UserRepository {
     void update(UserEntity entity);
 
     PageResult<UserEntity> page(int page, int size, String username, String role, String status);
+
+    /** 统计: [总数, 活跃数, 本月新增] */
+    long[] countStats();
 }

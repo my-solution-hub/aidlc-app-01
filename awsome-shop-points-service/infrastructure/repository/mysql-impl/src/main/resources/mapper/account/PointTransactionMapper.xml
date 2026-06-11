@@ -4,7 +4,7 @@
 <mapper namespace="com.awsome.shop.point.repository.mysql.mapper.account.PointTransactionMapper">
 
     <select id="selectPageByUser" resultType="com.awsome.shop.point.repository.mysql.po.account.PointTransactionPO">
-        SELECT id, user_id, type, amount, balance, description, created_at
+        SELECT id, user_id, type, amount, balance, description, operator, created_at
         FROM point_transaction
         WHERE user_id = #{userId}
         <if test="type != null and type != ''">

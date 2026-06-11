@@ -3,6 +3,38 @@
 > 风格：RESTful · 统一经 API 网关访问（默认 `http://localhost:8088`）
 > 字段标注 `*` 表示必填。`?` 查询参数；`{}` 路径参数。
 
+## 🆕 v1.2 更新说明（对齐 .pen 设计稿缺口，2026-06-11，全部 E2E 验证 35/35 PASS）
+
+本次补齐设计稿与后端的 **20 项缺口**（合并规范 53 路径 / 65 接口 / 89 schema）。
+
+**新增接口（13 个）**
+| 接口 | 说明 |
+|---|---|
+| `GET /api/admin/users/stats` | 用户统计：总数/活跃/本月新增 |
+| `GET /api/admin/users/export` | 导出用户 CSV |
+| `GET /api/admin/products/stats` | 商品统计（Dashboard 数据源） |
+| `POST /api/admin/products/{id}/stock?changeType=IN|OUT&quantity=&reason=` | 管理员调整库存（入/出库+记录） |
+| `GET /api/products/{id}/related` | 同类推荐（同分类 TOP6） |
+| `GET /api/products/{id}/reviews` · `POST /api/products/{id}/reviews` | 商品评价（列表+提交） |
+| `GET /api/wishlist` · `POST /api/wishlist` · `DELETE /api/wishlist` | 心愿单（列表/加入/移出，query: userId、productId） |
+| `GET/POST /api/addresses` · `PUT/DELETE /api/addresses/{id}` | 收货地址簿 CRUD |
+| `POST /api/orders/{id}/confirm-receipt?userId=` | 员工确认收货（DELIVERING→COMPLETED） |
+| `GET /api/admin/orders/export` | 导出兑换记录 CSV |
+
+**新增字段**
+| 模块 | 新字段 |
+|---|---|
+| 用户 `UserDTO` / `UpdateUserRequest` | `department`（部门） |
+| 商品 `ProductDTO` / Create/Update | `images: string[]`（多图，最多10张，第一张主图） |
+| 积分规则 `PointRuleDTO` / Create/Update | `scope`（适用范围）/ `grantMethod`（发放方式）/ `icon`（图标） |
+| 积分流水 `PointTransactionDTO` | `operator`（操作人，默认"系统"） |
+| 兑换记录 `ExchangeRecordDTO` | `freightPoints`（运费积分,默认0）/ `balanceAfter`（兑换后余额）/ `carrier`（快递公司）/ `receiver`·`receiverPhone`·`receiverAddress`（收货快照）/ `timeline: StatusLogDTO[]`（状态时间线，仅详情返回） |
+| 兑换状态更新 `UpdateExchangeStatusRequest` | `carrier`（快递公司） |
+| 下单 `ExchangeRequest` | `addressId`（携带收货地址，下单时存快照） |
+| 员工订单查询 `GET /api/orders` | 新增 `keyword`（搜订单号/商品名） |
+
+> 多级分类（D4）、取消订单退款（C4）经验证后端**原已支持**，无需新增。
+
 ## 📎 标准 OpenAPI 规范（机器可读，权威来源）
 
 本文档的端点与字段均以下列 OpenAPI 3 规范为准：
@@ -85,7 +117,10 @@
 
 ### GET /api/admin/users — 用户列表分页
 - 查询参数 **ListUserRequest**：`page`(int=1), `size`(int=20), `username`(string), `role`(string), `status`(string)
-- 响应 `PageResult<UserDTO>`
+- 响应 `PageResult<UserDTO>`（UserDTO 含 `department` 部门）
+
+### GET /api/admin/users/stats — 用户统计（ADMIN）🆕
+- 无参 → **UserStatsDTO**：`totalUsers`(总数), `activeUsers`(活跃), `newThisMonth`(本月新增)
 
 ### POST /api/admin/users — 创建用户
 - 请求体 **CreateUserRequest**：`username*`, `password*`, `nickname`, `role`(默认 EMPLOYEE)
@@ -239,10 +274,14 @@
 - 响应 **ExchangeRecordDTO**
 
 ### GET /api/orders — 我的兑换记录分页（登录）
-- 查询 **ListMyExchangeRequest**：`page`, `size`, `userId*`(long), `status`(string) → `PageResult<ExchangeRecordDTO>`
+- 查询 **ListMyExchangeRequest**：`page`, `size`, `userId*`(long), `status`(string), `keyword`(string，搜订单号/商品名) → `PageResult<ExchangeRecordDTO>`
 
 ### GET /api/orders/{id} — 兑换详情（登录）
-- 路径 `id*`(long) → **ExchangeRecordDTO**
+- 路径 `id*`(long) → **ExchangeRecordDTO**（含 `timeline` 状态时间线、`freightPoints`、`balanceAfter`、`carrier`）
+
+### POST /api/orders/{id}/confirm-receipt — 员工确认收货（登录）🆕
+- 路径 `id*`(long)，查询 `userId`(long，校验订单归属)
+- 将订单 `DELIVERING → COMPLETED` → **ExchangeRecordDTO**
 
 ## 4.2 兑换管理（ADMIN）
 
@@ -255,7 +294,7 @@
 - 响应 **ExchangeRecordStatsDTO**：`totalCount`, `pendingDeliveryCount`, `completedCount`, `totalPointsConsumed`
 
 ### PUT /api/admin/orders/{id}/status — 更新状态
-- 路径 `id*`；请求体 **UpdateExchangeStatusRequest**：`status*`(string), `trackingNumber`(string)
+- 路径 `id*`；请求体 **UpdateExchangeStatusRequest**：`status*`(string), `trackingNumber`(string), `carrier`(string，快递公司)
 - 状态流转校验（BR-ORDER-006）：`PENDING_DELIVERY → DELIVERING | CANCELLED`；`DELIVERING → COMPLETED | CANCELLED`；取消时自动退积分 + 恢复库存
 - 响应 **ExchangeRecordDTO**
 

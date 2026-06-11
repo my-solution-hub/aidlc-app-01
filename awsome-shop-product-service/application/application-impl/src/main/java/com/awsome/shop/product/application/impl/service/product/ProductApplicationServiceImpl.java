@@ -46,13 +46,18 @@ public class ProductApplicationServiceImpl implements ProductApplicationService 
     }
 
     @Override
+    public ProductDTO adminAdjustStock(Long productId, String changeType, int quantity, String reason) {
+        return toDTO(productDomainService.adminAdjustStock(productId, changeType, quantity, reason));
+    }
+
+    @Override
     public ProductDTO create(CreateProductRequest request) {
         ProductEntity entity = productDomainService.create(
                 request.getName(), request.getSku(), request.getCategory(), request.getBrand(),
                 request.getPointsPrice(), request.getMarketPrice(), request.getStock(),
                 request.getStatus(), request.getDescription(), request.getImageUrl(),
                 request.getSubtitle(), request.getDeliveryMethod(), request.getServiceGuarantee(),
-                request.getPromotion(), request.getColors(), request.getSpecs());
+                request.getPromotion(), request.getColors(), request.getSpecs(), request.getImages());
         return toDTO(entity);
     }
 
@@ -63,7 +68,7 @@ public class ProductApplicationServiceImpl implements ProductApplicationService 
                 request.getPointsPrice(), request.getMarketPrice(), request.getStock(),
                 request.getStatus(), request.getDescription(), request.getImageUrl(),
                 request.getSubtitle(), request.getDeliveryMethod(), request.getServiceGuarantee(),
-                request.getPromotion(), request.getColors(), request.getSpecs());
+                request.getPromotion(), request.getColors(), request.getSpecs(), request.getImages());
         return toDTO(entity);
     }
 
@@ -97,8 +102,18 @@ public class ProductApplicationServiceImpl implements ProductApplicationService 
         dto.setPromotion(entity.getPromotion());
         dto.setColors(entity.getColors());
         dto.setSpecs(entity.getSpecs());
+        dto.setImages(entity.getImages());
         dto.setCreatedAt(entity.getCreatedAt());
         dto.setUpdatedAt(entity.getUpdatedAt());
+        return dto;
+    }
+
+    @Override
+    public com.awsome.shop.product.application.api.dto.product.ProductStatsDTO stats() {
+        long[] s = productDomainService.countStats();
+        com.awsome.shop.product.application.api.dto.product.ProductStatsDTO dto = new com.awsome.shop.product.application.api.dto.product.ProductStatsDTO();
+        dto.setTotalProducts(s[0]);
+        dto.setOnSaleProducts(s[1]);
         return dto;
     }
 }

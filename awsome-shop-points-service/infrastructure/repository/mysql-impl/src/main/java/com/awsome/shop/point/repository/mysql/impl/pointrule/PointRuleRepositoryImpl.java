@@ -63,6 +63,9 @@ public class PointRuleRepositoryImpl implements PointRuleRepository {
         po.setPointValueMin(entity.getPointValueMin());
         po.setPointValueMax(entity.getPointValueMax());
         po.setTriggerCondition(entity.getTriggerCondition());
+        po.setScope(entity.getScope());
+        po.setGrantMethod(entity.getGrantMethod());
+        po.setIcon(entity.getIcon());
         po.setStatus(entity.getStatus());
         return po;
     }
@@ -76,6 +79,9 @@ public class PointRuleRepositoryImpl implements PointRuleRepository {
         entity.setPointValueMin(po.getPointValueMin());
         entity.setPointValueMax(po.getPointValueMax());
         entity.setTriggerCondition(po.getTriggerCondition());
+        entity.setScope(po.getScope());
+        entity.setGrantMethod(po.getGrantMethod());
+        entity.setIcon(po.getIcon());
         entity.setStatus(po.getStatus());
         entity.setCreatedAt(po.getCreatedAt());
         entity.setUpdatedAt(po.getUpdatedAt());

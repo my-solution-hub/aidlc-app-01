@@ -24,5 +24,11 @@ public class UpdatePointRuleRequest {
 
     private String triggerCondition;
 
+    private String scope;
+
+    private String grantMethod;
+
+    private String icon;
+
     private Integer status;
 }

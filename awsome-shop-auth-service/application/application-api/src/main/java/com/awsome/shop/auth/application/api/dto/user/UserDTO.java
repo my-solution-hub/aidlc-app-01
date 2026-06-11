@@ -18,6 +18,8 @@ public class UserDTO {
 
     private String employeeId;
 
+    private String department;
+
     private String role;
 
     private String status;

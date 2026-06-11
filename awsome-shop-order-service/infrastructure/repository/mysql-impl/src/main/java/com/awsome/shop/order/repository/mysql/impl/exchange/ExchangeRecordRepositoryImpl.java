@@ -3,16 +3,21 @@ package com.awsome.shop.order.repository.mysql.impl.exchange;
 import com.awsome.shop.order.common.dto.PageResult;
 import com.awsome.shop.order.domain.model.exchange.ExchangeRecordEntity;
 import com.awsome.shop.order.domain.model.exchange.ExchangeRecordStatsEntity;
+import com.awsome.shop.order.domain.model.exchange.ExchangeStatusLogEntity;
 import com.awsome.shop.order.repository.exchange.ExchangeRecordRepository;
 import com.awsome.shop.order.repository.mysql.mapper.exchange.ExchangeRecordMapper;
+import com.awsome.shop.order.repository.mysql.mapper.exchange.ExchangeStatusLogMapper;
 import com.awsome.shop.order.repository.mysql.po.exchange.ExchangeRecordPO;
 import com.awsome.shop.order.repository.mysql.po.exchange.ExchangeRecordStatsPO;
+import com.awsome.shop.order.repository.mysql.po.exchange.ExchangeStatusLogPO;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.stream.Collectors;
 
 /**
@@ -23,6 +28,7 @@ import java.util.stream.Collectors;
 public class ExchangeRecordRepositoryImpl implements ExchangeRecordRepository {
 
     private final ExchangeRecordMapper exchangeRecordMapper;
+    private final ExchangeStatusLogMapper exchangeStatusLogMapper;
 
     @Override
     public ExchangeRecordEntity getById(Long id) {
@@ -46,9 +52,9 @@ public class ExchangeRecordRepositoryImpl implements ExchangeRecordRepository {
     }
 
     @Override
-    public PageResult<ExchangeRecordEntity> pageByUser(int page, int size, Long userId, String status) {
+    public PageResult<ExchangeRecordEntity> pageByUser(int page, int size, Long userId, String status, String keyword) {
         IPage<ExchangeRecordPO> result = exchangeRecordMapper.selectPageByUser(
-                new Page<>(page, size), userId, status);
+                new Page<>(page, size), userId, status, keyword);
 
         PageResult<ExchangeRecordEntity> pageResult = new PageResult<>();
         pageResult.setCurrent(result.getCurrent());
@@ -76,11 +82,12 @@ public class ExchangeRecordRepositoryImpl implements ExchangeRecordRepository {
     }
 
     @Override
-    public void updateStatus(Long id, String status, String trackingNumber) {
+    public void updateStatus(Long id, String status, String trackingNumber, String carrier) {
         ExchangeRecordPO po = new ExchangeRecordPO();
         po.setId(id);
         po.setStatus(status);
         po.setTrackingNumber(trackingNumber);
+        po.setCarrier(carrier);
         exchangeRecordMapper.updateById(po);
     }
 
@@ -107,9 +114,15 @@ public class ExchangeRecordRepositoryImpl implements ExchangeRecordRepository {
         entity.setEmployeeName(po.getEmployeeName());
         entity.setQuantity(po.getQuantity());
         entity.setPointsCost(po.getPointsCost());
+        entity.setFreightPoints(po.getFreightPoints());
+        entity.setBalanceAfter(po.getBalanceAfter());
         entity.setExchangeTime(po.getExchangeTime());
         entity.setStatus(po.getStatus());
         entity.setTrackingNumber(po.getTrackingNumber());
+        entity.setCarrier(po.getCarrier());
+        entity.setReceiver(po.getReceiver());
+        entity.setReceiverPhone(po.getReceiverPhone());
+        entity.setReceiverAddress(po.getReceiverAddress());
         entity.setCreatedAt(po.getCreatedAt());
         entity.setUpdatedAt(po.getUpdatedAt());
         return entity;
@@ -127,9 +140,40 @@ public class ExchangeRecordRepositoryImpl implements ExchangeRecordRepository {
         po.setEmployeeName(entity.getEmployeeName());
         po.setQuantity(entity.getQuantity());
         po.setPointsCost(entity.getPointsCost());
+        po.setFreightPoints(entity.getFreightPoints());
+        po.setBalanceAfter(entity.getBalanceAfter());
         po.setExchangeTime(entity.getExchangeTime());
         po.setStatus(entity.getStatus());
         po.setTrackingNumber(entity.getTrackingNumber());
+        po.setCarrier(entity.getCarrier());
+        po.setReceiver(entity.getReceiver());
+        po.setReceiverPhone(entity.getReceiverPhone());
+        po.setReceiverAddress(entity.getReceiverAddress());
         return po;
+    }
+
+    @Override
+    public void addStatusLog(Long exchangeId, String status, String remark) {
+        ExchangeStatusLogPO po = new ExchangeStatusLogPO();
+        po.setExchangeId(exchangeId);
+        po.setStatus(status);
+        po.setRemark(remark);
+        po.setCreatedAt(LocalDateTime.now());
+        exchangeStatusLogMapper.insert(po);
+    }
+
+    @Override
+    public List<ExchangeStatusLogEntity> listStatusLog(Long exchangeId) {
+        QueryWrapper<ExchangeStatusLogPO> wrapper = new QueryWrapper<>();
+        wrapper.eq("exchange_id", exchangeId).orderByAsc("created_at", "id");
+        return exchangeStatusLogMapper.selectList(wrapper).stream().map(po -> {
+            ExchangeStatusLogEntity e = new ExchangeStatusLogEntity();
+            e.setId(po.getId());
+            e.setExchangeId(po.getExchangeId());
+            e.setStatus(po.getStatus());
+            e.setRemark(po.getRemark());
+            e.setCreatedAt(po.getCreatedAt());
+            return e;
+        }).collect(Collectors.toList());
     }
 }

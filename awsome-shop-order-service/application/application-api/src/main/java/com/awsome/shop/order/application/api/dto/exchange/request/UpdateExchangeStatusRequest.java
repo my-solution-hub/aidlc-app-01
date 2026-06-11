@@ -26,4 +26,5 @@ public class UpdateExchangeStatusRequest {
      * 物流单号（可选）
      */
     private String trackingNumber;
+    private String carrier;
 }

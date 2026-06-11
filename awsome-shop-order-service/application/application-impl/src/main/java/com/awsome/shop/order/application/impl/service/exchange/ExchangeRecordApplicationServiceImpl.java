@@ -1,6 +1,7 @@
 package com.awsome.shop.order.application.impl.service.exchange;
 
 import com.awsome.shop.order.application.api.dto.exchange.ExchangeRecordDTO;
+import com.awsome.shop.order.application.api.dto.exchange.StatusLogDTO;
 import com.awsome.shop.order.application.api.dto.exchange.ExchangeRecordStatsDTO;
 import com.awsome.shop.order.application.api.dto.exchange.request.ExchangeRequest;
 import com.awsome.shop.order.application.api.dto.exchange.request.GetExchangeRecordRequest;
@@ -40,10 +41,22 @@ public class ExchangeRecordApplicationServiceImpl implements ExchangeRecordAppli
     private final IdempotencyService idempotencyService;
     private final ExchangeRateLimitService rateLimitService;
     private final ExchangeNotificationService notificationService;
+    private final com.awsome.shop.order.domain.service.address.AddressDomainService addressDomainService;
 
     @Override
     public ExchangeRecordDTO get(GetExchangeRecordRequest request) {
-        return toDTO(exchangeRecordDomainService.getById(request.getId()));
+        ExchangeRecordDTO dto = toDTO(exchangeRecordDomainService.getById(request.getId()));
+        // 填充状态时间线
+        java.util.List<StatusLogDTO> timeline = exchangeRecordDomainService
+                .listStatusLog(request.getId()).stream().map(log -> {
+                    StatusLogDTO s = new StatusLogDTO();
+                    s.setStatus(log.getStatus());
+                    s.setRemark(log.getRemark());
+                    s.setTime(log.getCreatedAt());
+                    return s;
+                }).collect(java.util.stream.Collectors.toList());
+        dto.setTimeline(timeline);
+        return dto;
     }
 
     @Override
@@ -74,7 +87,7 @@ public class ExchangeRecordApplicationServiceImpl implements ExchangeRecordAppli
                 && !"CANCELLED".equals(before.getStatus());
 
         ExchangeRecordEntity updated = exchangeRecordDomainService.updateStatus(
-                request.getId(), request.getStatus(), request.getTrackingNumber());
+                request.getId(), request.getStatus(), request.getTrackingNumber(), request.getCarrier());
 
         // 取消时自动退还积分 + 恢复库存（BR-ORDER-007）。
         // 状态已更新；补偿失败仅记录日志，需人工介入，不回滚状态。
@@ -83,6 +96,7 @@ public class ExchangeRecordApplicationServiceImpl implements ExchangeRecordAppli
             int qty = before.getQuantity() == null ? 1 : before.getQuantity();
             safeRestoreStock(before.getProductId(), qty);
         }
+        safeAddStatusLog(updated.getId(), updated.getStatus(), "状态更新为 " + updated.getStatus());
         // ORD-8: 状态变更通知
         notificationService.notifyStatusChange(updated.getUserId(), updated.getOrderNo(), updated.getStatus());
         return toDTO(updated);
@@ -122,9 +136,10 @@ public class ExchangeRecordApplicationServiceImpl implements ExchangeRecordAppli
 
         // Saga 执行顺序：先扣积分，再扣库存（BR-ORDER-003）。
         // 原因：积分是虚拟资产，回滚更安全可靠；库存扣减失败时回滚积分。
+        Integer balanceAfter = null;
         try {
-            // 1. 扣减积分
-            exchangeRemoteClient.deductPoints(userId, pointsCost);
+            // 1. 扣减积分（返回扣减后余额，用于记录 balanceAfter）
+            balanceAfter = exchangeRemoteClient.deductPoints(userId, pointsCost);
         } catch (SagaException e) {
             // 步骤1（扣减积分）失败，无需补偿
             throw new BusinessException(OrderErrorCode.DEDUCT_POINTS_FAILED, e.getMessage());
@@ -142,8 +157,27 @@ public class ExchangeRecordApplicationServiceImpl implements ExchangeRecordAppli
         // 3. 持久化兑换记录
         ExchangeRecordEntity entity = buildEntity(request, productId, productName,
                 description, imageUrl, quantity, pointsCost);
+        entity.setFreightPoints(0);
+        entity.setBalanceAfter(balanceAfter);
+        // 填充收货地址快照(若下单携带 addressId)
+        if (request.getAddressId() != null) {
+            try {
+                com.awsome.shop.order.domain.model.address.AddressEntity addr =
+                        addressDomainService.list(userId).stream()
+                                .filter(a -> a.getId().equals(request.getAddressId()))
+                                .findFirst().orElse(null);
+                if (addr != null) {
+                    entity.setReceiver(addr.getReceiver());
+                    entity.setReceiverPhone(addr.getPhone());
+                    entity.setReceiverAddress((addr.getRegion() == null ? "" : addr.getRegion() + " ") + addr.getDetail());
+                }
+            } catch (Exception ex) {
+                log.warn("填充收货地址快照失败, addressId={}", request.getAddressId(), ex);
+            }
+        }
         try {
             ExchangeRecordEntity saved = exchangeRecordDomainService.save(entity);
+            safeAddStatusLog(saved.getId(), "PENDING_DELIVERY", "订单提交成功，积分已扣除");
             // ORD-8: 兑换成功通知
             notificationService.notifyExchangeSuccess(userId, saved.getOrderNo(), productName);
             return toDTO(saved);
@@ -159,8 +193,24 @@ public class ExchangeRecordApplicationServiceImpl implements ExchangeRecordAppli
     @Override
     public PageResult<ExchangeRecordDTO> listMine(ListMyExchangeRequest request) {
         PageResult<ExchangeRecordEntity> page = exchangeRecordDomainService.pageByUser(
-                request.getPage(), request.getSize(), request.getUserId(), request.getStatus());
+                request.getPage(), request.getSize(), request.getUserId(),
+                request.getStatus(), request.getKeyword());
         return page.convert(this::toDTO);
+    }
+
+    @Override
+    public ExchangeRecordDTO confirmReceipt(Long id, Long userId) {
+        // 校验订单归属(仅本人可确认收货)
+        ExchangeRecordEntity record = exchangeRecordDomainService.getById(id);
+        if (userId != null && !userId.equals(record.getUserId())) {
+            throw new BusinessException(OrderErrorCode.INVALID_EXCHANGE_STATUS, "无权操作他人订单");
+        }
+        // 流转到 COMPLETED(domain 会校验 DELIVERING -> COMPLETED 合法性)
+        ExchangeRecordEntity updated = exchangeRecordDomainService.updateStatus(
+                id, "COMPLETED", record.getTrackingNumber(), record.getCarrier());
+        safeAddStatusLog(id, "COMPLETED", "员工已确认收货");
+        notificationService.notifyStatusChange(updated.getUserId(), updated.getOrderNo(), updated.getStatus());
+        return toDTO(updated);
     }
 
     private ExchangeRecordEntity buildEntity(ExchangeRequest request, Long productId, String productName,
@@ -196,6 +246,18 @@ public class ExchangeRecordApplicationServiceImpl implements ExchangeRecordAppli
         }
     }
 
+    /**
+     * 记录状态日志（容错）。时间线是辅助展示数据，写入失败仅告警，
+     * 不影响主交易（订单/积分/库存已完成），避免次要数据拖垮核心流程。
+     */
+    private void safeAddStatusLog(Long exchangeId, String status, String remark) {
+        try {
+            exchangeRecordDomainService.addStatusLog(exchangeId, status, remark);
+        } catch (Exception ex) {
+            log.warn("状态日志写入失败(不影响主流程), exchangeId={}, status={}", exchangeId, status, ex);
+        }
+    }
+
     private ExchangeRecordDTO toDTO(ExchangeRecordEntity entity) {
         ExchangeRecordDTO dto = new ExchangeRecordDTO();
         dto.setId(entity.getId());
@@ -208,8 +270,15 @@ public class ExchangeRecordApplicationServiceImpl implements ExchangeRecordAppli
         dto.setEmployeeName(entity.getEmployeeName());
         dto.setQuantity(entity.getQuantity());
         dto.setPointsCost(entity.getPointsCost());
+        dto.setFreightPoints(entity.getFreightPoints());
+        dto.setBalanceAfter(entity.getBalanceAfter());
         dto.setExchangeTime(entity.getExchangeTime());
         dto.setStatus(entity.getStatus());
+        dto.setTrackingNumber(entity.getTrackingNumber());
+        dto.setCarrier(entity.getCarrier());
+        dto.setReceiver(entity.getReceiver());
+        dto.setReceiverPhone(entity.getReceiverPhone());
+        dto.setReceiverAddress(entity.getReceiverAddress());
         dto.setCreatedAt(entity.getCreatedAt());
         dto.setUpdatedAt(entity.getUpdatedAt());
         return dto;

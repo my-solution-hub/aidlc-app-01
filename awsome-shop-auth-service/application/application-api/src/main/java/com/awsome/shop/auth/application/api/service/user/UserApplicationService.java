@@ -3,6 +3,7 @@ package com.awsome.shop.auth.application.api.service.user;
 import com.awsome.shop.auth.application.api.dto.auth.CurrentUserRequest;
 import com.awsome.shop.auth.application.api.dto.auth.RegisterRequest;
 import com.awsome.shop.auth.application.api.dto.user.UserDTO;
+import com.awsome.shop.auth.application.api.dto.user.UserStatsDTO;
 import com.awsome.shop.auth.application.api.dto.user.request.CreateUserRequest;
 import com.awsome.shop.auth.application.api.dto.user.request.GetUserRequest;
 import com.awsome.shop.auth.application.api.dto.user.request.ListUserRequest;
@@ -29,6 +30,9 @@ public interface UserApplicationService {
     /** 查询用户详情 */
     UserDTO get(GetUserRequest request);
 
-    /** 更新用户可变信息（昵称、角色、工号） */
+    /** 更新用户可变信息（昵称、角色、工号、部门） */
     UserDTO update(UpdateUserRequest request);
+
+    /** 用户统计（总数 / 活跃 / 本月新增） */
+    UserStatsDTO stats();
 }

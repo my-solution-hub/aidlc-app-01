@@ -52,6 +52,15 @@ public class PointRuleDomainServiceImpl implements PointRuleDomainService {
         if (entity.getTriggerCondition() != null) {
             existing.setTriggerCondition(entity.getTriggerCondition());
         }
+        if (entity.getScope() != null) {
+            existing.setScope(entity.getScope());
+        }
+        if (entity.getGrantMethod() != null) {
+            existing.setGrantMethod(entity.getGrantMethod());
+        }
+        if (entity.getIcon() != null) {
+            existing.setIcon(entity.getIcon());
+        }
         if (entity.getStatus() != null) {
             existing.setStatus(entity.getStatus());
         }

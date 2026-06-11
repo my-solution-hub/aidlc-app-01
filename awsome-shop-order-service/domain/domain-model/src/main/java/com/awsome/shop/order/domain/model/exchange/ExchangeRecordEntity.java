@@ -20,9 +20,21 @@ public class ExchangeRecordEntity {
     private String employeeName;
     private Integer quantity;
     private Integer pointsCost;
+
+    private Integer freightPoints;
+
+    private Integer balanceAfter;
     private LocalDateTime exchangeTime;
     private String status;
     private String trackingNumber;
+
+    private String carrier;
+
+    private String receiver;
+
+    private String receiverPhone;
+
+    private String receiverAddress;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

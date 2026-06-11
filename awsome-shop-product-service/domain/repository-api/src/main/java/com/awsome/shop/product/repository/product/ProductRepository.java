@@ -38,4 +38,10 @@ public interface ProductRepository {
      * @return Map，key 为分类名称，value 为商品数量
      */
     Map<String, Long> countGroupByCategory();
+
+    /** [总商品数, 上架数] */
+    long[] countStats();
+
+    /** 记录库存调整日志 */
+    void addStockLog(Long productId, String changeType, int quantity, int beforeStock, int afterStock, String reason);
 }

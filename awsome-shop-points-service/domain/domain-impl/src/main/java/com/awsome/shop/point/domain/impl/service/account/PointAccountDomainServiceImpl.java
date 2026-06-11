@@ -144,6 +144,7 @@ public class PointAccountDomainServiceImpl implements PointAccountDomainService 
         txn.setAmount(amount);
         txn.setBalance(balance);
         txn.setDescription(description);
+        txn.setOperator("系统");
         repository.insertTransaction(txn);
     }
 }

@@ -77,7 +77,7 @@ public class ProductDomainServiceImpl implements ProductDomainService {
                                 Integer pointsPrice, BigDecimal marketPrice, Integer stock,
                                 Integer status, String description, String imageUrl,
                                 String subtitle, String deliveryMethod, String serviceGuarantee,
-                                String promotion, String colors, List<Map<String, String>> specs) {
+                                String promotion, String colors, List<Map<String, String>> specs, List<String> images) {
         // SKU 唯一性校验
         ProductEntity existing = productRepository.getBySku(sku);
         if (existing != null) {
@@ -101,6 +101,7 @@ public class ProductDomainServiceImpl implements ProductDomainService {
         entity.setPromotion(promotion);
         entity.setColors(colors);
         entity.setSpecs(specs);
+        entity.setImages(images);
 
         productRepository.save(entity);
         return productRepository.getById(entity.getId());
@@ -112,7 +113,7 @@ public class ProductDomainServiceImpl implements ProductDomainService {
                                 Integer pointsPrice, BigDecimal marketPrice, Integer stock,
                                 Integer status, String description, String imageUrl,
                                 String subtitle, String deliveryMethod, String serviceGuarantee,
-                                String promotion, String colors, List<Map<String, String>> specs) {
+                                String promotion, String colors, List<Map<String, String>> specs, List<String> images) {
         ProductEntity entity = getById(id);
 
         // SKU 唯一性校验（排除自身）
@@ -123,7 +124,7 @@ public class ProductDomainServiceImpl implements ProductDomainService {
 
         entity.updateInfo(name, sku, category, brand, pointsPrice, marketPrice, stock,
                 status, description, imageUrl, subtitle, deliveryMethod, serviceGuarantee,
-                promotion, colors, specs);
+                promotion, colors, specs, images);
         productRepository.update(entity);
         return productRepository.getById(id);
     }
@@ -147,5 +148,28 @@ public class ProductDomainServiceImpl implements ProductDomainService {
     @Override
     public Map<String, Long> countGroupByCategory() {
         return productRepository.countGroupByCategory();
+    }
+
+    @Override
+    public long[] countStats() {
+        return productRepository.countStats();
+    }
+
+    @Override
+    @org.springframework.transaction.annotation.Transactional
+    public ProductEntity adminAdjustStock(Long productId, String changeType, int quantity, String reason) {
+        ProductEntity p = productRepository.getByIdForUpdate(productId);
+        if (p == null) {
+            throw new BusinessException(SampleErrorCode.RESOURCE_NOT_FOUND);
+        }
+        int before = p.getStock() == null ? 0 : p.getStock();
+        int after = "IN".equalsIgnoreCase(changeType) ? before + quantity : before - quantity;
+        if (after < 0) {
+            throw new BusinessException(ProductErrorCode.INSUFFICIENT_STOCK, String.valueOf(before));
+        }
+        p.setStock(after);
+        productRepository.update(p);
+        productRepository.addStockLog(productId, changeType.toUpperCase(), quantity, before, after, reason);
+        return p;
     }
 }

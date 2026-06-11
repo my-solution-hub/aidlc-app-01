@@ -6,7 +6,7 @@
     <!-- 分页查询 -->
     <select id="selectPage" resultType="com.awsome.shop.order.repository.mysql.po.exchange.ExchangeRecordPO">
         SELECT id, order_no, product_id, product_name, product_desc, product_image_url,
-               user_id, employee_name, quantity, points_cost, exchange_time, status, tracking_number,
+               user_id, employee_name, quantity, points_cost, freight_points, balance_after, exchange_time, status, tracking_number, carrier, receiver, receiver_phone, receiver_address,
                created_at, updated_at, created_by, updated_by, deleted, version
         FROM exchange_record
         WHERE deleted = 0
@@ -29,13 +29,17 @@
     <!-- 按员工分页查询 -->
     <select id="selectPageByUser" resultType="com.awsome.shop.order.repository.mysql.po.exchange.ExchangeRecordPO">
         SELECT id, order_no, product_id, product_name, product_desc, product_image_url,
-               user_id, employee_name, quantity, points_cost, exchange_time, status, tracking_number,
+               user_id, employee_name, quantity, points_cost, freight_points, balance_after, exchange_time, status, tracking_number, carrier, receiver, receiver_phone, receiver_address,
                created_at, updated_at, created_by, updated_by, deleted, version
         FROM exchange_record
         WHERE deleted = 0
           AND user_id = #{userId}
         <if test="status != null and status != ''">
             AND status = #{status}
+        </if>
+        <if test="keyword != null and keyword != ''">
+            AND (order_no LIKE CONCAT('%', #{keyword}, '%')
+                 OR product_name LIKE CONCAT('%', #{keyword}, '%'))
         </if>
         ORDER BY exchange_time DESC
     </select>

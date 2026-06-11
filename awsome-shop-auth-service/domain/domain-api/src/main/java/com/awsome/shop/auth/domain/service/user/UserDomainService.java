@@ -39,7 +39,7 @@ public interface UserDomainService {
      * @param employeeId 工号（为空则不更新；非空时校验唯一）
      * @return 更新后的用户实体
      */
-    UserEntity update(Long userId, String nickname, String role, String employeeId);
+    UserEntity update(Long userId, String nickname, String role, String employeeId, String department);
 
     /**
      * 更新用户状态（启用/禁用账户）
@@ -49,4 +49,7 @@ public interface UserDomainService {
      * @return 更新后的用户实体
      */
     UserEntity updateStatus(Long userId, String status);
+
+    /** 用户统计: [总数, 活跃, 本月新增] */
+    long[] countStats();
 }

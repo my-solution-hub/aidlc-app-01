@@ -76,6 +76,7 @@ public class PointAccountRepositoryImpl implements PointAccountRepository {
         po.setAmount(transaction.getAmount());
         po.setBalance(transaction.getBalance());
         po.setDescription(transaction.getDescription());
+        po.setOperator(transaction.getOperator());
         transactionMapper.insert(po);
     }
 
@@ -141,6 +142,7 @@ public class PointAccountRepositoryImpl implements PointAccountRepository {
         entity.setAmount(po.getAmount());
         entity.setBalance(po.getBalance());
         entity.setDescription(po.getDescription());
+        entity.setOperator(po.getOperator());
         entity.setCreatedAt(po.getCreatedAt());
         return entity;
     }

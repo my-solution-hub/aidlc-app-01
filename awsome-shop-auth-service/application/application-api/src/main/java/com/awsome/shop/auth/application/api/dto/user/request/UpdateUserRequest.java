@@ -17,4 +17,5 @@ public class UpdateUserRequest {
     private String role;
 
     private String employeeId;
+    private String department;
 }

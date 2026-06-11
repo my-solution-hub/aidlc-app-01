@@ -34,4 +34,7 @@ public interface ExchangeRecordApplicationService {
      * 员工查询自己的兑换记录（分页）
      */
     PageResult<ExchangeRecordDTO> listMine(ListMyExchangeRequest request);
+
+    /** 员工确认收货(DELIVERING -> COMPLETED) */
+    ExchangeRecordDTO confirmReceipt(Long id, Long userId);
 }

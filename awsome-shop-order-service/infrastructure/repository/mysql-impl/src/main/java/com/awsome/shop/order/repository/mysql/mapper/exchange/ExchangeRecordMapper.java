@@ -41,7 +41,8 @@ public interface ExchangeRecordMapper extends BaseMapper<ExchangeRecordPO> {
      */
     IPage<ExchangeRecordPO> selectPageByUser(IPage<ExchangeRecordPO> page,
                                              @Param("userId") Long userId,
-                                             @Param("status") String status);
+                                             @Param("status") String status,
+                                             @Param("keyword") String keyword);
 
     /**
      * 统计查询

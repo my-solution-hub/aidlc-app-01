@@ -23,6 +23,8 @@ public class UserPO {
 
     private String employeeId;
 
+    private String department;
+
     private String role;
 
     private String status;

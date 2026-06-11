@@ -56,6 +56,26 @@ public class ExchangeRecordController {
         return Result.success(exchangeRecordApplicationService.stats());
     }
 
+    @Operation(summary = "导出兑换记录 CSV")
+    @GetMapping("/admin/orders/export")
+    public org.springframework.http.ResponseEntity<String> export() {
+        ListExchangeRecordRequest req = new ListExchangeRecordRequest();
+        req.setPage(1);
+        req.setSize(10000);
+        StringBuilder sb = new StringBuilder("﻿订单号,商品,兑换员工,消耗积分,状态,兑换时间\n");
+        for (ExchangeRecordDTO o : exchangeRecordApplicationService.list(req).getRecords()) {
+            sb.append(nz(o.getOrderNo())).append(',').append(nz(o.getProductName())).append(',')
+              .append(nz(o.getEmployeeName())).append(',').append(nz(o.getPointsCost())).append(',')
+              .append(nz(o.getStatus())).append(',').append(nz(o.getExchangeTime())).append('\n');
+        }
+        return org.springframework.http.ResponseEntity.ok()
+                .header("Content-Disposition", "attachment; filename=orders.csv")
+                .header("Content-Type", "text/csv; charset=UTF-8")
+                .body(sb.toString());
+    }
+
+    private static String nz(Object o) { return o == null ? "" : o.toString().replace(",", " "); }
+
     @Operation(summary = "更新兑换记录状态")
     @PutMapping("/admin/orders/{id}/status")
     public Result<ExchangeRecordDTO> updateStatus(@PathVariable Long id,
@@ -84,5 +104,12 @@ public class ExchangeRecordController {
         GetExchangeRecordRequest request = new GetExchangeRecordRequest();
         request.setId(id);
         return Result.success(exchangeRecordApplicationService.get(request));
+    }
+
+    @Operation(summary = "员工确认收货")
+    @PostMapping("/orders/{id}/confirm-receipt")
+    public Result<ExchangeRecordDTO> confirmReceipt(@PathVariable Long id,
+            @org.springframework.web.bind.annotation.RequestParam(value = "userId", required = false) Long userId) {
+        return Result.success(exchangeRecordApplicationService.confirmReceipt(id, userId));
     }
 }

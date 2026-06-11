@@ -52,10 +52,41 @@ public class ProductController {
         return Result.success(productApplicationService.list(request).getRecords());
     }
 
+    @Operation(summary = "商品统计 (Dashboard) — 总数/上架数")
+    @GetMapping("/api/admin/products/stats")
+    public Result<com.awsome.shop.product.application.api.dto.product.ProductStatsDTO> stats() {
+        return Result.success(productApplicationService.stats());
+    }
+
+    @Operation(summary = "管理员调整库存 (入库IN/出库OUT) 并记录")
+    @PostMapping("/api/admin/products/{id}/stock")
+    public Result<ProductDTO> adjustStock(@PathVariable("id") Long id,
+            @org.springframework.web.bind.annotation.RequestParam("changeType") String changeType,
+            @org.springframework.web.bind.annotation.RequestParam("quantity") Integer quantity,
+            @org.springframework.web.bind.annotation.RequestParam(value = "reason", required = false) String reason) {
+        return Result.success(productApplicationService.adminAdjustStock(id, changeType, quantity, reason));
+    }
+
     @Operation(summary = "商品详情查询")
     @GetMapping("/api/products/{id}")
     public Result<ProductDTO> get(@PathVariable("id") Long id) {
         return Result.success(productApplicationService.get(id));
+    }
+
+    @Operation(summary = "同类推荐 (PROD-8) — 同分类其他商品 TOP 6")
+    @GetMapping("/api/products/{id}/related")
+    public Result<List<ProductDTO>> related(@PathVariable("id") Long id) {
+        ProductDTO self = productApplicationService.get(id);
+        ListProductRequest request = new ListProductRequest();
+        request.setPage(1);
+        request.setSize(7);
+        request.setCategory(self.getCategory());
+        List<ProductDTO> list = productApplicationService.list(request).getRecords();
+        // 排除自身,最多取 6 个
+        return Result.success(list.stream()
+                .filter(p -> !p.getId().equals(id))
+                .limit(6)
+                .collect(java.util.stream.Collectors.toList()));
     }
 
     @Operation(summary = "创建商品")

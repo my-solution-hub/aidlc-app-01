@@ -2,6 +2,7 @@ package com.awsome.shop.product.repository.mysql.mapper.product;
 
 import com.awsome.shop.product.repository.mysql.po.product.ProductPO;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import org.apache.ibatis.annotations.Select;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import org.apache.ibatis.annotations.MapKey;
 import org.apache.ibatis.annotations.Mapper;
@@ -42,4 +43,10 @@ public interface ProductMapper extends BaseMapper<ProductPO> {
      */
     @MapKey("category")
     Map<String, Map<String, Object>> countGroupByCategory();
+
+    @Select("SELECT COUNT(*) FROM product WHERE deleted = 0")
+    long countTotal();
+
+    @Select("SELECT COUNT(*) FROM product WHERE deleted = 0 AND status = 1")
+    long countOnSale();
 }

@@ -84,7 +84,7 @@ class ExchangeRecordApplicationServiceImplTest {
             productNode.put("description", "降噪耳机");
             when(exchangeRemoteClient.getProduct(1L)).thenReturn(productNode);
 
-            doNothing().when(exchangeRemoteClient).deductPoints(100L, 500);
+            when(exchangeRemoteClient.deductPoints(100L, 500)).thenReturn(0);
             doNothing().when(exchangeRemoteClient).deductStock(1L, 1);
 
             ExchangeRecordEntity savedEntity = buildSavedEntity();
@@ -138,7 +138,7 @@ class ExchangeRecordApplicationServiceImplTest {
             productNode.put("pointsPrice", 500);
             when(exchangeRemoteClient.getProduct(1L)).thenReturn(productNode);
 
-            doNothing().when(exchangeRemoteClient).deductPoints(100L, 500);
+            when(exchangeRemoteClient.deductPoints(100L, 500)).thenReturn(0);
             doThrow(new SagaException("库存不足"))
                     .when(exchangeRemoteClient).deductStock(1L, 1);
 
@@ -161,7 +161,7 @@ class ExchangeRecordApplicationServiceImplTest {
             productNode.put("pointsPrice", 500);
             when(exchangeRemoteClient.getProduct(1L)).thenReturn(productNode);
 
-            doNothing().when(exchangeRemoteClient).deductPoints(100L, 500);
+            when(exchangeRemoteClient.deductPoints(100L, 500)).thenReturn(0);
             doNothing().when(exchangeRemoteClient).deductStock(1L, 1);
             when(exchangeRecordDomainService.save(any()))
                     .thenThrow(new RuntimeException("DB connection lost"));
@@ -199,7 +199,7 @@ class ExchangeRecordApplicationServiceImplTest {
             productNode.put("pointsPrice", 50);
             when(exchangeRemoteClient.getProduct(1L)).thenReturn(productNode);
 
-            doNothing().when(exchangeRemoteClient).deductPoints(100L, 150); // 50*3
+            when(exchangeRemoteClient.deductPoints(100L, 150)).thenReturn(0); // 50*3
             doNothing().when(exchangeRemoteClient).deductStock(1L, 3);
 
             ExchangeRecordEntity saved = buildSavedEntity();

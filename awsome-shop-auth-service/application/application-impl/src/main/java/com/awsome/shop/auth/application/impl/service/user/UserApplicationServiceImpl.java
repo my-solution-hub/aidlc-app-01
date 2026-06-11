@@ -90,8 +90,19 @@ public class UserApplicationServiceImpl implements UserApplicationService {
     public UserDTO update(UpdateUserRequest request) {
         UserEntity user = userDomainService.update(
                 request.getUserId(), request.getNickname(),
-                request.getRole(), request.getEmployeeId());
+                request.getRole(), request.getEmployeeId(), request.getDepartment());
         return toDTO(user);
+    }
+
+    @Override
+    public com.awsome.shop.auth.application.api.dto.user.UserStatsDTO stats() {
+        long[] s = userDomainService.countStats();
+        com.awsome.shop.auth.application.api.dto.user.UserStatsDTO dto =
+                new com.awsome.shop.auth.application.api.dto.user.UserStatsDTO();
+        dto.setTotalUsers(s[0]);
+        dto.setActiveUsers(s[1]);
+        dto.setNewThisMonth(s[2]);
+        return dto;
     }
 
     private UserDTO toDTO(UserEntity entity) {
@@ -100,6 +111,7 @@ public class UserApplicationServiceImpl implements UserApplicationService {
         dto.setUsername(entity.getUsername());
         dto.setNickname(entity.getNickname());
         dto.setEmployeeId(entity.getEmployeeId());
+        dto.setDepartment(entity.getDepartment());
         dto.setRole(entity.getRole());
         dto.setStatus(entity.getStatus());
         dto.setLastLoginAt(entity.getLastLoginAt());

@@ -133,6 +133,7 @@ public class PointAccountApplicationServiceImpl implements PointAccountApplicati
         dto.setAmount(entity.getAmount());
         dto.setBalance(entity.getBalance());
         dto.setDescription(entity.getDescription());
+        dto.setOperator(entity.getOperator());
         dto.setCreatedAt(entity.getCreatedAt());
         return dto;
     }

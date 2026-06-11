@@ -47,6 +47,8 @@ public class UpdateProductRequest {
     @Size(max = 500, message = "主图URL不能超过500个字符")
     private String imageUrl;
 
+    private java.util.List<String> images;
+
     @Size(max = 500, message = "副标题不能超过500个字符")
     private String subtitle;
 

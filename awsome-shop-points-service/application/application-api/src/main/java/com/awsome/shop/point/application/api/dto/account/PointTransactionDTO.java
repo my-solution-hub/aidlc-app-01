@@ -22,5 +22,7 @@ public class PointTransactionDTO {
 
     private String description;
 
+    private String operator;
+
     private LocalDateTime createdAt;
 }

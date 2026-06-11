@@ -209,12 +209,14 @@ export default function UserPointsHistory() {
           filtered.map((txn) => {
             const positive = txn.amount >= 0;
             return (
-              <Box key={txn.id} sx={{ display: "flex", alignItems: "center", px: "20px", py: "13px", borderTop: "1px solid #F1F5F9" }}>
+              <Box key={txn.id} sx={{ display: "flex", alignItems: "center", px: "20px", py: "13px", borderTop: "1px solid #F1F5F9", borderLeft: `3px solid ${positive ? "#16A34A" : "#DC2626"}` }}>
                 <Box sx={{ width: 150 }}>
                   <Typography sx={{ fontSize: 12, color: "#64748B" }}>{fmt(txn.createdAt)}</Typography>
                 </Box>
                 <Box sx={{ width: 100 }}>
-                  <Typography sx={{ fontSize: 12, color: "#1E293B" }}>{txn.type || "—"}</Typography>
+                  <Box sx={{ display: "inline-flex", bgcolor: "#F1F5F9", borderRadius: "6px", px: "8px", py: "2px" }}>
+                    <Typography sx={{ fontSize: 11, color: "#475569" }}>{txn.type || "—"}</Typography>
+                  </Box>
                 </Box>
                 <Box sx={{ width: 100 }}>
                   <Typography sx={{ fontSize: 13, fontWeight: 700, color: positive ? "#16A34A" : "#DC2626" }}>

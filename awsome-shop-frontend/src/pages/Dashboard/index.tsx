@@ -4,12 +4,6 @@ import { useNavigate } from "react-router";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import Paper from "@mui/material/Paper";
-import Table from "@mui/material/Table";
-import TableBody from "@mui/material/TableBody";
-import TableCell from "@mui/material/TableCell";
-import TableContainer from "@mui/material/TableContainer";
-import TableHead from "@mui/material/TableHead";
-import TableRow from "@mui/material/TableRow";
 import Link from "@mui/material/Link";
 import Chip from "@mui/material/Chip";
 import Inventory2Icon from "@mui/icons-material/Inventory2";
@@ -223,138 +217,79 @@ export default function Dashboard() {
           </Link>
         </Box>
 
-        <TableContainer>
-          <Table sx={{ "& .MuiTableCell-root": { borderColor: "#F1F5F9" } }}>
-            <TableHead>
-              <TableRow sx={{ bgcolor: "#F8FAFC" }}>
-                <TableCell
+        {recentOrders.length === 0 ? (
+          <Box sx={{ textAlign: "center", py: "32px", color: "text.secondary", fontSize: 13 }}>
+            暂无兑换记录
+          </Box>
+        ) : (
+          <Box sx={{ display: "flex", flexDirection: "column" }}>
+            {recentOrders.map((order) => {
+              const statusCfg = STATUS_CONFIG[order.status] ?? {
+                label: order.status,
+                color: "#64748B",
+                bg: "#F1F5F9",
+              };
+              const initial = (order.employeeName || "?").charAt(0);
+              return (
+                <Box
+                  key={order.id}
                   sx={{
-                    fontSize: 12,
-                    fontWeight: 600,
-                    color: "text.secondary",
-                    width: 120,
-                    py: "10px",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "12px",
                     px: "20px",
+                    py: "14px",
+                    borderTop: "1px solid #F1F5F9",
                   }}
                 >
-                  {t("admin.table.user")}
-                </TableCell>
-                <TableCell
-                  sx={{
-                    fontSize: 12,
-                    fontWeight: 600,
-                    color: "text.secondary",
-                    py: "10px",
-                    px: "20px",
-                  }}
-                >
-                  {t("admin.table.product")}
-                </TableCell>
-                <TableCell
-                  sx={{
-                    fontSize: 12,
-                    fontWeight: 600,
-                    color: "text.secondary",
-                    width: 80,
-                    py: "10px",
-                    px: "20px",
-                  }}
-                >
-                  {t("admin.table.points")}
-                </TableCell>
-                <TableCell
-                  sx={{
-                    fontSize: 12,
-                    fontWeight: 600,
-                    color: "text.secondary",
-                    width: 90,
-                    py: "10px",
-                    px: "20px",
-                  }}
-                >
-                  {t("admin.table.status")}
-                </TableCell>
-                <TableCell
-                  sx={{
-                    fontSize: 12,
-                    fontWeight: 600,
-                    color: "text.secondary",
-                    width: 120,
-                    py: "10px",
-                    px: "20px",
-                  }}
-                >
-                  {t("admin.table.time")}
-                </TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {recentOrders.length === 0 ? (
-                <TableRow>
-                  <TableCell
-                    colSpan={5}
+                  <Box
                     sx={{
-                      textAlign: "center",
-                      py: "32px",
-                      color: "text.secondary",
-                      fontSize: 13,
+                      width: 36,
+                      height: 36,
+                      borderRadius: "50%",
+                      bgcolor: "#EFF6FF",
+                      flexShrink: 0,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
                     }}
                   >
-                    暂无兑换记录
-                  </TableCell>
-                </TableRow>
-              ) : (
-                recentOrders.map((order) => {
-                  const statusCfg = STATUS_CONFIG[order.status] ?? {
-                    label: order.status,
-                    color: "#64748B",
-                    bg: "#F1F5F9",
-                  };
-                  return (
-                    <TableRow
-                      key={order.id}
-                      sx={{ "&:last-child td": { borderBottom: 0 } }}
+                    <Typography sx={{ fontSize: 14, fontWeight: 600, color: "#2563EB" }}>{initial}</Typography>
+                  </Box>
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Typography sx={{ fontSize: 13, fontWeight: 600, color: "text.primary" }}>
+                      {order.employeeName}
+                    </Typography>
+                    <Typography
+                      sx={{ fontSize: 12, color: "text.secondary", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
                     >
-                      <TableCell sx={{ fontSize: 13, py: "12px", px: "20px" }}>
-                        {order.employeeName}
-                      </TableCell>
-                      <TableCell sx={{ fontSize: 13, py: "12px", px: "20px" }}>
-                        {order.productName}
-                      </TableCell>
-                      <TableCell sx={{ fontSize: 13, py: "12px", px: "20px" }}>
-                        {order.pointsCost?.toLocaleString()}
-                      </TableCell>
-                      <TableCell sx={{ py: "12px", px: "20px" }}>
-                        <Chip
-                          label={statusCfg.label}
-                          size="small"
-                          sx={{
-                            fontSize: 11,
-                            fontWeight: 500,
-                            color: statusCfg.color,
-                            bgcolor: statusCfg.bg,
-                            borderRadius: "12px",
-                            height: 24,
-                          }}
-                        />
-                      </TableCell>
-                      <TableCell
-                        sx={{
-                          fontSize: 13,
-                          color: "text.secondary",
-                          py: "12px",
-                          px: "20px",
-                        }}
-                      >
-                        {fmtTime(order.exchangeTime)}
-                      </TableCell>
-                    </TableRow>
-                  );
-                })
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
+                      {order.productName}
+                    </Typography>
+                  </Box>
+                  <Typography sx={{ fontSize: 14, fontWeight: 700, color: "#D97706", flexShrink: 0 }}>
+                    {order.pointsCost?.toLocaleString()}
+                  </Typography>
+                  <Chip
+                    label={statusCfg.label}
+                    size="small"
+                    sx={{
+                      fontSize: 11,
+                      fontWeight: 500,
+                      color: statusCfg.color,
+                      bgcolor: statusCfg.bg,
+                      borderRadius: "12px",
+                      height: 24,
+                      flexShrink: 0,
+                    }}
+                  />
+                  <Typography sx={{ fontSize: 12, color: "text.secondary", width: 90, textAlign: "right", flexShrink: 0 }}>
+                    {fmtTime(order.exchangeTime)}
+                  </Typography>
+                </Box>
+              );
+            })}
+          </Box>
+        )}
       </Paper>
     </Box>
   );

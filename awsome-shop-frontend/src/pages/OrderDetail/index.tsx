@@ -8,10 +8,7 @@ import CircularProgress from "@mui/material/CircularProgress";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import Inventory2Icon from "@mui/icons-material/Inventory2";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
-import Inventory2OutlinedIcon from "@mui/icons-material/Inventory2Outlined";
 import LocalShippingIcon from "@mui/icons-material/LocalShipping";
-import TaskAltIcon from "@mui/icons-material/TaskAlt";
 import CancelIcon from "@mui/icons-material/Cancel";
 import { getMyOrder, confirmReceipt } from "../../services/api/order";
 import type { ExchangeRecordDTO } from "../../types/api";
@@ -20,21 +17,7 @@ import { AppSnackbar, useSnackbar } from "../../components/AppSnackbar";
 import { BusinessError } from "../../services/request";
 import { STATUS_I18N } from "../../utils/orderStatus";
 import { resolveImageUrl } from "../../utils/image";
-
-/** Horizontal progress steps (cancel handled separately). */
-const STEPS: { key: string; icon: React.ElementType }[] = [
-  { key: "submitted", icon: ReceiptLongIcon },
-  { key: "pending", icon: Inventory2OutlinedIcon },
-  { key: "delivering", icon: LocalShippingIcon },
-  { key: "completed", icon: TaskAltIcon },
-];
-
-/** Map a backend status to how many steps are completed. */
-const STATUS_TO_DONE: Record<string, number> = {
-  PENDING_DELIVERY: 1,
-  DELIVERING: 2,
-  COMPLETED: 4,
-};
+import OrderProgress from "../../components/OrderProgress";
 
 function Card({
   title,
@@ -127,8 +110,6 @@ export default function OrderDetail() {
   };
 
   const fmt = (s?: string) => (s ? s.slice(0, 19).replace("T", " ") : "—");
-  const timeOfStatus = (o: ExchangeRecordDTO, status: string) =>
-    o.timeline?.find((l) => l.status === status)?.time;
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 3, p: "24px 32px" }}>
@@ -152,7 +133,6 @@ export default function OrderDetail() {
       ) : (
         (() => {
           const cancelled = order.status === "CANCELLED";
-          const doneCount = STATUS_TO_DONE[order.status] ?? 0;
           return (
             <Box sx={{ maxWidth: 860, width: "100%", mx: "auto", display: "flex", flexDirection: "column", gap: "20px" }}>
               {/* Hero status card */}
@@ -213,75 +193,7 @@ export default function OrderDetail() {
 
               {/* Progress stepper / cancelled banner */}
               <Card title={t("employee.orderDetail.progressTitle")}>
-                {cancelled ? (
-                  <Box sx={{ display: "flex", alignItems: "center", gap: "10px", bgcolor: "#FEF2F2", borderRadius: "10px", p: "16px" }}>
-                    <CancelIcon sx={{ fontSize: 22, color: "#DC2626" }} />
-                    <Typography sx={{ fontSize: 14, color: "#991B1B" }}>{t("employee.orderDetail.cancelled")}</Typography>
-                  </Box>
-                ) : (
-                  <Box sx={{ display: "flex", alignItems: "flex-start", pt: "8px" }}>
-                    {STEPS.map((step, i) => {
-                      const done = i < doneCount;
-                      const current = i === doneCount;
-                      const Icon = done ? CheckCircleIcon : step.icon;
-                      const color = done ? "#16A34A" : current ? "#2563EB" : "#CBD5E1";
-                      const stepTime =
-                        step.key === "submitted"
-                          ? order.exchangeTime || order.createdAt
-                          : step.key === "pending"
-                            ? timeOfStatus(order, "PENDING_DELIVERY")
-                            : step.key === "delivering"
-                              ? timeOfStatus(order, "DELIVERING")
-                              : timeOfStatus(order, "COMPLETED");
-                      return (
-                        <Box key={step.key} sx={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", position: "relative" }}>
-                          {/* connector to next */}
-                          {i < STEPS.length - 1 && (
-                            <Box
-                              sx={{
-                                position: "absolute",
-                                top: 18,
-                                left: "50%",
-                                width: "100%",
-                                height: "3px",
-                                bgcolor: i < doneCount ? "#16A34A" : "#E2E8F0",
-                              }}
-                            />
-                          )}
-                          <Box
-                            sx={{
-                              zIndex: 1,
-                              width: 38,
-                              height: 38,
-                              borderRadius: "50%",
-                              bgcolor: done ? "#DCFCE7" : current ? "#EFF6FF" : "#F1F5F9",
-                              border: `2px solid ${color}`,
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                            }}
-                          >
-                            <Icon sx={{ fontSize: 20, color }} />
-                          </Box>
-                          <Typography
-                            sx={{
-                              fontSize: 12,
-                              fontWeight: current ? 700 : 500,
-                              color: done ? "#16A34A" : current ? "#2563EB" : "#94A3B8",
-                              mt: "8px",
-                              textAlign: "center",
-                            }}
-                          >
-                            {t(`employee.orderDetail.steps.${step.key}`)}
-                          </Typography>
-                          <Typography sx={{ fontSize: 11, color: "#CBD5E1", mt: "2px", textAlign: "center", minHeight: 14 }}>
-                            {stepTime ? fmt(stepTime).slice(5, 16) : ""}
-                          </Typography>
-                        </Box>
-                      );
-                    })}
-                  </Box>
-                )}
+                <OrderProgress status={order.status} timeline={order.timeline} />
               </Card>
 
               {/* Product */}

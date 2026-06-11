@@ -25,6 +25,7 @@ import { AppSnackbar, useSnackbar } from "../../components/AppSnackbar";
 import { BusinessError } from "../../services/request";
 import { statusStyle, STATUS_I18N, nextStatuses } from "../../utils/orderStatus";
 import { resolveImageUrl } from "../../utils/image";
+import OrderProgress from "../../components/OrderProgress";
 
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -155,6 +156,11 @@ export default function ExchangeDetail() {
           )}
         </Box>
       </Box>
+
+      {/* Progress */}
+      <Card title={t("employee.orderDetail.progressTitle")}>
+        <OrderProgress status={record.status} timeline={record.timeline} />
+      </Card>
 
       {/* Body two columns */}
       <Box sx={{ display: "grid", gridTemplateColumns: "1.4fr 1fr", gap: "20px", alignItems: "start" }}>

@@ -15,6 +15,8 @@ import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
 import CelebrationIcon from "@mui/icons-material/Celebration";
 import VolunteerActivismIcon from "@mui/icons-material/VolunteerActivism";
 import TollIcon from "@mui/icons-material/Toll";
+import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
+import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
 import { getBalance, listTransactions } from "../../services/api/point";
 import { listMyOrders } from "../../services/api/order";
 import type { PointBalanceDTO, PointTransactionDTO, PageResult } from "../../types/api";
@@ -258,16 +260,52 @@ export default function MyPoints() {
             return (
               <Box
                 key={txn.id}
-                sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", px: "20px", py: "14px", borderTop: "1px solid #F8FAFC" }}
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: "12px",
+                  px: "20px",
+                  py: "14px",
+                  borderTop: "1px solid #F8FAFC",
+                  borderLeft: `3px solid ${positive ? "#16A34A" : "#DC2626"}`,
+                }}
               >
-                <Box>
-                  <Typography sx={{ fontSize: 14, color: "#1E293B" }}>{txn.description}</Typography>
-                  <Typography sx={{ fontSize: 12, color: "#94A3B8" }}>
-                    {(txn.createdAt ?? "").slice(0, 16).replace("T", " ")}
-                  </Typography>
+                <Box sx={{ display: "flex", alignItems: "center", gap: "12px", minWidth: 0 }}>
+                  <Box
+                    sx={{
+                      width: 36,
+                      height: 36,
+                      borderRadius: "50%",
+                      flexShrink: 0,
+                      bgcolor: positive ? "#DCFCE7" : "#FEE2E2",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    {positive ? (
+                      <ArrowUpwardIcon sx={{ fontSize: 18, color: "#16A34A" }} />
+                    ) : (
+                      <ArrowDownwardIcon sx={{ fontSize: 18, color: "#DC2626" }} />
+                    )}
+                  </Box>
+                  <Box sx={{ minWidth: 0 }}>
+                    <Typography sx={{ fontSize: 14, color: "#1E293B" }}>{txn.description}</Typography>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                      {txn.type && (
+                        <Box sx={{ bgcolor: "#F1F5F9", borderRadius: "6px", px: "6px", py: "1px" }}>
+                          <Typography sx={{ fontSize: 11, color: "#64748B" }}>{txn.type}</Typography>
+                        </Box>
+                      )}
+                      <Typography sx={{ fontSize: 12, color: "#94A3B8" }}>
+                        {(txn.createdAt ?? "").slice(0, 16).replace("T", " ")}
+                      </Typography>
+                    </Box>
+                  </Box>
                 </Box>
-                <Box sx={{ textAlign: "right" }}>
-                  <Typography sx={{ fontSize: 15, fontWeight: 700, color: positive ? "#16A34A" : "#DC2626" }}>
+                <Box sx={{ textAlign: "right", flexShrink: 0 }}>
+                  <Typography sx={{ fontSize: 16, fontWeight: 700, color: positive ? "#16A34A" : "#DC2626" }}>
                     {positive ? "+" : ""}
                     {txn.amount.toLocaleString()}
                   </Typography>

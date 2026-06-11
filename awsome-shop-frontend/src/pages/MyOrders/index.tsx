@@ -16,6 +16,7 @@ import { statusStyle, STATUS_I18N } from "../../utils/orderStatus";
 import { AppSnackbar, useSnackbar } from "../../components/AppSnackbar";
 import { BusinessError } from "../../services/request";
 import { resolveImageUrl } from "../../utils/image";
+import OrderProgress from "../../components/OrderProgress";
 
 const PAGE_SIZE = 5;
 
@@ -245,6 +246,13 @@ export default function MyOrders() {
                     {(record.pointsCost ?? 0).toLocaleString()} {t("employee.points")}
                   </Typography>
                 </Box>
+
+                {/* Mini progress */}
+                {record.status !== "CANCELLED" && (
+                  <Box sx={{ px: "20px", py: "14px", borderTop: "1px solid #F8FAFC" }}>
+                    <OrderProgress status={record.status} compact />
+                  </Box>
+                )}
 
                 {/* Card footer */}
                 <Box

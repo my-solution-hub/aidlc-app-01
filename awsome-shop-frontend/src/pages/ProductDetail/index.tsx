@@ -517,46 +517,6 @@ export default function ProductDetail() {
                 </Box>
               )}
 
-              {/* Spec params */}
-              {product.specs && product.specs.length > 0 && (
-                <Box
-                  sx={{ display: "flex", flexDirection: "column", gap: "4px" }}
-                >
-                  <Typography
-                    sx={{
-                      fontSize: 14,
-                      fontWeight: 600,
-                      color: "#1E293B",
-                      mb: "4px",
-                    }}
-                  >
-                    {t("employee.productDetail.specs")}
-                  </Typography>
-                  {product.specs.flatMap((row) =>
-                    Object.entries(row).map(([k, v]) => (
-                      <Box
-                        key={k}
-                        sx={{
-                          display: "flex",
-                          gap: "16px",
-                          py: "6px",
-                          borderBottom: "1px solid #F8FAFC",
-                        }}
-                      >
-                        <Typography
-                          sx={{ fontSize: 13, color: "#94A3B8", width: 120 }}
-                        >
-                          {k}
-                        </Typography>
-                        <Typography sx={{ fontSize: 13, color: "#1E293B" }}>
-                          {String(v)}
-                        </Typography>
-                      </Box>
-                    )),
-                  )}
-                </Box>
-              )}
-
               {/* Actions */}
               <Box sx={{ display: "flex", gap: "12px", mt: "auto" }}>
                 <Button
@@ -607,6 +567,52 @@ export default function ProductDetail() {
               </Box>
             </Box>
           </Box>
+
+          {/* Spec params card */}
+          {product.specs && product.specs.length > 0 && (
+            <Box sx={{ bgcolor: "#fff", borderRadius: "12px", border: "1px solid #F1F5F9", p: "24px", display: "flex", flexDirection: "column", gap: "12px" }}>
+              <Typography sx={{ fontSize: 16, fontWeight: 600, color: "#1E293B" }}>
+                {t("employee.productDetail.specs")}
+              </Typography>
+              <Box sx={{ height: "1px", bgcolor: "#F1F5F9" }} />
+              {product.specs.flatMap((row) =>
+                Object.entries(row).map(([k, v]) => (
+                  <Box key={k} sx={{ display: "flex", gap: "16px", py: "8px", borderBottom: "1px solid #F8FAFC" }}>
+                    <Typography sx={{ fontSize: 13, color: "#94A3B8", width: 140 }}>{k}</Typography>
+                    <Typography sx={{ fontSize: 13, color: "#1E293B" }}>{String(v)}</Typography>
+                  </Box>
+                )),
+              )}
+            </Box>
+          )}
+
+          {/* Service / delivery card */}
+          {(product.deliveryMethod || product.serviceGuarantee || product.colors) && (
+            <Box sx={{ bgcolor: "#fff", borderRadius: "12px", border: "1px solid #F1F5F9", p: "24px", display: "flex", flexDirection: "column", gap: "12px" }}>
+              <Typography sx={{ fontSize: 16, fontWeight: 600, color: "#1E293B" }}>
+                {t("employee.productDetail.serviceTitle")}
+              </Typography>
+              <Box sx={{ height: "1px", bgcolor: "#F1F5F9" }} />
+              {product.deliveryMethod && (
+                <Box sx={{ display: "flex", gap: "16px", py: "6px" }}>
+                  <Typography sx={{ fontSize: 13, color: "#94A3B8", width: 140 }}>{t("employee.productDetail.delivery")}</Typography>
+                  <Typography sx={{ fontSize: 13, color: "#1E293B" }}>{product.deliveryMethod}</Typography>
+                </Box>
+              )}
+              {product.serviceGuarantee && (
+                <Box sx={{ display: "flex", gap: "16px", py: "6px" }}>
+                  <Typography sx={{ fontSize: 13, color: "#94A3B8", width: 140 }}>{t("employee.productDetail.guarantee")}</Typography>
+                  <Typography sx={{ fontSize: 13, color: "#1E293B" }}>{product.serviceGuarantee}</Typography>
+                </Box>
+              )}
+              {product.colors && (
+                <Box sx={{ display: "flex", gap: "16px", py: "6px" }}>
+                  <Typography sx={{ fontSize: 13, color: "#94A3B8", width: 140 }}>{t("employee.productDetail.colors")}</Typography>
+                  <Typography sx={{ fontSize: 13, color: "#1E293B" }}>{product.colors}</Typography>
+                </Box>
+              )}
+            </Box>
+          )}
 
           {/* Related products */}
           {related.length > 0 && (

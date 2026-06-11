@@ -185,7 +185,14 @@ export default function ProductDetail() {
 
   return (
     <Box
-      sx={{ display: "flex", flexDirection: "column", gap: 3, p: "24px 32px" }}
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        gap: 3,
+        p: "24px 32px",
+        width: "100%",
+        boxSizing: "border-box",
+      }}
     >
       <Button
         startIcon={<ArrowBackIcon sx={{ fontSize: 18 }} />}
@@ -231,6 +238,8 @@ export default function ProductDetail() {
               borderRadius: "12px",
               border: "1px solid #F1F5F9",
               p: "24px",
+              width: "100%",
+              boxSizing: "border-box",
             }}
           >
             {/* Image gallery */}
@@ -293,6 +302,7 @@ export default function ProductDetail() {
             <Box
               sx={{
                 flex: 1,
+                minWidth: 0,
                 display: "flex",
                 flexDirection: "column",
                 gap: "16px",

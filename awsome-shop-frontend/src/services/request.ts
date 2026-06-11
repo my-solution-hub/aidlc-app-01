@@ -26,7 +26,7 @@ const TOKEN_KEY = "token";
 
 const instance = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:8088",
-  timeout: 15000,
+  timeout: 10000,
 });
 
 // Request interceptor — inject JWT token

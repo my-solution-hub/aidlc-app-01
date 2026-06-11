@@ -26,7 +26,20 @@ export function initRum(): AwsRum | undefined {
     identityPoolId,
     guestRoleArn,
     endpoint: `https://dataplane.rum.${region}.amazonaws.com`,
-    telemetries: ["errors", "performance", "http"],
+    // Enable HTTP plugin (XHR + fetch) AND have it inject X-Amzn-Trace-Id
+    // into outbound requests so RUM segments link to backend X-Ray traces
+    // in the Service Map. The default config object does not enable this.
+    telemetries: [
+      "errors",
+      "performance",
+      [
+        "http",
+        {
+          addXRayTraceIdHeader: true,
+          recordAllRequests: true,
+        },
+      ],
+    ],
     allowCookies: true,
     enableXRay: true,
   };

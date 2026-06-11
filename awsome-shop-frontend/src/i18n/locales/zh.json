@@ -123,7 +123,12 @@
       "cancel": "取消",
       "loadFailed": "加载兑换信息失败",
       "shippingTitle": "收货信息",
-      "noAddress": "还没有收货地址，请新增"
+      "noAddress": "还没有收货地址，请新增",
+      "summaryTitle": "积分明细",
+      "tipsTitle": "温馨提示",
+      "tip1": "兑换成功后积分将立即扣除，不可撤销",
+      "tip2": "商品将在 3-5 个工作日内配送至收货地址",
+      "tip3": "如有问题请联系管理员处理"
     },
     "redemptionSuccess": {
       "title": "兑换成功！",

@@ -9,9 +9,11 @@ import MenuItem from '@mui/material/MenuItem';
 import Divider from '@mui/material/Divider';
 import TranslateIcon from '@mui/icons-material/Translate';
 import PaletteIcon from '@mui/icons-material/Palette';
+import LockResetIcon from '@mui/icons-material/LockReset';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { useAuthStore } from '../store/useAuthStore';
 import { useAppStore } from '../store/useAppStore';
+import ChangePasswordDialog from './ChangePasswordDialog';
 
 export default function AvatarMenu() {
   const { t, i18n } = useTranslation();
@@ -23,6 +25,7 @@ export default function AvatarMenu() {
   const storedLanguage = useAppStore((s) => s.language);
   const setLanguage = useAppStore((s) => s.setLanguage);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [changePasswordOpen, setChangePasswordOpen] = useState(false);
 
   // Restore user's language preference when entering authenticated pages
   useEffect(() => {
@@ -50,6 +53,11 @@ export default function AvatarMenu() {
   const handleSwitchTheme = () => {
     toggleDarkMode();
     handleClose();
+  };
+
+  const handleOpenChangePassword = () => {
+    handleClose();
+    setChangePasswordOpen(true);
   };
 
   const handleLogout = async () => {
@@ -153,6 +161,26 @@ export default function AvatarMenu() {
 
         <Divider sx={{ borderColor: '#F1F5F9' }} />
 
+        {/* Change Password */}
+        <MenuItem
+          onClick={handleOpenChangePassword}
+          sx={{
+            py: '10px',
+            px: '12px',
+            mx: '6px',
+            my: '2px',
+            borderRadius: '8px',
+            gap: '12px',
+          }}
+        >
+          <LockResetIcon sx={{ fontSize: 20, color: '#64748B' }} />
+          <Typography sx={{ fontSize: 14, color: '#1E293B', flex: 1 }}>
+            {t('auth.changePassword.menuItem')}
+          </Typography>
+        </MenuItem>
+
+        <Divider sx={{ borderColor: '#F1F5F9' }} />
+
         {/* Logout */}
         <MenuItem
           onClick={handleLogout}
@@ -171,6 +199,10 @@ export default function AvatarMenu() {
           </Typography>
         </MenuItem>
       </Menu>
+      <ChangePasswordDialog
+        open={changePasswordOpen}
+        onClose={() => setChangePasswordOpen(false)}
+      />
     </>
   );
 }

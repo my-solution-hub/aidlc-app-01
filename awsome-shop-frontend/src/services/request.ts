@@ -1,5 +1,8 @@
-import axios, { type AxiosRequestConfig } from "axios";
-import type { Result } from "../types/api";
+import axios, {
+  type AxiosRequestConfig,
+  type InternalAxiosRequestConfig,
+} from "axios";
+import type { LoginResponse, Result } from "../types/api";
 
 // ---- Business error ----
 
@@ -21,6 +24,15 @@ export class BusinessError extends Error {
 
 const SUCCESS_CODE = "SUCCESS";
 const TOKEN_KEY = "token";
+const REFRESH_URL = "/api/auth/refresh";
+const LOGIN_URL = "/api/auth/login";
+
+// Extend the request config with a retry marker so a request that already
+// went through one refresh+retry cycle is never retried again (prevents
+// infinite loops).
+interface RetryableRequestConfig extends InternalAxiosRequestConfig {
+  _retry?: boolean;
+}
 
 // ---- Axios instance ----
 
@@ -40,6 +52,51 @@ instance.interceptors.request.use(
   },
   (error) => Promise.reject(error),
 );
+
+// ---- Token refresh (concurrency-safe) ----
+
+/**
+ * Holds the in-flight refresh request so that concurrent 401s share a single
+ * refresh call instead of each firing their own. Reset to null once settled.
+ */
+let refreshPromise: Promise<string> | null = null;
+
+/**
+ * Exchange the (expired) token for a new one via POST /api/auth/refresh.
+ * Done inline with the axios instance — NOT via services/api/auth.ts — to
+ * avoid a circular import (auth.ts imports this module).
+ * The response interceptor unwraps Result<T>, so the resolved value is the
+ * LoginResponse payload directly.
+ */
+function refreshAccessToken(): Promise<string> {
+  if (!refreshPromise) {
+    refreshPromise = instance
+      .post(REFRESH_URL)
+      .then((data) => {
+        const res = data as unknown as LoginResponse;
+        if (!res?.token) {
+          throw new Error("Refresh response missing token");
+        }
+        localStorage.setItem(TOKEN_KEY, res.token);
+        return res.token;
+      })
+      .finally(() => {
+        refreshPromise = null;
+      });
+  }
+  return refreshPromise;
+}
+
+function clearAuthAndRedirect() {
+  // Clear both the JWT and the zustand-persisted auth flag, otherwise
+  // /login redirects the user straight back to / via the
+  // isAuthenticated useEffect, looping forever.
+  localStorage.removeItem(TOKEN_KEY);
+  localStorage.removeItem("auth-storage");
+  if (window.location.pathname !== "/login") {
+    window.location.href = "/login";
+  }
+}
 
 // Response interceptor — unwrap Result<T> and handle errors
 instance.interceptors.response.use(
@@ -61,17 +118,34 @@ instance.interceptors.response.use(
       new BusinessError(result.code, result.message || "请求失败"),
     );
   },
-  (error) => {
-    if (error.response?.status === 401) {
-      // Clear both the JWT and the zustand-persisted auth flag, otherwise
-      // /login redirects the user straight back to / via the
-      // isAuthenticated useEffect, looping forever.
-      localStorage.removeItem(TOKEN_KEY);
-      localStorage.removeItem("auth-storage");
-      if (window.location.pathname !== "/login") {
-        window.location.href = "/login";
+  async (error) => {
+    const originalConfig = error.config as RetryableRequestConfig | undefined;
+    const status = error.response?.status;
+
+    if (status === 401 && originalConfig && !originalConfig._retry) {
+      const url = originalConfig.url || "";
+      const token = localStorage.getItem(TOKEN_KEY);
+      // Never try to refresh for the auth endpoints themselves — a 401 on
+      // /refresh or /login means the session is truly gone.
+      const isAuthEndpoint =
+        url.includes(REFRESH_URL) || url.includes(LOGIN_URL);
+
+      if (token && !isAuthEndpoint) {
+        originalConfig._retry = true;
+        try {
+          const newToken = await refreshAccessToken();
+          originalConfig.headers.Authorization = `Bearer ${newToken}`;
+          return instance(originalConfig);
+        } catch {
+          clearAuthAndRedirect();
+          return Promise.reject(error);
+        }
       }
+
+      // No token, or the auth endpoint itself returned 401 → give up.
+      clearAuthAndRedirect();
     }
+
     return Promise.reject(error);
   },
 );

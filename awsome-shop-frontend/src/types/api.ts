@@ -41,6 +41,11 @@ export interface RegisterRequest {
   role?: string;
 }
 
+export interface ChangePasswordRequest {
+  oldPassword: string;
+  newPassword: string;
+}
+
 export interface UserDTO {
   id: number;
   username: string;

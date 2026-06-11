@@ -48,6 +48,7 @@ export default function ProductDetailAdmin() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const snackbar = useSnackbar();
+  const { showError } = snackbar;
   const { id } = useParams<{ id: string }>();
   const productId = id ? Number(id) : null;
 
@@ -62,11 +63,11 @@ export default function ProductDetailAdmin() {
     try {
       setProduct(await getProduct(productId));
     } catch {
-      snackbar.showError(t("admin.products.loadFailed"));
+      showError(t("admin.products.loadFailed"));
     } finally {
       setLoading(false);
     }
-  }, [productId, snackbar, t]);
+  }, [productId, showError, t]);
 
   useEffect(() => {
     fetchData();

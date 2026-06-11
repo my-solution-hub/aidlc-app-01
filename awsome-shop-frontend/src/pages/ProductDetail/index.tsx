@@ -28,7 +28,7 @@ function getCategoryStyle(category: string) {
 export default function ProductDetail() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const snackbar = useSnackbar();
+  const { state: snackbarState, showError, close: closeSnackbar } = useSnackbar();
   const { id } = useParams<{ id: string }>();
 
   const [product, setProduct] = useState<ProductDTO | null>(null);
@@ -41,11 +41,11 @@ export default function ProductDetail() {
       const res = await getProduct(Number(id));
       setProduct(res);
     } catch {
-      snackbar.showError(t("employee.productDetail.loadFailed"));
+      showError(t("employee.productDetail.loadFailed"));
     } finally {
       setLoading(false);
     }
-  }, [id, snackbar, t]);
+  }, [id, showError, t]);
 
   useEffect(() => {
     fetchProduct();
@@ -231,7 +231,7 @@ export default function ProductDetail() {
         </Box>
       )}
 
-      <AppSnackbar state={snackbar.state} onClose={snackbar.close} />
+      <AppSnackbar state={snackbarState} onClose={closeSnackbar} />
     </Box>
   );
 }

@@ -48,6 +48,7 @@ export default function ExchangeDetail() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const snackbar = useSnackbar();
+  const { showError } = snackbar;
   const { id } = useParams<{ id: string }>();
 
   const [record, setRecord] = useState<ExchangeRecordDTO | null>(null);
@@ -61,11 +62,11 @@ export default function ExchangeDetail() {
     try {
       setRecord(await getExchangeRecord(Number(id)));
     } catch {
-      snackbar.showError(t("common.operationFailed"));
+      showError(t("common.operationFailed"));
     } finally {
       setLoading(false);
     }
-  }, [id, snackbar, t]);
+  }, [id, showError, t]);
 
   useEffect(() => {
     fetchData();
